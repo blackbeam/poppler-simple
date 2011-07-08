@@ -84,7 +84,7 @@ namespace node {
 	NodePopplerDocument *self = ObjectWrap::Unwrap<NodePopplerDocument>(info.This());
 	HandleScope scope;
 
-	return Integer::New(poppler_document_get_n_pages(self->document));
+	return scope.Close(Integer::New(poppler_document_get_n_pages(self->document)));
     }
 
     Handle<Value> NodePopplerDocument::New(const Arguments &args) {

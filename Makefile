@@ -1,11 +1,8 @@
-all: build
-	node test.js
+all: build/default/poppler.node test
+	nodeunit test/test.js
 
-build: configure NodePopplerPage.cc NodePopplerPage.h NodePopplerDocument.cc NodePopplerDocument.h
+build/default/poppler.node: *.cc *.h build/config.log
 	node-waf -v build
 
-configure:
+build/config.log: wscript
 	node-waf -v configure
-
-debug: build
-	valgrind node test.js
