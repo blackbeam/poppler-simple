@@ -1,6 +1,5 @@
 #include <v8.h>
 #include <node.h>
-#include <node_events.h>
 #include <node_buffer.h>
 #include <poppler/glib/poppler.h>
 
@@ -11,8 +10,9 @@ using namespace v8;
 using namespace node;
 
 namespace node {
+    Persistent<FunctionTemplate> NodePopplerDocument::constructor_template;
 
-    NodePopplerDocument::NodePopplerDocument(const char* cFileName) : EventEmitter() {
+    NodePopplerDocument::NodePopplerDocument(const char* cFileName) {
 	err = NULL;
 	document = NULL;
 	document = poppler_document_new_from_file(cFileName, NULL, &err);

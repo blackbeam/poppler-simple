@@ -1,6 +1,5 @@
 #include <v8.h>
 #include <node.h>
-#include <node_events.h>
 #include <node_buffer.h>
 
 #include "NodePopplerDocument.h"
@@ -182,56 +181,64 @@ namespace node {
 	HandleScope scope;
 	NodePopplerPage* self = ObjectWrap::Unwrap<NodePopplerPage>(args.Holder());
 	gdouble PPI;
-	bool forcePixbuf;
 	GdkPixbuf *pixbuf;
 	int scalledWidth, scalledHeight, pixbufSize;
+        cairo_surface_t *surface;
+	cairo_t *cr;
 
-	if (args.Length() != 2) return ThrowException(Exception::Error(String::New("Two arguments required: (PPI: Number, forcePixbuf: Boolean).")));
+	if (args.Length() < 1) return ThrowException(Exception::Error(String::New("One arguments required: (PPI: Number).")));
 	if (!args[0]->IsNumber()) return ThrowException(Exception::TypeError(String::New("`PPI' must be an instance of Number.")));
-	if (!args[1]->IsBoolean()) return ThrowException(Exception::TypeError(String::New("`forcePixbuf' must be an instance of Boolean.")));
 
 	PPI = args[0]->ToNumber()->Value();
-	forcePixbuf = args[1]->ToBoolean()->Value();
 
 	scalledHeight = static_cast<int>( (self->height / 72.0) * PPI );
 	scalledWidth = static_cast<int>( (self->width / 72.0) * PPI );
 
-	if ( self->mapping && ! forcePixbuf && g_list_length (self->mapping) == 1 ) {
-	    // render to output dev
-	    ImageOutputDev *imgOut;
-	    char path[L_tmpnam + 4];
-	    tmpnam( path );
-	    int page_num;
-	    bool is_saved;
+	// Render to cairo surface
+        surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, scalledWidth, scalledHeight);
+        cr = cairo_create (surface);
+        poppler_page_render (self->page, cr);
+        cairo_set_operator (cr, CAIRO_OPERATOR_DEST_OVER);
+	cairo_set_source_rgb (cr, 1., 1., 1.);
+	cairo_paint (cr);
+	cairo_destroy (cr);
+        // copy cairo surface to pixbuf
+        int cairo_width, cairo_height, cairo_rowstride;
+        unsigned char *pixbuf_data, *dst, *cairo_data;
+        int pixbuf_rowstride, pixbuf_n_channels;
+        unsigned int *src;
+        int x, y;
 
-	    imgOut = new ImageOutputDev( self->width / 72.0, (PopplerImageMapping *)self->mapping->data, path, &is_saved );
-	    if (imgOut->isOk()) {
-		page_num = poppler_page_get_index(self->page) + 1;
-		self->page->document->doc->displayPage(imgOut, page_num, 72, 72, 0,
-			gTrue, gFalse, gFalse);
-	    }
-	    delete imgOut;
-	    if ( is_saved ) {
-		Local<v8::Object> out = v8::Object::New();
+        cairo_width = cairo_image_surface_get_width (surface);
+        cairo_height = cairo_image_surface_get_height (surface);
+        cairo_rowstride = cairo_image_surface_get_stride (surface);
+        cairo_data = cairo_image_surface_get_data (surface);
 
-		out->Set(String::NewSymbol("type"), String::New("file"));
-		out->Set(String::NewSymbol("path"), String::New(path));
+        pixbuf = gdk_pixbuf_new( GDK_COLORSPACE_RGB, FALSE, 8, scalledWidth, scalledHeight );
+        pixbuf_data = gdk_pixbuf_get_pixels (pixbuf);
+        pixbuf_rowstride = gdk_pixbuf_get_rowstride (pixbuf);
+        pixbuf_n_channels = gdk_pixbuf_get_n_channels (pixbuf);
 
-		return scope.Close(out);
-	    }
+        for (y = 0; y < cairo_height; y++) {
+          src = (unsigned int *) (cairo_data + y * cairo_rowstride);
+          dst = pixbuf_data + y * pixbuf_rowstride;
+          for (x = 0; x < cairo_width; x++) {
+            dst[0] = (*src >> 16) & 0xff;
+            dst[1] = (*src >> 8) & 0xff;
+            dst[2] = (*src >> 0) & 0xff;
+            if (pixbuf_n_channels == 4)
+              dst[3] = (*src >> 24) & 0xff;
+            dst += pixbuf_n_channels;
+            src++;
+          }
+        }
 
-	}
-	// render to pixbuf
-to_pixbuf:
 	Buffer *bp;
 
-	pixbuf = gdk_pixbuf_new( GDK_COLORSPACE_RGB, FALSE, 8, scalledWidth, scalledHeight );
-	poppler_page_render_to_pixbuf(self->page, 0, 0, scalledWidth, scalledHeight, PPI / 72.0, 0, pixbuf);
-
-	pixbufSize = ( gdk_pixbuf_get_height( pixbuf ) * gdk_pixbuf_get_rowstride( pixbuf ) );
+	pixbufSize = ( gdk_pixbuf_get_height( pixbuf ) * pixbuf_rowstride );
 
 	bp = Buffer::New(pixbufSize);
-	memcpy(Buffer::Data( bp ), gdk_pixbuf_get_pixels(pixbuf), pixbufSize);
+	memcpy(Buffer::Data( bp ), pixbuf_data, pixbufSize);
 
 	Local<v8::Object> out = v8::Object::New();
 	Local<v8::Object> v8pixbuf = v8::Object::New();
