@@ -250,7 +250,8 @@ namespace node {
 	out->Set(String::NewSymbol("type"), String::New("pixbuf"));
 	out->Set(String::NewSymbol("data"), v8pixbuf);
 
-	g_object_unref(pixbuf);
+	cairo_surface_destroy(surface);
+	gdk_pixbuf_unref(pixbuf);
 
 	return scope.Close(out);
     }

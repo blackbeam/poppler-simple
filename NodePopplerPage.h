@@ -9,7 +9,6 @@
 #include <OutputDev.h>
 #include <Stream.h>
 #include <gdk/gdk.h>
-#include "ImageOutputDev.h"
 #include "ImageQualityDev.h"
 
 struct _PopplerDocument
