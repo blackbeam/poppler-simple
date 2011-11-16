@@ -181,6 +181,7 @@ namespace node {
 	HandleScope scope;
 	NodePopplerPage* self = ObjectWrap::Unwrap<NodePopplerPage>(args.Holder());
 	gdouble PPI;
+        double scale;
 	GdkPixbuf *pixbuf;
 	int scalledWidth, scalledHeight, pixbufSize;
         cairo_surface_t *surface;
@@ -193,10 +194,13 @@ namespace node {
 
 	scalledHeight = static_cast<int>( (self->height / 72.0) * PPI );
 	scalledWidth = static_cast<int>( (self->width / 72.0) * PPI );
+        scale = PPI / 72.0;
 
 	// Render to cairo surface
         surface = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, scalledWidth, scalledHeight);
         cr = cairo_create (surface);
+        if (scale != 1.0)
+          cairo_scale(cr, scale, scale);
         poppler_page_render (self->page, cr);
         cairo_set_operator (cr, CAIRO_OPERATOR_DEST_OVER);
 	cairo_set_source_rgb (cr, 1., 1., 1.);
@@ -252,6 +256,8 @@ namespace node {
 
 	cairo_surface_destroy(surface);
 	gdk_pixbuf_unref(pixbuf);
+
+        while (!V8::IdleNotification()) {}
 
 	return scope.Close(out);
     }
