@@ -19,5 +19,5 @@ def configure(conf):
 def build(bld):
   obj = bld.new_task_gen('cxx', 'shlib', 'node_addon')
   obj.target = 'poppler'
-  obj.source = 'NodePopplerDocument.cc NodePopplerPage.cc'
+  obj.source = './src/NodePopplerDocument.cc ./src/NodePopplerPage.cc'
   obj.uselib = ['GDK-3.0', 'POPPLER-GLIB']

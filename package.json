@@ -1,0 +1,22 @@
+{
+  "author": "AnatolyI <ai@rsl.ru>",
+  "name": "poppler-simple",
+  "description": "A simple sinchronous interface to poppler",
+  "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/blackbeam/node-poppler.git"
+  },
+  "scripts": {
+    "preinstall": "node-waf configure build"
+  },
+  "main": "./lib/poppler.js",
+  "dependencies": {},
+  "devDependencies": {
+    "nodeunit": "*"
+  },
+  "optionalDependencies": {},
+  "engines": {
+    "node": "*"
+  }
+}

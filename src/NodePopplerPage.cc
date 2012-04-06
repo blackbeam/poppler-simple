@@ -33,7 +33,6 @@ namespace node {
 	 */
 	NODE_SET_PROTOTYPE_METHOD(constructor_template, "render", NodePopplerPage::render);
 	NODE_SET_PROTOTYPE_METHOD(constructor_template, "findText", NodePopplerPage::findText);
-	NODE_SET_PROTOTYPE_METHOD(constructor_template, "test", NodePopplerPage::test);
 
 	/** Getters:
 	 *  static Handle<Value> funcName(Local<String> property, const AccessorInfo& info);
@@ -260,26 +259,6 @@ namespace node {
         while (!V8::IdleNotification()) {}
 
 	return scope.Close(out);
-    }
-
-    Handle<Value> NodePopplerPage::test(const Arguments &args) {
-	HandleScope scope;
-	NodePopplerPage* self = ObjectWrap::Unwrap<NodePopplerPage>(args.Holder());
-	Local<v8::Object> out = v8::Object::New();
-
-	if ( !self->mapping ) {
-	    out->Set(v8::String::NewSymbol("quality"), v8::String::New("DAMAGED"));
-	    return scope.Close( out );
-	}
-
-	ImageQualityDev *imgQDev = new ImageQualityDev( self->width / 72.0, (PopplerImageMapping *)self->mapping->data, out );
-	if (imgQDev->isOk()) {
-	    int page_num = poppler_page_get_index(self->page) + 1;
-	    self->page->document->doc->displayPage(imgQDev, page_num, 72, 72, 0,
-			gTrue, gFalse, gFalse);
-	}
-	delete imgQDev;
-	return scope.Close( out );
     }
 
 }

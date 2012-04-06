@@ -9,7 +9,6 @@
 #include <OutputDev.h>
 #include <Stream.h>
 #include <gdk/gdk.h>
-#include "ImageQualityDev.h"
 
 struct _PopplerDocument
 {
@@ -45,7 +44,6 @@ namespace node {
 	protected:
 	    static v8::Handle<v8::Value> New(const v8::Arguments &args);
 	    static v8::Handle<v8::Value> render(const v8::Arguments &args);
-            static v8::Handle<v8::Value> test(const v8::Arguments &args);
             static v8::Handle<v8::Value> findText(const v8::Arguments &args);
 
 	private:
