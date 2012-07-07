@@ -53,7 +53,7 @@ module.exports = {
             render = page.render(90, false);
             test.equal(render.type, 'file');
             test.ok(render.path && render.path.length > 0);
-            test.ok(path.existsSync(render.path));
+            test.ok(fs.existsSync(render.path));
             fs.unlinkSync(render.path);
             test.done();
         }*/
