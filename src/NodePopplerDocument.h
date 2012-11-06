@@ -14,9 +14,9 @@ namespace node {
 	protected:
 	    static v8::Handle<v8::Value> New(const v8::Arguments &args);
 	private:
-            static v8::Persistent<v8::FunctionTemplate> constructor_template;
+        static v8::Persistent<v8::FunctionTemplate> constructor_template;
 
-            static v8::Handle<v8::Value> paramsGetter(v8::Local<v8::String> property, const v8::AccessorInfo &info);
+        static v8::Handle<v8::Value> paramsGetter(v8::Local<v8::String> property, const v8::AccessorInfo &info);
 
 	    PopplerDocument *document;
 	    GError *err;
