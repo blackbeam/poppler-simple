@@ -9,7 +9,7 @@ module.exports = {
     all: {
         'Is module loaded?': function (test) {
             test.ok(poppler && poppler.PopplerDocument && poppler.PopplerPage);
-            test.done()
+            test.done();
         },
         'Open pdf': function (test) {
             doc = new poppler.PopplerDocument(target);
@@ -20,7 +20,7 @@ module.exports = {
         },
         'Open page': function (test) {
             page = new poppler.PopplerPage(doc, 1);
-            test.deepEqual(page.images, [ { x1: 0, x2: 1246, y1: -0.15999999999996817, y2: 2383.84 } ]); 
+            test.deepEqual(page.images, [{x1: 0, x2: 1246, y1: -0.15999999999996817, y2: 2383.84}]);
             test.equal(page.index, 1);
             test.equal(page.height, 572);
             test.equal(page.width, 299);
@@ -40,7 +40,7 @@ module.exports = {
             );
             test.done();
         },
-        'Rendering to raw pixbuf': function (test) {
+        'Rendering to raw pixbuf synchronously': function (test) {
             render = page.render(72);
             test.equal(render.type, 'pixbuf');
             test.equal(render.data.pixels.length, 514800);
@@ -48,6 +48,17 @@ module.exports = {
             test.equal(render.data.width, 299);
             test.equal(render.data.has_alpha, false);
             test.done();
+        },
+        'Rendering to raw pixbuf asynchronously': function (test) {
+            render = page.render(72, function (err, render) {
+                test.equal(err, null);
+                test.equal(render.type, 'pixbuf');
+                test.equal(render.data.pixels.length, 514800);
+                test.equal(render.data.height, 572);
+                test.equal(render.data.width, 299);
+                test.equal(render.data.has_alpha, false);
+                test.done();
+            });
         }/*,
         'Render to file': function (test) {
             render = page.render(90, false);
@@ -58,4 +69,4 @@ module.exports = {
             test.done();
         }*/
     }
-}
+};
