@@ -1,8 +1,8 @@
 {
   "author": "AnatolyI <ai@rsl.ru>",
   "name": "poppler-simple",
-  "description": "A simple sinchronous interface to poppler",
-  "version": "0.0.1",
+  "description": "A simple interface to poppler",
+  "version": "0.0.2",
   "repository": {
     "type": "git",
     "url": "git://github.com/blackbeam/node-poppler.git"
