@@ -48,7 +48,7 @@ module.exports = {
             test.equal(render.data.width, 299);
             test.equal(render.data.has_alpha, false);
             test.done();
-        },
+        }/*,
         'Rendering to raw pixbuf asynchronously': function (test) {
             render = page.render(72, function (err, render) {
                 test.equal(err, null);
@@ -59,7 +59,7 @@ module.exports = {
                 test.equal(render.data.has_alpha, false);
                 test.done();
             });
-        }/*,
+        }*//*,
         'Render to file': function (test) {
             render = page.render(90, false);
             test.equal(render.type, 'file');

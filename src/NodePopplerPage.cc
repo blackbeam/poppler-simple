@@ -251,7 +251,7 @@ namespace node {
         NodePopplerPage* self = ObjectWrap::Unwrap<NodePopplerPage>(args.Holder());
         struct render_work_t *work;
 
-        if (args.Length() < 1) return ThrowException(Exception::Error(String::New("One argument required: (PPI: Number).")));
+        if (args.Length() != 1) return ThrowException(Exception::Error(String::New("One argument required: (PPI: Number).")));
         if (!args[0]->IsNumber()) return ThrowException(Exception::TypeError(String::New("`PPI' must be an instance of Number.")));
 
         work = new render_work_t();
