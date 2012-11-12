@@ -81,7 +81,8 @@ namespace node {
         }
     }
 
-    Handle<Value> NodePopplerPage::New(const Arguments &args) {HandleScope scope;
+    Handle<Value> NodePopplerPage::New(const Arguments &args) {
+        HandleScope scope;
         NodePopplerDocument* doc;
         int32_t index;
 
@@ -156,7 +157,7 @@ namespace node {
                 }
                 return scope.Close(images);
             }
-            return scope.Close(Handle<Value>());
+            return scope.Close(Null());
         }
     }
 
