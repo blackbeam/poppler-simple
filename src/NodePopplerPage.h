@@ -3,11 +3,11 @@
 #include <node_object_wrap.h>
 #include <poppler/glib/poppler.h>
 #include <cairo.h>
-#include <Page.h>
-#include <PDFDoc.h>
-#include <TextOutputDev.h>
-#include <OutputDev.h>
-#include <Stream.h>
+#include <poppler/Page.h>
+#include <poppler/PDFDoc.h>
+#include <poppler/TextOutputDev.h>
+//#include <OutputDev.h>
+//#include <Stream.h>
 #include <gdk/gdk.h>
 
 struct _PopplerDocument
@@ -59,6 +59,9 @@ namespace node {
 	    PopplerPage* page;
 	    double width, height;
         GList *mapping;
+
+        PDFDoc doc;
+        Page pg;
 
 	    friend class NodePopplerDocument;
     };
