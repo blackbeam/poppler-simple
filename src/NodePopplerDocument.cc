@@ -1,7 +1,6 @@
 #include <v8.h>
 #include <node.h>
 #include <node_buffer.h>
-#include <poppler/glib/poppler.h>
 
 #include "NodePopplerDocument.h"
 #include "NodePopplerPage.h"
@@ -13,13 +12,15 @@ namespace node {
     Persistent<FunctionTemplate> NodePopplerDocument::constructor_template;
 
     NodePopplerDocument::NodePopplerDocument(const char* cFileName) {
-        err = NULL;
-        document = NULL;
-        document = poppler_document_new_from_file(cFileName, NULL, &err);
+        doc = NULL;
+
+        GooString *fileNameA = new GooString(cFileName);
+
+        doc = PDFDocFactory().createPDFDoc(*fileNameA, NULL, NULL);
     }
 
     NodePopplerDocument::~NodePopplerDocument() {
-        if (document) g_object_unref(G_OBJECT(document));
+        if (doc) delete doc;
     }
 
     void NodePopplerDocument::Initialize(v8::Handle<v8::Object> target) {
@@ -54,6 +55,8 @@ namespace node {
          *  constructor_template->PrototypeTemplate()->SetAccessor(String::NewSymbol("page_count"), funcName);
          */
         constructor_template->InstanceTemplate()->SetAccessor(String::NewSymbol("pageCount"), NodePopplerDocument::paramsGetter);
+        constructor_template->InstanceTemplate()->SetAccessor(String::NewSymbol("PDFMajorVersion"), NodePopplerDocument::paramsGetter);
+        constructor_template->InstanceTemplate()->SetAccessor(String::NewSymbol("PDFMinorVersion"), NodePopplerDocument::paramsGetter);
         constructor_template->InstanceTemplate()->SetAccessor(String::NewSymbol("pdfVersion"), NodePopplerDocument::paramsGetter);
         constructor_template->InstanceTemplate()->SetAccessor(String::NewSymbol("isLinearized"), NodePopplerDocument::paramsGetter);
         target->Set(String::NewSymbol("PopplerDocument"), constructor_template->GetFunction());
@@ -65,39 +68,79 @@ namespace node {
         NodePopplerDocument *self = ObjectWrap::Unwrap<NodePopplerDocument>(info.This());
 
         if (strcmp(*propName, "pageCount") == 0) {
-            return scope.Close( Uint32::New( poppler_document_get_n_pages( self->document ) ) );
-        }
-        if (strcmp(*propName, "pdfVersion") == 0) {
-            gchar* pdfVersion = poppler_document_get_pdf_version_string( self->document );
-            Local<String> v8pdfVersion = String::New( pdfVersion );
-            g_free( pdfVersion );
-            return scope.Close( v8pdfVersion );
-        }
-        if (strcmp(*propName, "isLinearized") == 0) {
-            return scope.Close( Boolean::New( poppler_document_is_linearized( self->document ) ) );
-        }
-    }
+            return scope.Close(Uint32::New(self->doc->getNumPages()));
 
-    Handle<Value> NodePopplerDocument::getPageCount(Local<String> property, const AccessorInfo& info) {
-        NodePopplerDocument *self = ObjectWrap::Unwrap<NodePopplerDocument>(info.This());
-        HandleScope scope;
+        } else if (strcmp(*propName, "PDFMajorVersion") == 0) {
+            return scope.Close(Uint32::New(self->doc->getPDFMajorVersion()));
 
-        return scope.Close(Integer::New(poppler_document_get_n_pages(self->document)));
+        } else if (strcmp(*propName, "PDFMinorVersion") == 0) {
+            return scope.Close(Uint32::New(self->doc->getPDFMinorVersion()));
+
+        } else if (strcmp(*propName, "pdfVersion") == 0) {
+            char versionString[16];
+            sprintf(versionString, "PDF-%d.%d\0", self->doc->getPDFMajorVersion(), self->doc->getPDFMinorVersion());
+            return scope.Close(String::New(versionString, strlen(versionString)));
+
+        } else if (strcmp(*propName, "isLinearized") == 0) {
+            return scope.Close(Boolean::New(self->doc->isLinearized()));
+
+        }
     }
 
     Handle<Value> NodePopplerDocument::New(const Arguments &args) {
         HandleScope scope;
-        if(args.Length() != 1) return ThrowException(Exception::Error(String::New("One argument required: (filename: String).")));
-        if(!args[0]->IsString()) return ThrowException(Exception::TypeError(String::New("'filename' must be an instance of String.")));
+        if(args.Length() != 1) {
+            return ThrowException(
+                Exception::Error(String::New("One argument required: (filename: String).")));
+        }
+        if(!args[0]->IsString()) {
+            return ThrowException(
+                Exception::TypeError(String::New("'filename' must be an instance of String.")));
+        }
 
         String::Utf8Value str(args[0]);
-        if (*str == NULL) return ThrowException(Exception::Error(String::New("Couldn't convert a filename to cstring.")));
         NodePopplerDocument *doc = new NodePopplerDocument(*str);
-        if (doc->err) {
-            Local<String> error = String::New(doc->err->message);
-            g_error_free(doc->err);
+
+        if (!doc->isOk()) {
+            int errorCode = doc->doc->getErrorCode();
+            char errorName[128];
+            char errorDescription[256];
+            switch (errorCode) {
+                case errOpenFile:
+                    sprintf(errorName, "fopen error. Errno: %d\0", doc->doc->getFopenErrno());
+                    break;
+                case errBadCatalog:
+                    sprintf(errorName, "bad catalog\0");
+                    break;
+                case errDamaged:
+                    sprintf(errorName, "damaged\0");
+                    break;
+                case errEncrypted:
+                    sprintf(errorName, "encrypted\0");
+                    break;
+                case errHighlightFile:
+                    sprintf(errorName, "highlight file\0");
+                    break;
+                case errBadPrinter:
+                    sprintf(errorName, "bad printer\0");
+                    break;
+                case errPrinting:
+                    sprintf(errorName, "printing error\0");
+                    break;
+                case errPermission:
+                    sprintf(errorName, "permission error\0");
+                    break;
+                case errBadPageNum:
+                    sprintf(errorName, "bad page num\0");
+                    break;
+                case errFileIO:
+                    sprintf(errorName, "file IO error\0");
+                    break;
+            }
+            sprintf(errorDescription, "Couldn't open file - %s.", errorName);
             delete doc;
-            return ThrowException(Exception::Error(error));
+            return ThrowException(
+                Exception::Error(String::New(errorDescription, strlen(errorDescription))));
         }
         doc->Wrap(args.This());
         return args.This();
@@ -106,18 +149,13 @@ namespace node {
 }
 
 // Exporting function
-    extern "C" void
+extern "C" void
 init (v8::Handle<v8::Object> target)
 {
     HandleScope scope;
 
     // Require for poppler
-    // globalParams = new GlobalParams();
-    // globalParams->setProfileCommands (true);
-    //globalParams->setPrintCommands (true);
-
-    //Required for gdk
-    g_type_init();
+    globalParams = new GlobalParams();
 
     NodePopplerDocument::Initialize(target);
     NodePopplerPage::Initialize(target);

@@ -16,12 +16,13 @@ module.exports = {
             test.equal(doc.isLinearized, true);
             test.equal(doc.pdfVersion, 'PDF-1.4');
             test.equal(doc.pageCount, 24);
+            test.equal(doc.PDFMajorVersion, 1);
+            test.equal(doc.PDFMinorVersion, 4);
             test.done();
         },
         'Open page': function (test) {
             page = new poppler.PopplerPage(doc, 1);
-            test.deepEqual(page.images, [{x1: 0, x2: 1246, y1: -0.15999999999996817, y2: 2383.84}]);
-            test.equal(page.index, 1);
+            test.equal(page.num, 1);
             test.equal(page.height, 572);
             test.equal(page.width, 299);
             test.deepEqual(page.crop_box, { x1: 0, x2: 299, y1: 0, y2: 572 });
@@ -40,33 +41,54 @@ module.exports = {
             );
             test.done();
         },
-        'Rendering to raw pixbuf synchronously': function (test) {
-            render = page.render(72);
-            test.equal(render.type, 'pixbuf');
-            test.equal(render.data.pixels.length, 514800);
-            test.equal(render.data.height, 572);
-            test.equal(render.data.width, 299);
-            test.equal(render.data.has_alpha, false);
+        'Add annotations to page' : function (test) {
+            page.addAnnot({x1: 0.4, y1: 0.4, x2: 0.6, y2: 0.45});
             test.done();
-        }/*,
-        'Rendering to raw pixbuf asynchronously': function (test) {
-            render = page.render(72, function (err, render) {
-                test.equal(err, null);
-                test.equal(render.type, 'pixbuf');
-                test.equal(render.data.pixels.length, 514800);
-                test.equal(render.data.height, 572);
-                test.equal(render.data.width, 299);
-                test.equal(render.data.has_alpha, false);
-                test.done();
+        },
+        'Rendering to file': function (test) {
+            var out = page.renderToFile('/tmp/out.png', 'png', 150);
+            test.deepEqual(out, {'type': 'file', 'path': '/tmp/out.png'});
+            fs.unlinkSync(out.path);
+            out = page.renderToFile('/tmp/out.jpeg', 'jpeg', 150, {
+                quality: 50
             });
-        }*//*,
-        'Render to file': function (test) {
-            render = page.render(90, false);
-            test.equal(render.type, 'file');
-            test.ok(render.path && render.path.length > 0);
-            test.ok(fs.existsSync(render.path));
-            fs.unlinkSync(render.path);
+            test.deepEqual(out, {'type': 'file', 'path': '/tmp/out.jpeg'});
+            fs.unlinkSync(out.path);
+            out = page.renderToFile('/tmp/out.tiff', 'tiff', 150, {
+                compression: "lzw"
+            });
+            test.deepEqual(out, {'type': 'file', 'path': '/tmp/out.tiff'});
+            fs.unlinkSync(out.path);
             test.done();
-        }*/
+        },
+        'Remove annotations from page' : function (test) {
+            page.deleteAnnots();
+            test.done();
+        },
+        'Rendering slice to file': function (test) {
+            var out = page.renderToFile('/tmp/out.jpeg', 'jpeg', 150, {
+                quality: 100,
+                slice: {
+                    x: 0, y: 0, w: 1, h: 1
+                }
+            });
+            test.deepEqual(out, {'type': 'file', 'path': '/tmp/out.jpeg'});
+            fs.unlinkSync(out.path);
+            test.done();
+        },
+        'Rendering to buffer': function (test) {
+            var out = page.renderToBuffer('jpeg', 72, {
+                quality: 100,
+                slice: {
+                    x: 0, y: 0, w: 1, h: 0.5
+                }
+            });
+            test.equal(out.type, 'buffer');
+            test.equal(out.format, 'jpeg');
+            test.ok(Buffer.isBuffer(out.data));
+            fs.writeFileSync('/tmp/slice.jpeg', out.data);
+            fs.unlinkSync('/tmp/slice.jpeg');
+            test.done();
+        }
     }
 };
