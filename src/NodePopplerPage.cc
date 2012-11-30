@@ -45,6 +45,7 @@ namespace node {
         constructor_template->InstanceTemplate()->SetAccessor(String::NewSymbol("width"), NodePopplerPage::paramsGetter);
         constructor_template->InstanceTemplate()->SetAccessor(String::NewSymbol("height"), NodePopplerPage::paramsGetter);
         constructor_template->InstanceTemplate()->SetAccessor(String::NewSymbol("crop_box"), NodePopplerPage::paramsGetter);
+        constructor_template->InstanceTemplate()->SetAccessor(String::NewSymbol("numAnnots"), NodePopplerPage::paramsGetter);
 
 	    /** Class methods
 	     * NODE_SET_METHOD(constructor_template->GetFunction(), "GetPageCount", funcName);
@@ -55,21 +56,31 @@ namespace node {
     }
 
     NodePopplerPage::~NodePopplerPage() {
-        if (text != NULL)
-            text->decRefCnt();
+        if (text != NULL) { text->decRefCnt(); }
         if (color != NULL) { delete color; }
+        if (!docClosed) { parent->evPageClosed(this); }
     }
 
     NodePopplerPage::NodePopplerPage(NodePopplerDocument* doc, int32_t pageNum) : ObjectWrap() {
         text = NULL;
+        color = NULL;
 
         pg = doc->doc->getPage(pageNum);
-        if (pg->isOk()) {
+        if (pg && pg->isOk()) {
+            parent = doc;
+            parent->evPageOpened(this);
             this->doc = doc->doc;
             width = pg->getCropWidth();
             height = pg->getCropHeight();
             color = new AnnotColor(0, 1, 0);
+            docClosed = false;
+        } else {
+            docClosed = true;
         }
+    }
+
+    void NodePopplerPage::evDocumentClosed() {
+        docClosed = true;
     }
 
     Handle<Value> NodePopplerPage::New(const Arguments &args) {
@@ -91,7 +102,12 @@ namespace node {
             return ThrowException(Exception::TypeError(
                 String::New("'doc' must be an instance of NodePopplerDocument.")));
         }
+
         doc = ObjectWrap::Unwrap<NodePopplerDocument>(args[0]->ToObject());
+        if (0 >= pageNum || pageNum > doc->doc->getNumPages()) {
+            return ThrowException(Exception::Error(String::New(
+                "Page number out of bounds.")));
+        }
 
         NodePopplerPage* page = new NodePopplerPage(doc, pageNum);
         if(!page->isOk()) {
@@ -124,6 +140,9 @@ namespace node {
             crop_box->Set(String::NewSymbol("y2"), Number::New(rect->y2));
 
             return scope.Close(crop_box);
+        } else if (strcmp(*propName, "numAnnots") == 0) {
+            Annots *annots = self->pg->getAnnots();
+            return scope.Close(Uint32::New(annots->getNumAnnots()));
         }
     }
 
@@ -139,6 +158,11 @@ namespace node {
         double height, width, xMin = 0, yMin = 0, xMax, yMax;
         PDFRectangle **matches = NULL;
         unsigned int cnt = 0;
+
+        if (self->isDocClosed()) {
+            return ThrowException(Exception::Error(String::New(
+                "Document closed. You must delete this page")));
+        }
 
         if (args.Length() != 1 && !args[0]->IsString()) {
             return ThrowException(Exception::Error(
@@ -190,8 +214,9 @@ namespace node {
         NodePopplerPage *self = ObjectWrap::Unwrap<NodePopplerPage>(args.Holder());
 
         Annots *annots = self->pg->getAnnots();
-        for (int i = 0; i < annots->getNumAnnots(); i++) {
-            Annot *annot = annots->getAnnot(i);
+
+        while (annots->getNumAnnots()) {
+            Annot *annot = annots->getAnnot(0);
             annot->invalidateAppearance();
             self->pg->removeAnnot(annot);
         }
@@ -213,6 +238,11 @@ namespace node {
     Handle<Value> NodePopplerPage::addAnnot(const Arguments &args) {
         HandleScope scope;
         NodePopplerPage* self = ObjectWrap::Unwrap<NodePopplerPage>(args.Holder());
+
+        if (self->isDocClosed()) {
+            return ThrowException(Exception::Error(String::New(
+                "Document closed. You must delete this page")));
+        }
 
         char *error = NULL;
 
@@ -393,6 +423,14 @@ namespace node {
         sx = scaledWidth * x;
         sy = scaledHeight - scaledHeight * y - sh; // converto to bottom related coord
 
+        if ((unsigned long)sh * sw > 100000000L) {
+            if (compression) { delete [] compression; }
+            char *e = (char*)"Result image is too big";
+            *error = new char[strlen(e)+1];
+            strcpy(*error, e);
+            return;
+        }
+
         display(f, PPI, wr, compression, quality, progressive, sx, sy, sw, sh, error);
 
         if (compression) { delete [] compression; }
@@ -411,6 +449,11 @@ namespace node {
         HandleScope scope;
         NodePopplerPage* self = ObjectWrap::Unwrap<NodePopplerPage>(args.Holder());
 
+        if (self->isDocClosed()) {
+            return ThrowException(Exception::Error(String::New(
+                "Document closed. You must delete this page")));
+        }
+
         char *error = NULL;
         FILE *f;
         char *buf = NULL;
@@ -420,7 +463,6 @@ namespace node {
             return ThrowException(Exception::Error(String::New(
                 "Arguments: (method: String, PPI: Number[, options: Object]")));
         }
-        fprintf(stderr, "%d\n", self->doc);
 
         f = open_memstream(&buf, &len);
         if (!f) {
@@ -483,6 +525,11 @@ namespace node {
         HandleScope scope;
         NodePopplerPage* self = ObjectWrap::Unwrap<NodePopplerPage>(args.Holder());
 
+        if (self->isDocClosed()) {
+            return ThrowException(Exception::Error(String::New(
+                "Document closed. You must delete this page")));
+        }
+
         char* cPath = NULL;
         char* error = NULL;
         FILE *f;
@@ -526,6 +573,7 @@ namespace node {
         if (error) {
             Handle<Value> e = Exception::Error(String::New(error));
             delete [] error;
+            unlink(cPath);
             delete [] cPath;
             return ThrowException(e);
         } else {

@@ -11,16 +11,36 @@ using namespace node;
 namespace node {
     Persistent<FunctionTemplate> NodePopplerDocument::constructor_template;
 
+    void NodePopplerDocument::evPageOpened(NodePopplerPage *p) {
+        for (int i = 0; i < pages->getLength(); i++) {
+            if (p == (NodePopplerPage*) pages->get(i)) {
+                return;
+            }
+        }
+        pages->append((void*)p);
+    }
+
+    void NodePopplerDocument::evPageClosed(NodePopplerPage *p) {
+        for (int i = 0; i < pages->getLength(); i++) {
+            if (p == (NodePopplerPage*) pages->get(i)) {
+                pages->del(i);
+            }
+        }
+    }
+
     NodePopplerDocument::NodePopplerDocument(const char* cFileName) {
         doc = NULL;
-
         GooString *fileNameA = new GooString(cFileName);
-
         doc = PDFDocFactory().createPDFDoc(*fileNameA, NULL, NULL);
+        pages = new GooList();
     }
 
     NodePopplerDocument::~NodePopplerDocument() {
+        for (int i = 0; i < pages->getLength(); i++) {
+            ((NodePopplerPage*)pages->get(i))->evDocumentClosed();
+        }
         if (doc) delete doc;
+        delete pages;
     }
 
     void NodePopplerDocument::Initialize(v8::Handle<v8::Object> target) {

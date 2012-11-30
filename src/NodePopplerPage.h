@@ -1,3 +1,4 @@
+#include <unistd.h>
 #include <v8.h>
 #include <node.h>
 #include <node_object_wrap.h>
@@ -18,6 +19,7 @@
 
 
 namespace node {
+    class NodePopplerDocument;
     class NodePopplerPage : public ObjectWrap {
     public:
         enum Writer { W_PNG, W_JPEG, W_TIFF, W_PIXBUF };
@@ -27,11 +29,12 @@ namespace node {
         ~NodePopplerPage();
         static void Initialize(v8::Handle<v8::Object> target);
         bool isOk() {
-            return pg->isOk();
+            return pg != NULL && pg->isOk();
         }
 
         double getWidth() { return width; }
         double getHeight() { return height; }
+        bool isDocClosed() { return docClosed; }
 
         void display(
             FILE *f, double PPI, Writer wr,
@@ -69,6 +72,9 @@ namespace node {
             double *x4, double *y4,
             char **error);
 
+        void evDocumentClosed();
+
+        bool docClosed;
     private:
         static v8::Persistent<v8::FunctionTemplate> constructor_template;
 
@@ -102,6 +108,7 @@ namespace node {
         Page *pg;
         TextPage *text;
         AnnotColor *color;
+        NodePopplerDocument *parent;
 
         friend class NodePopplerDocument;
     };

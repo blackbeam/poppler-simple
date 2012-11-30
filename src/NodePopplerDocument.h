@@ -5,9 +5,10 @@
 #include <poppler/ErrorCodes.h>
 #include <poppler/PDFDocFactory.h>
 #include <goo/GooString.h>
+#include <goo/GooList.h>
 
 namespace node {
-
+    class NodePopplerPage;
     class NodePopplerDocument : public ObjectWrap {
     public:
         NodePopplerDocument(const char* cFileName);
@@ -19,6 +20,9 @@ namespace node {
         static v8::Handle<v8::Value> getPageCount(v8::Local<v8::String> property, const v8::AccessorInfo& info);
     protected:
         static v8::Handle<v8::Value> New(const v8::Arguments &args);
+        void evPageOpened(NodePopplerPage *p);
+        void evPageClosed(NodePopplerPage *p);
+        GooList *pages;
     private:
         static v8::Persistent<v8::FunctionTemplate> constructor_template;
 
