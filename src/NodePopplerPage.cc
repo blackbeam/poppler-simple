@@ -458,13 +458,33 @@ namespace node {
         FILE *f;
         char *buf = NULL;
         size_t len = 0;
+        Writer w;
+        char filename[L_tmpnam];
 
         if (args.Length() < 2) {
             return ThrowException(Exception::Error(String::New(
                 "Arguments: (method: String, PPI: Number[, options: Object]")));
         }
 
-        f = open_memstream(&buf, &len);
+        // Hack. libtiff fail on writing to memstream
+        if (args[0]->IsString()) {
+            String::Utf8Value m(args[0]);
+            if (strncmp(*m, "png", 3) == 0) {
+                w = W_PNG;
+            } else if (strncmp(*m, "jpeg", 4) == 0) {
+                w = W_JPEG;
+            } else if (strncmp(*m, "tiff", 4) == 0) {
+                w = W_TIFF;
+            }
+        }
+
+        if (w == W_TIFF) {
+            tmpnam(filename);
+            f = fopen(filename, "wb");
+        } else {
+            f = open_memstream(&buf, &len);
+        }
+        
         if (!f) {
             return ThrowException(Exception::Error(String::New(
                 "Can't open output stream")));
@@ -478,11 +498,28 @@ namespace node {
             self->renderToStream(2, argv, f, &error);
         }
 
-        fclose(f);
+        if (w == W_TIFF) {
+            struct stat s;
+            int filedes;
+            filedes = open(filename, O_RDONLY);
+            fstat(filedes, &s);
+            if (s.st_size > 0) {
+                len = s.st_size;
+                buf = (char*) malloc(len);
+                read(filedes, buf, len);
+            }
+            close(filedes);
+            fclose(f);
+            remove(filename);
+        } else {
+            fclose(f);
+        }
+
 
         if (error) {
             Handle<Value> e = Exception::Error(String::New(error));
             delete [] error;
+            if (buf) free(buf);
             return ThrowException(e);
         } else {
             Buffer *buffer = Buffer::New(len);

@@ -141,12 +141,30 @@ module.exports = {
             test.equal(out.type, 'buffer');
             test.equal(out.format, 'jpeg');
             test.ok(Buffer.isBuffer(out.data));
-            fs.writeFileSync('/tmp/slice.jpeg', out.data);
-            fs.unlinkSync('/tmp/slice.jpeg');
+
+            out = page.renderToBuffer('png', 150, {
+                slice: {
+                    x: 0, y: 0, w: 1, h: 0.5
+                }
+            });
+            test.equal(out.type, 'buffer');
+            test.equal(out.format, 'png');
+            test.ok(Buffer.isBuffer(out.data));
 
             test.throws(function () {
                 page.renderToBuffer('tiff', 65536);
             }, 'Result image is too big');
+
+            out = page.renderToBuffer('tiff', 150, {
+                compression: "lzw",
+                slice: {
+                    x: 0, y: 0, w: 1, h: 0.5
+                }
+            });
+            test.equal(out.type, 'buffer');
+            test.equal(out.format, 'tiff');
+            test.ok(Buffer.isBuffer(out.data));
+
             test.done();
         },
         'Freeing': function (test) {

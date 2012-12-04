@@ -14,6 +14,9 @@
 #include <goo/PNGWriter.h>
 #include <goo/TiffWriter.h>
 #include <goo/JpegWriter.h>
+#include <stdio.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 #include "iconv_string.h"
 
