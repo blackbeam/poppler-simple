@@ -127,35 +127,37 @@ namespace node {
             char errorDescription[256];
             switch (errorCode) {
                 case errOpenFile:
-                    sprintf(errorName, "fopen error. Errno: %d\0", doc->doc->getFopenErrno());
+                    sprintf(errorName, "fopen error. Errno: %d", doc->doc->getFopenErrno());
                     break;
                 case errBadCatalog:
-                    sprintf(errorName, "bad catalog\0");
+                    sprintf(errorName, "bad catalog");
                     break;
                 case errDamaged:
-                    sprintf(errorName, "damaged\0");
+                    sprintf(errorName, "damaged");
                     break;
                 case errEncrypted:
-                    sprintf(errorName, "encrypted\0");
+                    sprintf(errorName, "encrypted");
                     break;
                 case errHighlightFile:
-                    sprintf(errorName, "highlight file\0");
+                    sprintf(errorName, "highlight file");
                     break;
                 case errBadPrinter:
-                    sprintf(errorName, "bad printer\0");
+                    sprintf(errorName, "bad printer");
                     break;
                 case errPrinting:
-                    sprintf(errorName, "printing error\0");
+                    sprintf(errorName, "printing error");
                     break;
                 case errPermission:
-                    sprintf(errorName, "permission error\0");
+                    sprintf(errorName, "permission error");
                     break;
                 case errBadPageNum:
-                    sprintf(errorName, "bad page num\0");
+                    sprintf(errorName, "bad page num");
                     break;
                 case errFileIO:
-                    sprintf(errorName, "file IO error\0");
+                    sprintf(errorName, "file IO error");
                     break;
+                default:
+                    sprintf(errorName, "other error");
             }
             sprintf(errorDescription, "Couldn't open file - %s.", errorName);
             delete doc;
