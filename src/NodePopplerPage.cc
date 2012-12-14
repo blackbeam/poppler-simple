@@ -46,6 +46,12 @@ namespace node {
         constructor_template->InstanceTemplate()->SetAccessor(String::NewSymbol("height"), NodePopplerPage::paramsGetter);
         constructor_template->InstanceTemplate()->SetAccessor(String::NewSymbol("crop_box"), NodePopplerPage::paramsGetter);
         constructor_template->InstanceTemplate()->SetAccessor(String::NewSymbol("numAnnots"), NodePopplerPage::paramsGetter);
+        constructor_template->InstanceTemplate()->SetAccessor(String::NewSymbol("media_box"), NodePopplerPage::paramsGetter);
+        constructor_template->InstanceTemplate()->SetAccessor(String::NewSymbol("art_box"), NodePopplerPage::paramsGetter);
+        constructor_template->InstanceTemplate()->SetAccessor(String::NewSymbol("trim_box"), NodePopplerPage::paramsGetter);
+        constructor_template->InstanceTemplate()->SetAccessor(String::NewSymbol("bleed_box"), NodePopplerPage::paramsGetter);
+        constructor_template->InstanceTemplate()->SetAccessor(String::NewSymbol("rotate"), NodePopplerPage::paramsGetter);
+        constructor_template->InstanceTemplate()->SetAccessor(String::NewSymbol("isCropped"), NodePopplerPage::paramsGetter);
 
 	    /** Class methods
 	     * NODE_SET_METHOD(constructor_template->GetFunction(), "GetPageCount", funcName);
@@ -126,10 +132,13 @@ namespace node {
 
         if (strcmp(*propName, "width") == 0) {
             return scope.Close(Number::New(self->getWidth()));
+
         } else if (strcmp(*propName, "height") == 0) {
             return scope.Close(Number::New(self->getHeight()));
+
         } else if (strcmp(*propName, "num") == 0) {
             return scope.Close(Uint32::New(self->pg->getNum()));
+
         } else if (strcmp(*propName, "crop_box") == 0) {
             PDFRectangle *rect = self->pg->getCropBox();
             Local<v8::Object> crop_box = v8::Object::New();
@@ -140,9 +149,61 @@ namespace node {
             crop_box->Set(String::NewSymbol("y2"), Number::New(rect->y2));
 
             return scope.Close(crop_box);
+
+        } else if (strcmp(*propName, "media_box") == 0) {
+            PDFRectangle *rect = self->pg->getMediaBox();
+            Local<v8::Object> media_box = v8::Object::New();
+
+            media_box->Set(String::NewSymbol("x1"), Number::New(rect->x1));
+            media_box->Set(String::NewSymbol("x2"), Number::New(rect->x2));
+            media_box->Set(String::NewSymbol("y1"), Number::New(rect->y1));
+            media_box->Set(String::NewSymbol("y2"), Number::New(rect->y2));
+
+            return scope.Close(media_box);
+
+        } else if (strcmp(*propName, "bleed_box") == 0) {
+            PDFRectangle *rect = self->pg->getBleedBox();
+            Local<v8::Object> bleed_box = v8::Object::New();
+
+            bleed_box->Set(String::NewSymbol("x1"), Number::New(rect->x1));
+            bleed_box->Set(String::NewSymbol("x2"), Number::New(rect->x2));
+            bleed_box->Set(String::NewSymbol("y1"), Number::New(rect->y1));
+            bleed_box->Set(String::NewSymbol("y2"), Number::New(rect->y2));
+
+            return scope.Close(bleed_box);
+
+        } else if (strcmp(*propName, "trim_box") == 0) {
+            PDFRectangle *rect = self->pg->getTrimBox();
+            Local<v8::Object> trim_box = v8::Object::New();
+
+            trim_box->Set(String::NewSymbol("x1"), Number::New(rect->x1));
+            trim_box->Set(String::NewSymbol("x2"), Number::New(rect->x2));
+            trim_box->Set(String::NewSymbol("y1"), Number::New(rect->y1));
+            trim_box->Set(String::NewSymbol("y2"), Number::New(rect->y2));
+
+            return scope.Close(trim_box);
+
+        } else if (strcmp(*propName, "art_box") == 0) {
+            PDFRectangle *rect = self->pg->getArtBox();
+            Local<v8::Object> art_box = v8::Object::New();
+
+            art_box->Set(String::NewSymbol("x1"), Number::New(rect->x1));
+            art_box->Set(String::NewSymbol("x2"), Number::New(rect->x2));
+            art_box->Set(String::NewSymbol("y1"), Number::New(rect->y1));
+            art_box->Set(String::NewSymbol("y2"), Number::New(rect->y2));
+
+            return scope.Close(art_box);
+
+        } else if (strcmp(*propName, "rotate") == 0) {
+            return scope.Close(Int32::New(self->pg->getRotate()));
+
         } else if (strcmp(*propName, "numAnnots") == 0) {
             Annots *annots = self->pg->getAnnots();
             return scope.Close(Uint32::New(annots->getNumAnnots()));
+
+        } else if (strcmp(*propName, "isCropped") == 0) {
+            return scope.Close(Boolean::New(self->pg->isCropped()));
+
         }
     }
 

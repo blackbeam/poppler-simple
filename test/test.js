@@ -39,7 +39,14 @@ module.exports = {
             test.equal(page.num, 1);
             test.equal(page.height, 572);
             test.equal(page.width, 299);
+            test.equal(page.rotate, 0);
+            test.equal(page.isCropped, false);
+            test.equal(page.numAnnots, 0);
+            test.deepEqual(page.media_box, { x1: 0, x2: 299, y1: 0, y2: 572 });
             test.deepEqual(page.crop_box, { x1: 0, x2: 299, y1: 0, y2: 572 });
+            test.deepEqual(page.art_box, { x1: 0, x2: 299, y1: 0, y2: 572 });
+            test.deepEqual(page.bleed_box, { x1: 0, x2: 299, y1: 0, y2: 572 });
+            test.deepEqual(page.trim_box, { x1: 0, x2: 299, y1: 0, y2: 572 });
             test.done();
         },
         'Search for text': function (test) {
