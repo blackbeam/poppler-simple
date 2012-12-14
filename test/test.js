@@ -1,6 +1,6 @@
 var fileName = __dirname + '/fixtures/rsl01000000001.pdf';
 var target = 'file://' + fileName;
-var poppler = require('../build/Release/poppler');
+var poppler = require('..');
 var path = require('path');
 var fs = require('fs');
 
