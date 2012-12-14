@@ -30,12 +30,12 @@ module.exports = {
         },
         'Open not existing page': function (test) {
             test.throws(function () {
-                page = new poppler.PopplerPage(doc, 65536);
+                page = doc.getPage(655536);
             }, 'Page number out of bounds');
             test.done();
         },
         'Open page': function (test) {
-            page = new poppler.PopplerPage(doc, 1);
+            page = doc.getPage(1);
             test.equal(page.num, 1);
             test.equal(page.height, 572);
             test.equal(page.width, 299);
