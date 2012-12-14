@@ -17,12 +17,13 @@ namespace node {
             return doc->isOk();
         }
         static void Initialize(v8::Handle<v8::Object> target);
-        static v8::Handle<v8::Value> getPageCount(v8::Local<v8::String> property, const v8::AccessorInfo& info);
+
     protected:
         static v8::Handle<v8::Value> New(const v8::Arguments &args);
         void evPageOpened(NodePopplerPage *p);
         void evPageClosed(NodePopplerPage *p);
         GooList *pages;
+
     private:
         static v8::Persistent<v8::FunctionTemplate> constructor_template;
 
@@ -31,5 +32,4 @@ namespace node {
         friend class NodePopplerPage;
         PDFDoc *doc;
     };
-
 }
