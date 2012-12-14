@@ -1,4 +1,5 @@
-var target = 'file://' + __dirname + '/fixtures/rsl01000000001.pdf';
+var fileName = __dirname + '/fixtures/rsl01000000001.pdf';
+var target = 'file://' + fileName;
 var poppler = require('../build/Release/poppler');
 var path = require('path');
 var fs = require('fs');
@@ -24,6 +25,7 @@ module.exports = {
             test.equal(doc.pageCount, 24);
             test.equal(doc.PDFMajorVersion, 1);
             test.equal(doc.PDFMinorVersion, 4);
+            test.equal(doc.fileName, fileName);
             test.done();
         },
         'Open not existing page': function (test) {

@@ -79,6 +79,7 @@ namespace node {
         constructor_template->InstanceTemplate()->SetAccessor(String::NewSymbol("PDFMinorVersion"), NodePopplerDocument::paramsGetter);
         constructor_template->InstanceTemplate()->SetAccessor(String::NewSymbol("pdfVersion"), NodePopplerDocument::paramsGetter);
         constructor_template->InstanceTemplate()->SetAccessor(String::NewSymbol("isLinearized"), NodePopplerDocument::paramsGetter);
+        constructor_template->InstanceTemplate()->SetAccessor(String::NewSymbol("fileName"), NodePopplerDocument::paramsGetter);
         target->Set(String::NewSymbol("PopplerDocument"), constructor_template->GetFunction());
     }
 
@@ -103,6 +104,10 @@ namespace node {
 
         } else if (strcmp(*propName, "isLinearized") == 0) {
             return scope.Close(Boolean::New(self->doc->isLinearized()));
+
+        } else if (strcmp(*propName, "fileName") == 0) {
+            GooString *fileName = self->doc->getFileName();
+            return scope.Close(String::New(fileName->getCString(), fileName->getLength()));
 
         }
     }
