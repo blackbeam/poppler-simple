@@ -1,10 +1,10 @@
+"use strict";
 var fileName = __dirname + '/fixtures/rsl01000000001.pdf';
 var target = 'file://' + fileName;
 var poppler = require('..');
-var path = require('path');
 var fs = require('fs');
 
-var doc, page, render;
+var doc, page;
 
 module.exports = {
     all: {
@@ -170,17 +170,21 @@ module.exports = {
             test.done();
         },
         'Freeing': function (test) {
-            doc = null;
-            gc();
-            test.throws(function () {
-                page.renderToBuffer('jpeg', 72, {
-                    quality: 100,
-                    slice: {x: 0, y: 0, w: 1, h: 0.5}
-                });
-            }, 'Document closed. You must delete this page');
-            page = null;
-            gc();
-            test.done();
+            if (gc) {
+                doc = null;
+                gc();
+                test.throws(function () {
+                    page.renderToBuffer('jpeg', 72, {
+                        quality: 100,
+                        slice: {x: 0, y: 0, w: 1, h: 0.5}
+                    });
+                }, 'Document closed. You must delete this page');
+                page = null;
+                gc();
+                test.done();
+            } else {
+                test.done();
+            }
         }
     }
 };
