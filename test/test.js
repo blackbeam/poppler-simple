@@ -182,6 +182,7 @@ module.exports = {
             page90.addAnnot(page90.findText("Российская"));
             page180.addAnnot(page180.findText("Российская"));
             page270.addAnnot(page270.findText("Российская"));
+            page0.addAnnot([]);
             test.equal(page0.numAnnots, 1);
             test.equal(page90.numAnnots, 1);
             test.equal(page180.numAnnots, 1);

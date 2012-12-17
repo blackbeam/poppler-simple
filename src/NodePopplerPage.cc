@@ -308,9 +308,10 @@ namespace node {
                 "One argument required: (annot: Object | Array).")));
         }
 
-        if (args[0]->IsArray() &&
-                args[0]->ToObject()->Get(String::NewSymbol("length"))->Uint32Value() > 0) {
-            self->addAnnot(Handle<v8::Array>::Cast(args[0]), &error);
+        if (args[0]->IsArray()) {
+            if (Handle<v8::Array>::Cast(args[0])->Length() > 0) {
+                self->addAnnot(Handle<v8::Array>::Cast(args[0]), &error);
+            }
         } else if (args[0]->IsObject()) {
             Handle<v8::Array> annot = v8::Array::New(1);
             annot->Set(0, args[0]);
@@ -335,7 +336,6 @@ namespace node {
         double x1, y1, x2, y2, x3, y3, x4, y4;
         int len = array->Length();
         AnnotQuadrilaterals::AnnotQuadrilateral **quads = new AnnotQuadrilaterals::AnnotQuadrilateral*[len];
-
         for (int i = 0; i < array->Length(); i++) {
             parseAnnot(array->Get(i), &x1, &y1, &x2, &y2, &x3, &y3, &x4, &y4, error);
             if (*error) {
