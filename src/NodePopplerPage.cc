@@ -76,8 +76,6 @@ namespace node {
             parent = doc;
             parent->evPageOpened(this);
             this->doc = doc->doc;
-            width = pg->getCropWidth();
-            height = pg->getCropHeight();
             color = new AnnotColor(0, 1, 0);
             docClosed = false;
         } else {
@@ -216,7 +214,7 @@ namespace node {
         TextPage *text;
         char *ucs4 = NULL;
         size_t ucs4_len;
-        double height, width, xMin = 0, yMin = 0, xMax, yMax;
+        double xMin = 0, yMin = 0, xMax, yMax;
         PDFRectangle **matches = NULL;
         unsigned int cnt = 0;
 
@@ -233,8 +231,6 @@ namespace node {
 
         iconv_string("UCS-4LE", "UTF-8", *str, *str+strlen(*str)+1, &ucs4, &ucs4_len);
         text = self->getTextPage();
-        height = self->pg->getCropHeight();
-        width = self->pg->getCropWidth();
 
         while (text->findText((unsigned int *)ucs4, ucs4_len/4 - 1,
                  gFalse, gTrue, // startAtTop, stopAtBottom
@@ -245,16 +241,16 @@ namespace node {
             PDFRectangle **t_matches = matches;
             cnt++;
             matches = (PDFRectangle**) realloc(t_matches, sizeof(PDFRectangle*) * cnt);
-            matches[cnt-1] = new PDFRectangle(xMin, height - yMax, xMax, height - yMin);
+            matches[cnt-1] = new PDFRectangle(xMin, self->getHeight() - yMax, xMax, self->getHeight() - yMin);
         }
         Local<v8::Array> v8results = v8::Array::New(cnt);
         for (int i = 0; i < cnt; i++) {
             PDFRectangle *match = matches[i];
             Local<v8::Object> v8result = v8::Object::New();
-            v8result->Set(String::NewSymbol("x1"), Number::New(match->x1 / width));
-            v8result->Set(String::NewSymbol("x2"), Number::New(match->x2 / width));
-            v8result->Set(String::NewSymbol("y1"), Number::New(match->y1 / height));
-            v8result->Set(String::NewSymbol("y2"), Number::New(match->y2 / height));
+            v8result->Set(String::NewSymbol("x1"), Number::New(match->x1 / self->getWidth()));
+            v8result->Set(String::NewSymbol("x2"), Number::New(match->x2 / self->getWidth()));
+            v8result->Set(String::NewSymbol("y1"), Number::New(match->y1 / self->getHeight()));
+            v8result->Set(String::NewSymbol("y2"), Number::New(match->y2 / self->getHeight()));
             v8results->Set(i, v8result);
             delete match;
         }
@@ -394,10 +390,33 @@ namespace node {
                 *error = new char(strlen(e)+1);
                 strcpy(*error, e);
             } else {
-                *x1 = *x2 = width * x1v->NumberValue();
-                *x3 = *x4 = width * x2v->NumberValue();
-                *y2 = *y4 = height * y1v->NumberValue();
-                *y1 = *y3 = height * y2v->NumberValue();
+                int rotation = getRotate();
+                switch (rotation) {
+                    case 90:
+                        *x1 = *x2 = pg->getCropWidth() * (1-y1v->NumberValue());
+                        *x3 = *x4 = pg->getCropWidth() * (1-y2v->NumberValue());
+                        *y2 = *y4 = pg->getCropHeight() * x2v->NumberValue();
+                        *y1 = *y3 = pg->getCropHeight() * x1v->NumberValue();
+                        break;
+                    case 180:
+                        *x1 = *x2 = pg->getCropWidth() * (1-x2v->NumberValue());
+                        *x3 = *x4 = pg->getCropWidth() * (1-x1v->NumberValue());
+                        *y2 = *y4 = pg->getCropHeight() * (1-y2v->NumberValue());
+                        *y1 = *y3 = pg->getCropHeight() * (1-y1v->NumberValue());
+                        break;
+                    case 270:
+                        *x1 = *x2 = pg->getCropWidth() * (y1v->NumberValue());
+                        *x3 = *x4 = pg->getCropWidth() * (y2v->NumberValue());
+                        *y2 = *y4 = pg->getCropHeight() * (1-x2v->NumberValue());
+                        *y1 = *y3 = pg->getCropHeight() * (1-x1v->NumberValue());
+                        break;
+                    default:
+                        *x1 = *x2 = pg->getCropWidth() * x1v->NumberValue();
+                        *x3 = *x4 = pg->getCropWidth() * x2v->NumberValue();
+                        *y2 = *y4 = pg->getCropHeight() * y1v->NumberValue();
+                        *y1 = *y3 = pg->getCropHeight() * y2v->NumberValue();
+                        break;
+                }
             }
         }
     }
@@ -477,8 +496,8 @@ namespace node {
         if (x + w > 1.0) { w = 1.0 - x; }
 
         scale = PPI / 72.0;
-        scaledWidth = width * scale;
-        scaledHeight = height * scale;
+        scaledWidth = getWidth() * scale;
+        scaledHeight = getHeight() * scale;
         sw = scaledWidth * w;
         sh = scaledHeight * h;
         sx = scaledWidth * x;

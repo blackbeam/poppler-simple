@@ -35,8 +35,19 @@ namespace node {
             return pg != NULL && pg->isOk();
         }
 
-        double getWidth() { return width; }
-        double getHeight() { return height; }
+        double getWidth() {
+            return ((getRotate() == 90 || getRotate() == 270)
+                ? pg->getCropHeight()
+                : pg->getCropWidth()
+                );
+        }
+        double getHeight() {
+            return ((getRotate() == 90 || getRotate() == 270)
+                ? pg->getCropWidth()
+                : pg->getCropHeight()
+                );
+        }
+        double getRotate() { return pg->getRotate(); }
         bool isDocClosed() { return docClosed; }
 
         void display(
@@ -104,8 +115,6 @@ namespace node {
         }
         void renderToStream(int argc, v8::Handle<v8::Value> argv[], FILE *f, char **error);
         void addAnnot(v8::Handle<v8::Array> array, char **error);
-
-        double width, height;
 
         PDFDoc *doc;
         Page *pg;
