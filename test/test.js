@@ -1,320 +1,258 @@
+/*global it:true, describe:true, require:true, __dirname:true, gc:true, before:true */
+/*jshint node:true */
 "use strict";
-var name0 = __dirname + '/fixtures/0.pdf';
-var name90  = __dirname + '/fixtures/90.pdf';
-var name180  = __dirname + '/fixtures/180.pdf';
-var name270  = __dirname + '/fixtures/270.pdf';
-var target0 = 'file://' + name0;
-var target90 = 'file://' + name90;
-var target180 = 'file://' + name180;
-var target270 = 'file://' + name270;
+
+var names = ['/fixtures/0.pdf', '/fixtures/90.pdf', '/fixtures/180.pdf', '/fixtures/270.pdf'].map(
+    function (x) {
+        return __dirname + x;
+    }
+);
+
+var targets = names.map(function (x) {
+    return 'file://' + x;
+});
+
+var a = require('assert');
 var poppler = require('..');
 var fs = require('fs');
+var docs = [];
+var pages = [];
 
-var doc0, doc90, doc180, doc270, page0, page90, page180, page270;
+describe('poppler module', function () {
+    it('should be loaded', function () {
+        a.ok(poppler && poppler.PopplerDocument && poppler.PopplerPage);
+    });
+});
 
-module.exports = {
-    all: {
-        'Is module loaded?': function (test) {
-            test.ok(poppler && poppler.PopplerDocument && poppler.PopplerPage);
-            test.done();
-        },
-        'Open not existing pdf': function (test) {
-            test.throws(function () {
-                var doc = new poppler.PopplerDocument('file:///123.pdf');
-                doc = null;
-            }, 'Couldn\'t open file - fopen error. Errno: 2.');
-            test.done();
-        },
-        'Open pdf': function (test) {
-            doc0 = new poppler.PopplerDocument(target0);
-            doc90 = new poppler.PopplerDocument(target90);
-            doc180 = new poppler.PopplerDocument(target180);
-            doc270 = new poppler.PopplerDocument(target270);
-            test.equal(doc0.isLinearized, false);
-            test.equal(doc0.pdfVersion, 'PDF-1.4');
-            test.equal(doc0.pageCount, 1);
-            test.equal(doc0.PDFMajorVersion, 1);
-            test.equal(doc0.PDFMinorVersion, 4);
-            test.equal(doc0.fileName, name0);
-            test.equal(doc90.isLinearized, false);
-            test.equal(doc90.pdfVersion, 'PDF-1.4');
-            test.equal(doc90.pageCount, 1);
-            test.equal(doc90.PDFMajorVersion, 1);
-            test.equal(doc90.PDFMinorVersion, 4);
-            test.equal(doc90.fileName, name90);
-            test.equal(doc180.isLinearized, false);
-            test.equal(doc180.pdfVersion, 'PDF-1.4');
-            test.equal(doc180.pageCount, 1);
-            test.equal(doc180.PDFMajorVersion, 1);
-            test.equal(doc180.PDFMinorVersion, 4);
-            test.equal(doc180.fileName, name180);
-            test.equal(doc270.isLinearized, false);
-            test.equal(doc270.pdfVersion, 'PDF-1.4');
-            test.equal(doc270.pageCount, 1);
-            test.equal(doc270.PDFMajorVersion, 1);
-            test.equal(doc270.PDFMinorVersion, 4);
-            test.equal(doc270.fileName, name270);
-            test.done();
-        },
-        'Open not existing page': function (test) {
-            test.throws(function () {
-                var page = doc0.getPage(655536);
-                page = null;
-            }, 'Page number out of bounds');
-            test.done();
-        },
-        'Open page': function (test) {
-            page0 = doc0.getPage(1);
-            page90 = doc90.getPage(1);
-            page180 = doc180.getPage(1);
-            page270 = doc270.getPage(1);
-            test.equal(page0.num, 1);
-            test.equal(page0.height, 572);
-            test.equal(page0.width, 299);
-            test.equal(page0.rotate, 0);
-            test.equal(page0.isCropped, false);
-            test.equal(page0.numAnnots, 0);
-            test.deepEqual(page0.media_box, { x1: 0, x2: 299, y1: 0, y2: 572 });
-            test.deepEqual(page0.crop_box, { x1: 0, x2: 299, y1: 0, y2: 572 });
-            test.deepEqual(page0.art_box, { x1: 0, x2: 299, y1: 0, y2: 572 });
-            test.deepEqual(page0.bleed_box, { x1: 0, x2: 299, y1: 0, y2: 572 });
-            test.deepEqual(page0.trim_box, { x1: 0, x2: 299, y1: 0, y2: 572 });
-            test.equal(page90.num, 1);
-            test.equal(page90.height, 299);
-            test.equal(page90.width, 572);
-            test.equal(page90.rotate, 90);
-            test.equal(page90.isCropped, false);
-            test.equal(page90.numAnnots, 0);
-            test.deepEqual(page90.media_box, { x1: 0, x2: 299, y1: 0, y2: 572 });
-            test.deepEqual(page90.crop_box, { x1: 0, x2: 299, y1: 0, y2: 572 });
-            test.deepEqual(page90.art_box, { x1: 0, x2: 299, y1: 0, y2: 572 });
-            test.deepEqual(page90.bleed_box, { x1: 0, x2: 299, y1: 0, y2: 572 });
-            test.deepEqual(page90.trim_box, { x1: 0, x2: 299, y1: 0, y2: 572 });
-            test.equal(page180.num, 1);
-            test.equal(page180.height, 572);
-            test.equal(page180.width, 299);
-            test.equal(page180.rotate, 180);
-            test.equal(page180.isCropped, false);
-            test.equal(page180.numAnnots, 0);
-            test.deepEqual(page180.media_box, { x1: 0, x2: 299, y1: 0, y2: 572 });
-            test.deepEqual(page180.crop_box, { x1: 0, x2: 299, y1: 0, y2: 572 });
-            test.deepEqual(page180.art_box, { x1: 0, x2: 299, y1: 0, y2: 572 });
-            test.deepEqual(page180.bleed_box, { x1: 0, x2: 299, y1: 0, y2: 572 });
-            test.deepEqual(page180.trim_box, { x1: 0, x2: 299, y1: 0, y2: 572 });
-            test.equal(page270.num, 1);
-            test.equal(page270.height, 299);
-            test.equal(page270.width, 572);
-            test.equal(page270.rotate, 270);
-            test.equal(page270.isCropped, false);
-            test.equal(page270.numAnnots, 0);
-            test.deepEqual(page270.media_box, { x1: 0, x2: 299, y1: 0, y2: 572 });
-            test.deepEqual(page270.crop_box, { x1: 0, x2: 299, y1: 0, y2: 572 });
-            test.deepEqual(page270.art_box, { x1: 0, x2: 299, y1: 0, y2: 572 });
-            test.deepEqual(page270.bleed_box, { x1: 0, x2: 299, y1: 0, y2: 572 });
-            test.deepEqual(page270.trim_box, { x1: 0, x2: 299, y1: 0, y2: 572 });
-            test.done();
-        },
-        'Search for text': function (test) {
-            test.deepEqual(page0.findText("Российская"), [
-                    {
-                        x1: 0.21752508361204015,
-                        x2: 0.38838531772575263,
-                        y1: 0.8903321678321678,
-                        y2: 0.9060664335664336
-                    }
-                ]
-            );
-            test.deepEqual(page90.findText("Российская"), [
-                    {
-                        x1: 0.8903321678321678,
-                        x2: 0.9060664335664336,
-                        y1: 0.6116146822742473,
-                        y2: 0.7824749163879599
-                    }
-                ]
-            );
-            test.deepEqual(page180.findText("Российская"), [
-                    {
-                        x1: 0.6116146822742473,
-                        x2: 0.7824749163879599,
-                        y1: 0.09393356643356647,
-                        y2: 0.1096678321678322
-                    }
-                ]
-            );
-            test.deepEqual(page270.findText("Российская"), [
-                    {
-                        x1: 0.09393356643356644,
-                        x2: 0.10966783216783217,
-                        y1: 0.2175250836120402,
-                        y2: 0.3883853177257527
-                    }
-                ]
-            );
-            test.deepEqual(page0.findText("qwerty"), []);
-            test.deepEqual(page0.findText("я"), [
-                {
-                    x1: 0.3716160869565219, x2: 0.38838531772575263,
-                    y1: 0.8903321678321678, y2: 0.9060664335664336
-                }, {
-                    x1: 0.5230859866220736, x2: 0.5398552173913044,
-                    y1: 0.8903321678321678, y2: 0.9060664335664336
-                }, {
-                    x1: 0.5900528762541806, x2: 0.6068221070234113,
-                    y1: 0.863479020979021, y2: 0.8792132867132867
-                }, {
-                    x1: 0.2310341137123746, x2: 0.24809096989966553,
-                    y1: 0.6241083916083916, y2: 0.6378496503496504
-                }, {
-                    x1: 0.5485525083612042, x2: 0.5656093645484952,
-                    y1: 0.5951573426573427, y2: 0.6088986013986013
-                }, {
-                    x1: 0.4864352842809363, x2: 0.5034921404682272,
-                    y1: 0.4927797202797203, y2: 0.506520979020979
-                }, {
-                    x1: 0.6230237458193979, x2: 0.6400806020066888,
-                    y1: 0.4927797202797203, y2: 0.506520979020979
-                }]);
-            test.done();
-        },
-        'Add annotations to page' : function (test) {
-            page0.addAnnot(page0.findText("Российская"));
-            page90.addAnnot(page90.findText("Российская"));
-            page180.addAnnot(page180.findText("Российская"));
-            page270.addAnnot(page270.findText("Российская"));
-            page0.addAnnot([]);
-            test.equal(page0.numAnnots, 1);
-            test.equal(page90.numAnnots, 1);
-            test.equal(page180.numAnnots, 1);
-            test.equal(page270.numAnnots, 1);
-            test.done();
-        },
-        'Rendering to file': function (test) {
-            var out = page0.renderToFile('test/out.png', 'png', 150);
-            test.deepEqual(out, {'type': 'file', 'path': 'test/out.png'});
-            fs.unlinkSync(out.path);
-
-            out = page0.renderToFile('test/out0.jpeg', 'jpeg', 150, {
-                quality: 50
-            });
-            test.deepEqual(out, {'type': 'file', 'path': 'test/out0.jpeg'});
-            fs.unlinkSync(out.path);
-            out = page90.renderToFile('test/out90.jpeg', 'jpeg', 150, {
-                quality: 50
-            });
-            test.deepEqual(out, {'type': 'file', 'path': 'test/out90.jpeg'});
-            fs.unlinkSync(out.path);
-            out = page180.renderToFile('test/out180.jpeg', 'jpeg', 150, {
-                quality: 50
-            });
-            test.deepEqual(out, {'type': 'file', 'path': 'test/out180.jpeg'});
-            fs.unlinkSync(out.path);
-            out = page270.renderToFile('test/out270.jpeg', 'jpeg', 150, {
-                quality: 50
-            });
-            test.deepEqual(out, {'type': 'file', 'path': 'test/out270.jpeg'});
-            fs.unlinkSync(out.path);
-
-            out = page0.renderToFile('test/out.tiff', 'tiff', 150, {
-                compression: "lzw"
-            });
-            test.deepEqual(out, {'type': 'file', 'path': 'test/out.tiff'});
-            fs.unlinkSync(out.path);
-
-            test.throws(function () {
-                var out = page0.renderToFile('/t/t/t/t/t/t/t/t/t/1123', 'jpeg', 150);
-                out = null;
-            }, "Can't open output file");
-
-            test.done();
-        },
-        'Remove annotations from page' : function (test) {
-            page0.deleteAnnots();
-            page90.deleteAnnots();
-            page180.deleteAnnots();
-            page270.deleteAnnots();
-            test.equal(page0.numAnnots, 0);
-            test.equal(page90.numAnnots, 0);
-            test.equal(page180.numAnnots, 0);
-            test.equal(page270.numAnnots, 0);
-            test.done();
-        },
-        'Rendering slice to file': function (test) {
-            var out = page0.renderToFile('test/out.jpeg', 'jpeg', 150, {
-                quality: 100,
-                slice: {
-                    x: 0, y: 0, w: 1, h: 1
-                }
-            });
-            test.deepEqual(out, {'type': 'file', 'path': 'test/out.jpeg'});
-            fs.unlinkSync(out.path);
-
-            test.throws(function () {
-                page0.renderToFile('test/test.jpeg', 'jpeg', 150, {
-                    slice: {x:0, y:0, w:1, h:1.1}
-                });
-            });
-            test.ok(!fs.exists('test/test.jpeg'));
-            test.done();
-        },
-        'Rendering to buffer': function (test) {
-            var out = page0.renderToBuffer('jpeg', 72, {
-                quality: 100,
-                slice: {
-                    x: 0, y: 0, w: 1, h: 0.5
-                }
-            });
-            test.equal(out.type, 'buffer');
-            test.equal(out.format, 'jpeg');
-            test.ok(Buffer.isBuffer(out.data));
-
-            out = page0.renderToBuffer('png', 150, {
-                slice: {
-                    x: 0, y: 0, w: 1, h: 0.5
-                }
-            });
-            test.equal(out.type, 'buffer');
-            test.equal(out.format, 'png');
-            test.ok(Buffer.isBuffer(out.data));
-
-            test.throws(function () {
-                page0.renderToBuffer('tiff', 65536);
-            }, 'Result image is too big');
-
-            out = page0.renderToBuffer('tiff', 150, {
-                compression: "lzw",
-                slice: {
-                    x: 0, y: 0, w: 1, h: 0.5
-                }
-            });
-            test.equal(out.type, 'buffer');
-            test.equal(out.format, 'tiff');
-            test.ok(Buffer.isBuffer(out.data));
-
-            test.done();
-        },
-        'Freeing': function (test) {
-            if (gc) {
-                doc0 = null;
-                doc90 = null;
-                doc180 = null;
-                doc270 = null;
-                gc();
-                test.throws(function () {
-                    page0.renderToBuffer('jpeg', 72, {
-                        quality: 100,
-                        slice: {x: 0, y: 0, w: 1, h: 0.5}
-                    });
-                }, 'Document closed. You must delete this page');
-                page0 = null;
-                page90 = null;
-                page180 = null;
-                page270 = null;
-                gc();
-                test.done();
-            } else {
-                test.done();
-            }
+describe('PopplerDocument', function () {
+    it('should throw on non existing document', function () {
+        a.throws(function () {
+            var doc = new poppler.PopplerDocument('file:///123.pdf');
+            doc = null;
+        }, new RegExp("Couldn't open file - fopen error. Errno: 2."));
+    });
+    it('should open pdf file', function () {
+        docs = targets.map(function (x) {
+            return new poppler.PopplerDocument(x);
+        });
+        for (var i = docs.length - 1; i >= 0; i--) {
+            var d = docs[i];
+            a.equal(d.isLinearized, false);
+            a.equal(d.pdfVersion, 'PDF-1.4');
+            a.equal(d.pageCount, 1);
+            a.equal(d.PDFMajorVersion, 1);
+            a.equal(d.PDFMinorVersion, 4);
+            a.equal(d.fileName, names[i]);
         }
-    }
-};
+    });
+    it('should throw on non existing page', function () {
+        a.throws(function () {
+            var page = docs[0].getPage(65536);
+            page = null;
+        }, new RegExp('Page number out of bounds'));
+    });
+    it('should open pages', function () {
+        pages = docs.map(function (x) {
+            return x.getPage(1);
+        });
+        var tmp = [
+            {
+                height: 572,
+                width: 299,
+                rotate: 0
+            },
+            {
+                height: 299,
+                width: 572,
+                rotate: 90
+            },
+            {
+                height: 572,
+                width: 299,
+                rotate: 180
+            },
+            {
+                height: 299,
+                width: 572,
+                rotate: 270
+            }
+        ];
+        for (var i = pages.length - 1; i >= 0; i--) {
+            var p = pages[i];
+            a.equal(p.num, 1);
+            a.equal(p.height, tmp[i].height);
+            a.equal(p.width, tmp[i].width);
+            a.equal(p.rotate, tmp[i].rotate);
+            a.equal(p.isCropped, false);
+            a.equal(p.numAnnots, 0);
+            a.deepEqual(p.media_box, { x1: 0, x2: 299, y1: 0, y2: 572 });
+            a.deepEqual(p.crop_box, { x1: 0, x2: 299, y1: 0, y2: 572 });
+            a.deepEqual(p.trim_box, { x1: 0, x2: 299, y1: 0, y2: 572 });
+            a.deepEqual(p.art_box, { x1: 0, x2: 299, y1: 0, y2: 572 });
+            a.deepEqual(p.bleed_box, { x1: 0, x2: 299, y1: 0, y2: 572 });
+        }
+    });
+});
+
+describe('PopplerPage', function () {
+    it('should search for text', function () {
+        var results = pages.map(function (x) {
+            return x.findText("ко");
+        });
+        var tmp = [
+            [
+                {
+                    x1: 0.45370444816053507,
+                    x2: 0.48796471571906347,
+                    y1: 0.863479020979021,
+                    y2: 0.8792132867132867
+                },
+                {
+                    x1: 0.7397859866220733,
+                    x2: 0.772362040133779,
+                    y1: 0.7812412587412587,
+                    y2: 0.7969755244755244
+                }
+            ],
+            [
+                {
+                    x1: 0.863479020979021,
+                    x2: 0.8792132867132867,
+                    y1: 0.5120352842809365,
+                    y2: 0.546295551839465
+                },
+                {
+                    x1: 0.7812412587412587,
+                    x2: 0.7969755244755244,
+                    y1: 0.227637959866221,
+                    y2: 0.2602140133779267
+                }
+            ],
+            [
+                {
+                    x1: 0.227637959866221,
+                    x2: 0.2602140133779267,
+                    y1: 0.20302447552447553,
+                    y2: 0.21875874125874126
+                },
+                {
+                    x1: 0.5120352842809365,
+                    x2: 0.546295551839465,
+                    y1: 0.12078671328671334,
+                    y2: 0.13652097902097907
+                }
+            ],
+            [
+                {
+                    x1: 0.2030244755244755,
+                    x2: 0.21875874125874123,
+                    y1: 0.7397859866220733,
+                    y2: 0.772362040133779
+                },
+                {
+                    x1: 0.12078671328671332,
+                    x2: 0.13652097902097904,
+                    y1: 0.45370444816053507,
+                    y2: 0.48796471571906347
+                }
+            ]
+        ];
+        a.deepEqual(results, tmp);
+    });
+    it('should add annotations', function () {
+        pages.forEach(function (x) {
+            x.addAnnot(x.findText('ко'));
+        });
+        pages.forEach(function (x) {
+            a.equal(x.numAnnots, 1);
+        });
+    });
+    it('should remove annotations', function () {
+        pages.forEach(function (x) {
+            x.deleteAnnots();
+            a.equal(x.numAnnots, 0);
+        });
+    });
+    describe('render to file', function () {
+        it('should render to png', function () {
+            pages.forEach(function (x) {
+                var out = x.renderToFile('test/out.png', 'png', 50, {
+                    slice: { x: 0, y: 0, w: 1, h: 0.5 }
+                });
+                fs.unlinkSync(out.path);
+                a.deepEqual(out, {type: 'file', path: 'test/out.png'});
+            });
+        });
+        it('should render to jpeg', function () {
+            pages.forEach(function (x) {
+                var out = x.renderToFile('test/out.jpeg', 'jpeg', 50, {quality: 100});
+                fs.unlinkSync(out.path);
+                a.deepEqual(out, {type: 'file', path: 'test/out.jpeg'});
+            });
+        });
+        it('should render to tiff', function () {
+            pages.forEach(function (x) {
+                var out = x.renderToFile('test/out.tiff', 'tiff', 50, {compression: 'lzw'});
+                fs.unlinkSync(out.path);
+                a.deepEqual(out, {type: 'file', path: 'test/out.tiff'});
+            });
+        });
+        it('should throw on bad output path', function () {
+            pages.forEach(function (x) {
+                a.throws(function () {
+                    var out = x.renderToFile('/t/t/t/t/t/t/t/123', 'jpeg', 50);
+                    out = null;
+                }, new RegExp("Can't open output file"));
+            });
+        });
+    });
+    describe('render to buffer', function () {
+        it('should render to png', function () {
+            pages.forEach(function (x) {
+                var out = x.renderToBuffer('png', 50, {
+                    slice: { x: 0, y: 0, w: 1, h: 0.5 }
+                });
+                a.equal(out.type, 'buffer');
+                a.equal(out.format, 'png');
+                a.ok(Buffer.isBuffer(out.data));
+                a.ok(out.data.length > 0);
+            });
+        });
+        it('should render to jpeg', function () {
+            pages.forEach(function (x) {
+                var out = x.renderToBuffer('jpeg', 50, {quality: 100});
+                a.equal(out.type, 'buffer');
+                a.equal(out.format, 'jpeg');
+                a.ok(Buffer.isBuffer(out.data));
+                a.ok(out.data.length > 0);
+            });
+        });
+        it('should render to tiff', function () {
+            pages.forEach(function (x) {
+                var out = x.renderToBuffer('tiff', 50, {compression: 'lzw'});
+                a.equal(out.type, 'buffer');
+                a.equal(out.format, 'tiff');
+                a.ok(Buffer.isBuffer(out.data));
+                a.ok(out.data.length > 0);
+            });
+        });
+    });
+});
+
+describe('freeing', function () {
+    before(function () {
+        for (var i = docs.length - 1; i >= 0; i--) {
+            delete docs[i];
+            docs[i] = null;
+        }
+        gc();
+    });
+
+    it('page should throw if document deleted', function () {
+        a.throws(function () {
+            pages.forEach(function (x) {
+                x.renderToBuffer('jpeg', 72);
+            }, new RegExp("Document closed. You must delete this page"));
+        });
+    });
+});

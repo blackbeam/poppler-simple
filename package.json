@@ -13,7 +13,7 @@
   "main": "./lib/poppler.js",
   "dependencies": {},
   "devDependencies": {
-    "nodeunit": "*"
+    "mocha": "*"
   },
   "optionalDependencies": {},
   "engines": {
