@@ -2,6 +2,7 @@
   "author": "AnatolyI <ai@rsl.ru>",
   "name": "poppler-simple",
   "description": "A simple interface to poppler pdf library",
+  "keywords": ["pdf", "poppler"],
   "version": "0.0.4",
   "repository": {
     "type": "git",
