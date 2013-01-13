@@ -2,6 +2,8 @@
 #include <v8.h>
 #include <node.h>
 #include <node_object_wrap.h>
+#include <poppler/poppler-config.h>
+#include <cpp/poppler-version.h>
 #include <poppler/Page.h>
 #include <poppler/PDFDoc.h>
 #include <poppler/TextOutputDev.h>

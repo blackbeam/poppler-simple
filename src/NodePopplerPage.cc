@@ -448,9 +448,13 @@ namespace node {
                 writer = new JpegWriter(quality, progressive);
                 break;
             case W_TIFF:
+#if (POPPLER_VERSION_MINOR == 22)
+                writer = new TiffWriter(TiffWriter::RGB);
+#else
                 writer = new TiffWriter();
-                ((TiffWriter*)writer)->setCompressionString(compression);
                 ((TiffWriter*)writer)->setSplashMode(splashModeRGB8);
+#endif
+                ((TiffWriter*)writer)->setCompressionString(compression);
         }
 
         pg->displaySlice(splashOut, PPI, PPI, 0, gFalse, gTrue, x, y, w, h, gFalse);
