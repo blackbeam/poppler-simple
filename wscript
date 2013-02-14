@@ -22,4 +22,4 @@ def build(bld):
     obj.cxxflags = ['-rdynamic']
     obj.target = 'poppler'
     obj.source = './src/NodePopplerDocument.cc ./src/NodePopplerPage.cc ./src/iconv_string.cc'
-    obj.uselib = ['GDK-3.0', 'POPPLER', 'POPPLER-GLIB']
+    obj.uselib = ['POPPLER']
