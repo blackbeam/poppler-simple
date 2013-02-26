@@ -95,6 +95,39 @@ describe('PopplerDocument', function () {
 });
 
 describe('PopplerPage', function () {
+    it('should return word list', function () {
+        var results = pages.map(function (x) {
+            return x.getWordList();
+        });
+        a.equal(results[0].length, 45);
+        a.equal(results[1].length, 45);
+        a.equal(results[2].length, 45);
+        a.equal(results[3].length, 45);
+        a.deepEqual(results[0][0], {
+            x1: 0.21752508361204015,
+            x2: 0.38838531772575263,
+            y1: 0.8903321678321678,
+            y2: 0.9060664335664337,
+            text: 'Российская' });
+        a.deepEqual(results[1][0], {
+            x1: 0.6241083916083916,
+            x2: 0.6378496503496504,
+            y1: 0.7519090301003345,
+            y2: 0.9871571906354514,
+            text: 'ЭТНОСОЦИАЛЬНАЯ' });
+        a.deepEqual(results[2][0], {
+            x1: 0.5975623411371238,
+            x2: 0.6588628762541806,
+            y1: 0.8016363636363637,
+            y2: 0.8142237762237763,
+            text: '1882' });
+        a.deepEqual(results[3][0], {
+            x1: 0.39110139860139864,
+            x2: 0.40484265734265734,
+            y1: 0.7972115050167224,
+            y2: 0.8783848829431437,
+            text: 'вв.)' });
+    });
     it('should search for text', function () {
         var results = pages.map(function (x) {
             return x.findText("ко");

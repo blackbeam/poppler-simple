@@ -60,6 +60,7 @@ namespace node {
     protected:
         static v8::Handle<v8::Value> New(const v8::Arguments &args);
         static v8::Handle<v8::Value> findText(const v8::Arguments &args);
+        static v8::Handle<v8::Value> getWordList(const v8::Arguments &args);
         static v8::Handle<v8::Value> renderToFile(const v8::Arguments &args);
         static v8::Handle<v8::Value> renderToBuffer(const v8::Arguments &args);
         static v8::Handle<v8::Value> addAnnot(const v8::Arguments &args);

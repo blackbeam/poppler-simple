@@ -34,6 +34,7 @@ namespace node {
         NODE_SET_PROTOTYPE_METHOD(constructor_template, "renderToFile", NodePopplerPage::renderToFile);
         NODE_SET_PROTOTYPE_METHOD(constructor_template, "renderToBuffer", NodePopplerPage::renderToBuffer);
         NODE_SET_PROTOTYPE_METHOD(constructor_template, "findText", NodePopplerPage::findText);
+        NODE_SET_PROTOTYPE_METHOD(constructor_template, "getWordList", NodePopplerPage::getWordList);
         NODE_SET_PROTOTYPE_METHOD(constructor_template, "addAnnot", NodePopplerPage::addAnnot);
         NODE_SET_PROTOTYPE_METHOD(constructor_template, "deleteAnnots", NodePopplerPage::deleteAnnots);
 //
@@ -203,6 +204,59 @@ namespace node {
             return scope.Close(Boolean::New(self->pg->isCropped()));
 
         }
+    }
+
+    /**
+     * \return Object Array of Objects which represents individual words on page
+     *                and stores word text and relative coords
+     */
+    Handle<Value> NodePopplerPage::getWordList(const Arguments &args) {
+        HandleScope scope;
+        NodePopplerPage* self = ObjectWrap::Unwrap<NodePopplerPage>(args.Holder());
+        TextPage *text;
+        TextWordList *wordList;
+
+        if (self->isDocClosed()) {
+            return ThrowException(Exception::Error(String::New(
+                "Document closed. You must delete this page")));
+        }
+
+        text = self->getTextPage();
+        wordList = text->makeWordList(gTrue);
+        int l = wordList->getLength();
+        Local<v8::Array> v8results = v8::Array::New(l);
+        for (int i = 0; i < l; i++) {
+            Local<v8::Object> v8result = v8::Object::New();
+            TextWord *word = wordList->get(i);
+            GooString *str = word->getText();
+            double x1, y1, x2, y2;
+
+            word->getBBox(&x1, &y1, &x2, &y2);
+            // Make coords relative
+            x1 /= self->getWidth();
+            x2 /= self->getWidth();
+            y1 /= self->getHeight();
+            y2 /= self->getHeight();
+            // TextOutputDev is upside down device
+            y1 = 1 - y1;
+            y2 = 1 - y2;
+            y1 = y1 + y2;
+            y2 = y1 - y2;
+            y1 = y1 - y2;
+
+            v8result->Set(String::NewSymbol("x1", 2), Number::New(x1));
+            v8result->Set(String::NewSymbol("x2", 2), Number::New(x2));
+            v8result->Set(String::NewSymbol("y1", 2), Number::New(y1));
+            v8result->Set(String::NewSymbol("y2", 2), Number::New(y2));
+            v8result->Set(String::NewSymbol("text", 4), String::New(str->getCString()));
+
+            v8results->Set(i, v8result);
+
+            delete str;
+        }
+        delete wordList;
+
+        return scope.Close(v8results);
     }
 
     /**
