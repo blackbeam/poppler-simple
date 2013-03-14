@@ -9,9 +9,15 @@
     "url": "git://github.com/blackbeam/node-poppler.git"
   },
   "scripts": {
-    "preinstall": "node-waf configure build"
+    "install": "(node-gyp rebuild) || (exit 0)",
+    "preinstall": "(node-gyp configure) || (exit 0)",
+    "test": "./node_modules/mocha/bin/mocha -gc",
+    "clean": "((node-gyp clean) && (rm -rf node_modules)) || (exit 0)"
   },
   "main": "./lib/poppler.js",
+  "engines": {
+    "node": ">=0.10.0 <0.12.0"
+  },
   "dependencies": {},
   "devDependencies": {
     "mocha": "*"

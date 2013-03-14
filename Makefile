@@ -1,10 +1,10 @@
-all: build/default/poppler.node
+all: build/Release/poppler.node
 
-build/default/poppler.node: ./src/*.cc ./src/*.h
-	node-waf -v configure build
+build/Release/poppler.node: ./src/*.cc ./src/*.h
+	npm install
 
 test: all
-	mocha -gc 
+	npm test
 
 clean:
-	node-waf distclean
+	npm run-script clean

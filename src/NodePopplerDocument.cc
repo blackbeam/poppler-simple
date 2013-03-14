@@ -187,3 +187,5 @@ init (v8::Handle<v8::Object> target)
     NodePopplerDocument::Initialize(target);
     NodePopplerPage::Initialize(target);
 }
+
+NODE_MODULE(poppler, init);
