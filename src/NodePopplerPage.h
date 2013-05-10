@@ -27,7 +27,7 @@ namespace node {
     class NodePopplerDocument;
     class NodePopplerPage : public ObjectWrap {
     public:
-        enum Writer { W_PNG, W_JPEG, W_TIFF, W_PIXBUF };
+        enum Writer { W_PNG, W_JPEG, W_TIFF/*, W_PIXBUF*/ };
         enum Destination { DEST_BUFFER, DEST_FILE };
 
         NodePopplerPage(NodePopplerDocument* doc, int32_t pageNum);

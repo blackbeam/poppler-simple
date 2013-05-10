@@ -923,6 +923,8 @@ namespace node {
                     *progressive = false;
                 }
                 break;
+            case W_PNG:
+                break;
         }
     }
 
