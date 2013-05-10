@@ -203,6 +203,8 @@ namespace node {
         } else if (strcmp(*propName, "isCropped") == 0) {
             return scope.Close(Boolean::New(self->pg->isCropped()));
 
+        } else {
+            return scope.Close(Null());
         }
     }
 

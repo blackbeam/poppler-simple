@@ -109,6 +109,8 @@ namespace node {
             GooString *fileName = self->doc->getFileName();
             return scope.Close(String::New(fileName->getCString(), fileName->getLength()));
 
+        } else {
+            return scope.Close(Null());
         }
     }
 
