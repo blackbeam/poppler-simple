@@ -300,7 +300,7 @@ namespace node {
             matches[cnt-1] = new PDFRectangle(xMin, self->getHeight() - yMax, xMax, self->getHeight() - yMin);
         }
         Local<v8::Array> v8results = v8::Array::New(cnt);
-        for (int i = 0; i < cnt; i++) {
+        for (unsigned int i = 0; i < cnt; i++) {
             PDFRectangle *match = matches[i];
             Local<v8::Object> v8result = v8::Object::New();
             v8result->Set(String::NewSymbol("x1"), Number::New(match->x1 / self->getWidth()));
@@ -392,7 +392,7 @@ namespace node {
         double x1, y1, x2, y2, x3, y3, x4, y4;
         int len = array->Length();
         AnnotQuadrilaterals::AnnotQuadrilateral **quads = new AnnotQuadrilaterals::AnnotQuadrilateral*[len];
-        for (int i = 0; i < array->Length(); i++) {
+        for (int i = 0; i < len; i++) {
             parseAnnot(array->Get(i), &x1, &y1, &x2, &y2, &x3, &y3, &x4, &y4, error);
             if (*error) {
                 for (i--; i >= 0; i--) {
