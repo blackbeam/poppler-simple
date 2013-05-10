@@ -495,7 +495,7 @@ namespace node {
             4, gFalse,
             paperColor);
         splashOut->startDoc(doc);
-        ImgWriter *writer;
+        ImgWriter *writer = NULL;
         switch (wr) {
             case W_PNG:
                 writer = new PNGWriter();
@@ -518,7 +518,7 @@ namespace node {
         SplashBitmap *bitmap = splashOut->getBitmap();
         SplashError e = bitmap->writeImgFile(writer, f, (int)PPI, (int)PPI);
         delete splashOut;
-        delete writer;
+        if (writer != NULL) delete writer;
 
         if (e) {
             char err[256];
@@ -601,23 +601,24 @@ namespace node {
         Writer w;
         char filename[L_tmpnam];
 
-        if (args.Length() < 2) {
+        if (args.Length() < 2 || !args[0]->IsString()) {
             return ThrowException(Exception::Error(String::New(
                 "Arguments: (method: String, PPI: Number[, options: Object]")));
         }
 
-        // Hack. libtiff fail on writing to memstream
-        if (args[0]->IsString()) {
-            String::Utf8Value m(args[0]);
-            if (strncmp(*m, "png", 3) == 0) {
-                w = W_PNG;
-            } else if (strncmp(*m, "jpeg", 4) == 0) {
-                w = W_JPEG;
-            } else if (strncmp(*m, "tiff", 4) == 0) {
-                w = W_TIFF;
-            }
+        String::Utf8Value m(args[0]);
+        if (strncmp(*m, "png", 3) == 0) {
+            w = W_PNG;
+        } else if (strncmp(*m, "jpeg", 4) == 0) {
+            w = W_JPEG;
+        } else if (strncmp(*m, "tiff", 4) == 0) {
+            w = W_TIFF;
+        } else {
+            return ThrowException(Exception::Error(String::New(
+                "Unsupported compression method")));
         }
 
+        // Hack. libtiff fail on writing to memstream
         if (w == W_TIFF) {
             tmpnam(filename);
             f = fopen(filename, "wb");
