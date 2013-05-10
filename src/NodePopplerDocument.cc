@@ -99,7 +99,7 @@ namespace node {
 
         } else if (strcmp(*propName, "pdfVersion") == 0) {
             char versionString[16];
-            sprintf(versionString, "PDF-%d.%d\0", self->doc->getPDFMajorVersion(), self->doc->getPDFMinorVersion());
+            sprintf(versionString, "PDF-%d.%d", self->doc->getPDFMajorVersion(), self->doc->getPDFMinorVersion());
             return scope.Close(String::New(versionString, strlen(versionString)));
 
         } else if (strcmp(*propName, "isLinearized") == 0) {

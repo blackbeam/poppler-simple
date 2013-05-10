@@ -520,7 +520,7 @@ namespace node {
 
         if (e) {
             char err[256];
-            sprintf(err, "SplashError %d\0", e);
+            sprintf(err, "SplashError %d", e);
             *error = new char[strlen(err)+1];
             strcpy(*error, err);
         }
