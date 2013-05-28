@@ -504,7 +504,7 @@ namespace node {
                 writer = new JpegWriter(quality, progressive);
                 break;
             case W_TIFF:
-#if (POPPLER_VERSION_MINOR == 22)
+#if (POPPLER_VERSION_MINOR > 22)
                 writer = new TiffWriter(TiffWriter::RGB);
 #else
                 writer = new TiffWriter();
