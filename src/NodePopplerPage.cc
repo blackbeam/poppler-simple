@@ -483,11 +483,7 @@ namespace node {
      *
      * Caller must free error if it was set
      */
-    void NodePopplerPage::display(
-            NodePopplerPage* self,
-            FILE *f, double PPI, Writer wr,
-            char *compression, int quality, bool progressive,
-            int x, int y, int w, int h, char **error) {
+    void NodePopplerPage::display(NodePopplerPage* self, RenderWork *work) {
         SplashColor paperColor;
         paperColor[0] = 255;
         paperColor[1] = 255;
@@ -498,12 +494,12 @@ namespace node {
             paperColor);
         splashOut->startDoc(self->doc);
         ImgWriter *writer = NULL;
-        switch (wr) {
+        switch (work->w) {
             case W_PNG:
                 writer = new PNGWriter();
                 break;
             case W_JPEG:
-                writer = new JpegWriter(quality, progressive);
+                writer = new JpegWriter(work->quality, work->progressive);
                 break;
             case W_TIFF:
 #if (POPPLER_VERSION_MINOR > 20)
@@ -512,21 +508,21 @@ namespace node {
                 writer = new TiffWriter();
                 ((TiffWriter*)writer)->setSplashMode(splashModeRGB8);
 #endif
-                ((TiffWriter*)writer)->setCompressionString(compression);
+                ((TiffWriter*)writer)->setCompressionString(work->compression);
         }
 
-        self->pg->displaySlice(splashOut, PPI, PPI, 0, gFalse, gTrue, x, y, w, h, gFalse);
+        self->pg->displaySlice(splashOut, work->PPI, work->PPI, 0, gFalse, gTrue, work->sx, work->sy, work->sw, work->sh, gFalse);
 
         SplashBitmap *bitmap = splashOut->getBitmap();
-        SplashError e = bitmap->writeImgFile(writer, f, (int)PPI, (int)PPI);
+        SplashError e = bitmap->writeImgFile(writer, work->f, (int)work->PPI, (int)work->PPI);
         delete splashOut;
         if (writer != NULL) delete writer;
 
         if (e) {
             char err[256];
             sprintf(err, "SplashError %d", e);
-            *error = new char[strlen(err)+1];
-            strcpy(*error, err);
+            work->error = new char[strlen(err)+1];
+            strcpy(work->error, err);
         }
     }
 
@@ -565,7 +561,7 @@ namespace node {
             return;
         }
 
-        display(this, work->f, work->PPI, work->w, work->compression, work->quality, work->progressive, work->sx, work->sy, work->sw, work->sh, &work->error);
+        display(this, work);
     }
 
     /**

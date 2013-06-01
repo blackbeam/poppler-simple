@@ -81,11 +81,7 @@ namespace node {
         double getRotate() { return pg->getRotate(); }
         bool isDocClosed() { return docClosed; }
 
-        static void display(
-            NodePopplerPage *self,
-            FILE *f, double PPI, Writer wr,
-            char *compression, int quality, bool progressive,
-            int x, int y, int w, int h, char **error);
+        static void display(NodePopplerPage *self, RenderWork *work);
 
     protected:
         static v8::Handle<v8::Value> New(const v8::Arguments &args);
