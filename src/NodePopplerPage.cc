@@ -37,7 +37,7 @@ namespace node {
         NODE_SET_PROTOTYPE_METHOD(constructor_template, "getWordList", NodePopplerPage::getWordList);
         NODE_SET_PROTOTYPE_METHOD(constructor_template, "addAnnot", NodePopplerPage::addAnnot);
         NODE_SET_PROTOTYPE_METHOD(constructor_template, "deleteAnnots", NodePopplerPage::deleteAnnots);
-//
+
         /** Getters:
          *  static Handle<Value> funcName(Local<String> property, const AccessorInfo& info);
          *  constructor_template->PrototypeTemplate()->SetAccessor(String::NewSymbol("page_count"), funcName);
@@ -504,7 +504,7 @@ namespace node {
                 writer = new JpegWriter(quality, progressive);
                 break;
             case W_TIFF:
-#if (POPPLER_VERSION_MINOR > 22)
+#if (POPPLER_VERSION_MINOR > 20)
                 writer = new TiffWriter(TiffWriter::RGB);
 #else
                 writer = new TiffWriter();
