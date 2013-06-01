@@ -484,6 +484,7 @@ namespace node {
      * Caller must free error if it was set
      */
     void NodePopplerPage::display(
+            NodePopplerPage* self,
             FILE *f, double PPI, Writer wr,
             char *compression, int quality, bool progressive,
             int x, int y, int w, int h, char **error) {
@@ -495,7 +496,7 @@ namespace node {
             splashModeRGB8,
             4, gFalse,
             paperColor);
-        splashOut->startDoc(doc);
+        splashOut->startDoc(self->doc);
         ImgWriter *writer = NULL;
         switch (wr) {
             case W_PNG:
@@ -514,7 +515,7 @@ namespace node {
                 ((TiffWriter*)writer)->setCompressionString(compression);
         }
 
-        pg->displaySlice(splashOut, PPI, PPI, 0, gFalse, gTrue, x, y, w, h, gFalse);
+        self->pg->displaySlice(splashOut, PPI, PPI, 0, gFalse, gTrue, x, y, w, h, gFalse);
 
         SplashBitmap *bitmap = splashOut->getBitmap();
         SplashError e = bitmap->writeImgFile(writer, f, (int)PPI, (int)PPI);
@@ -564,7 +565,7 @@ namespace node {
             return;
         }
 
-        display(work->f, work->PPI, work->w, work->compression, work->quality, work->progressive, work->sx, work->sy, work->sw, work->sh, &work->error);
+        display(this, work->f, work->PPI, work->w, work->compression, work->quality, work->progressive, work->sx, work->sy, work->sw, work->sh, &work->error);
     }
 
     /**
