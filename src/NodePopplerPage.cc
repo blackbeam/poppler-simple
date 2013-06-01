@@ -391,7 +391,8 @@ namespace node {
 
         double x1, y1, x2, y2, x3, y3, x4, y4;
         int len = array->Length();
-        AnnotQuadrilaterals::AnnotQuadrilateral **quads = new AnnotQuadrilaterals::AnnotQuadrilateral*[len];
+        AnnotQuadrilaterals::AnnotQuadrilateral **quads =
+            (AnnotQuadrilaterals::AnnotQuadrilateral**) gmalloc(sizeof(AnnotQuadrilaterals::AnnotQuadrilateral*) * len);
         for (int i = 0; i < len; i++) {
             parseAnnot(array->Get(i), &x1, &y1, &x2, &y2, &x3, &y3, &x4, &y4, error);
             if (*error) {
