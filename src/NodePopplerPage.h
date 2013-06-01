@@ -30,6 +30,35 @@ namespace node {
         enum Writer { W_PNG, W_JPEG, W_TIFF/*, W_PIXBUF*/ };
         enum Destination { DEST_BUFFER, DEST_FILE };
 
+        class RenderWork
+        {
+        public:
+            RenderWork() {
+                error = mstrm_buf = filename = compression = NULL;
+                f = NULL;
+                mstrm_len = 0;
+            }
+            ~RenderWork() {
+                if (error) delete [] error;
+                if (mstrm_buf) free(mstrm_buf);
+                if (filename) delete [] filename;
+                if (compression) delete [] compression;
+                if (!callback.IsEmpty()) callback.Dispose();
+                if (f) fclose(f);
+            }
+
+            uv_work_t request;
+            v8::Persistent<v8::Function> callback;
+            bool progressive;
+            char *error, *mstrm_buf, *filename, *compression;
+            int quality, sx, sy, sw, sh;
+            double PPI;
+            FILE *f;
+            size_t mstrm_len;
+            NodePopplerPage::Writer w;
+            NodePopplerPage *self;
+        };
+
         NodePopplerPage(NodePopplerDocument* doc, int32_t pageNum);
         ~NodePopplerPage();
         static void Initialize(v8::Handle<v8::Object> target);
@@ -116,7 +145,7 @@ namespace node {
             }
             return text;
         }
-        void renderToStream(int argc, v8::Handle<v8::Value> argv[], FILE *f, char **error);
+        void renderToStream(int argc, v8::Handle<v8::Value> argv[], RenderWork *work);
         void addAnnot(v8::Handle<v8::Array> array, char **error);
 
         PDFDoc *doc;

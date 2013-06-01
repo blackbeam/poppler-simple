@@ -533,21 +533,14 @@ namespace node {
      *
      * Backend function for \see NodePopplerPage::renderToBuffer and \see NodePopplerPage::renderToFile
      */
-    void NodePopplerPage::renderToStream(int argc, Handle<Value> argv[], FILE *f, char **error) {
+    void NodePopplerPage::renderToStream(int argc, Handle<Value> argv[], RenderWork *work) {
         HandleScope scope;
+        double x, y, w, h, scale, scaledWidth, scaledHeight;
 
-        Writer wr;
-        char *compression = NULL;
-        int quality = 100;
-        bool progressive = false;
-        double x, y, w, h, PPI, scale, scaledWidth, scaledHeight;
-        int sx, sy, sw, sh;
+        parseRenderArguments(argv, argc, &work->w, &work->compression, &work->quality, &work->progressive, &work->PPI,
+            &x, &y, &w, &h, &work->error);
 
-        parseRenderArguments(argv, argc, &wr, &compression, &quality, &progressive, &PPI,
-            &x, &y, &w, &h, error);
-
-        if (*error) {
-            if (compression) { delete [] compression; }
+        if (work->error) {
             return;
         }
 
@@ -555,25 +548,22 @@ namespace node {
         if (y + h > 1.0) { h = 1.0 - y; }
         if (x + w > 1.0) { w = 1.0 - x; }
 
-        scale = PPI / 72.0;
+        scale = work->PPI / 72.0;
         scaledWidth = getWidth() * scale;
         scaledHeight = getHeight() * scale;
-        sw = scaledWidth * w;
-        sh = scaledHeight * h;
-        sx = scaledWidth * x;
-        sy = scaledHeight - scaledHeight * y - sh; // converto to bottom related coord
+        work->sw = scaledWidth * w;
+        work->sh = scaledHeight * h;
+        work->sx = scaledWidth * x;
+        work->sy = scaledHeight - scaledHeight * y - work->sh; // converto to bottom related coords
 
-        if ((unsigned long)sh * sw > 100000000L) {
-            if (compression) { delete [] compression; }
+        if ((unsigned long)work->sh * work->sw > 100000000L) {
             char *e = (char*)"Result image is too big";
-            *error = new char[strlen(e)+1];
-            strcpy(*error, e);
+            work->error = new char[strlen(e)+1];
+            strcpy(work->error, e);
             return;
         }
 
-        display(f, PPI, wr, compression, quality, progressive, sx, sy, sw, sh, error);
-
-        if (compression) { delete [] compression; }
+        display(work->f, work->PPI, work->w, work->compression, work->quality, work->progressive, work->sx, work->sy, work->sw, work->sh, &work->error);
     }
 
     /**
@@ -588,91 +578,90 @@ namespace node {
     Handle<Value> NodePopplerPage::renderToBuffer(const Arguments &args) {
         HandleScope scope;
         NodePopplerPage* self = ObjectWrap::Unwrap<NodePopplerPage>(args.Holder());
+        RenderWork *work = new RenderWork();
+        work->filename = new char[L_tmpnam];
 
         if (self->isDocClosed()) {
+            delete work;
             return ThrowException(Exception::Error(String::New(
                 "Document closed. You must delete this page")));
         }
 
-        char *error = NULL;
-        FILE *f;
-        char *buf = NULL;
-        size_t len = 0;
-        Writer w;
-        char filename[L_tmpnam];
-
         if (args.Length() < 2 || !args[0]->IsString()) {
+            delete work;
             return ThrowException(Exception::Error(String::New(
                 "Arguments: (method: String, PPI: Number[, options: Object]")));
         }
 
         String::Utf8Value m(args[0]);
         if (strncmp(*m, "png", 3) == 0) {
-            w = W_PNG;
+            work->w = W_PNG;
         } else if (strncmp(*m, "jpeg", 4) == 0) {
-            w = W_JPEG;
+            work->w = W_JPEG;
         } else if (strncmp(*m, "tiff", 4) == 0) {
-            w = W_TIFF;
+            work->w = W_TIFF;
         } else {
+            delete work;
             return ThrowException(Exception::Error(String::New(
                 "Unsupported compression method")));
         }
 
         // Hack. libtiff fail on writing to memstream
-        if (w == W_TIFF) {
-            tmpnam(filename);
-            f = fopen(filename, "wb");
+        if (work->w == W_TIFF) {
+            tmpnam(work->filename);
+            work->f = fopen(work->filename, "wb");
         } else {
-            f = open_memstream(&buf, &len);
+            work->f = open_memstream(&work->mstrm_buf, &work->mstrm_len);
         }
         
-        if (!f) {
+        if (!work->f) {
+            delete work;
             return ThrowException(Exception::Error(String::New(
                 "Can't open output stream")));
         }
 
         if (args.Length() > 2) {
             Handle<Value> argv[3] = {args[0], args[1], args[2]};
-            self->renderToStream(3, argv, f, &error);
+            self->renderToStream(3, argv, work);
         } else {
             Handle<Value> argv[2] = {args[0], args[1]};
-            self->renderToStream(2, argv, f, &error);
+            self->renderToStream(2, argv, work);
         }
 
-        if (w == W_TIFF) {
+        if (work->w == W_TIFF) {
             struct stat s;
             int filedes;
-            filedes = open(filename, O_RDONLY);
+            filedes = open(work->filename, O_RDONLY);
             fstat(filedes, &s);
             if (s.st_size > 0) {
-                len = s.st_size;
-                buf = (char*) malloc(len);
-                read(filedes, buf, len);
+                work->mstrm_len = s.st_size;
+                work->mstrm_buf = (char*) malloc(work->mstrm_len);
+                read(filedes, work->mstrm_buf, work->mstrm_len);
             }
             close(filedes);
-            fclose(f);
-            remove(filename);
+            remove(work->filename);
         } else {
-            fclose(f);
+            // must close memstream before read from it's buffer
+            fclose(work->f);
+            work->f = NULL;
         }
 
 
-        if (error) {
-            Handle<Value> e = Exception::Error(String::New(error));
-            delete [] error;
-            if (buf) free(buf);
+        if (work->error) {
+            Handle<Value> e = Exception::Error(String::New(work->error));
+            delete work;
             return ThrowException(e);
         } else {
-            Buffer *buffer = Buffer::New(len);
+            Buffer *buffer = Buffer::New(work->mstrm_len);
             Handle<v8::Object> out = v8::Object::New();
 
-            memcpy(Buffer::Data(buffer), buf, len);
-            free(buf);
+            memcpy(Buffer::Data(buffer), work->mstrm_buf, work->mstrm_len);
 
             out->Set(String::NewSymbol("type"), String::NewSymbol("buffer"));
             out->Set(String::NewSymbol("format"), args[0]);
             out->Set(String::NewSymbol("data"), buffer->handle_);
 
+            delete work;
             return scope.Close(out);
         }
     }
@@ -702,63 +691,61 @@ namespace node {
     Handle<Value> NodePopplerPage::renderToFile(const Arguments &args) {
         HandleScope scope;
         NodePopplerPage* self = ObjectWrap::Unwrap<NodePopplerPage>(args.Holder());
+        RenderWork *work = new RenderWork();
 
         if (self->isDocClosed()) {
+            delete work;
             return ThrowException(Exception::Error(String::New(
                 "Document closed. You must delete this page")));
         }
 
-        char* cPath = NULL;
-        char* error = NULL;
-        FILE *f;
-
         if (args.Length() < 3) {
+            delete work;
             return ThrowException(Exception::Error(String::New(
                 "Arguments: (path: String, method: String, PPI: Number[, options: Object])"
                 )));
         }
 
         if (!args[0]->IsString()) {
+            delete work;
             return ThrowException(Exception::TypeError(String::New(
                 "'path' must be an instance of string")));
         } else {
             if (args[0]->ToString()->Utf8Length() > 0) {
-                cPath = new char[args[0]->ToString()->Utf8Length() + 1];
-                args[0]->ToString()->WriteUtf8(cPath);
+                work->filename = new char[args[0]->ToString()->Utf8Length() + 1];
+                args[0]->ToString()->WriteUtf8(work->filename);
             } else {
+                delete work;
                 return ThrowException(Exception::TypeError(String::New(
                     "'path' can't be empty")));
             }
         }
 
-        f = fopen(cPath, "wb");
-        if (!f) {
-            delete [] cPath;
+        work->f = fopen(work->filename, "wb");
+        if (!work->f) {
+            delete work;
             return ThrowException(Exception::Error(String::New(
                 "Can't open output file")));
         }
 
         if (args.Length() == 3) {
             Handle<Value> argv[2] = {args[1], args[2]};
-            self->renderToStream(2, argv, f, &error);
+            self->renderToStream(2, argv, work);
         } else {
             Handle<Value> argv[3] = {args[1], args[2], args[3]};
-            self->renderToStream(3, argv, f, &error);
+            self->renderToStream(3, argv, work);
         }
 
-        fclose(f);
-
-        if (error) {
-            Handle<Value> e = Exception::Error(String::New(error));
-            delete [] error;
-            unlink(cPath);
-            delete [] cPath;
+        if (work->error) {
+            Handle<Value> e = Exception::Error(String::New(work->error));
+            unlink(work->filename);
+            delete work;
             return ThrowException(e);
         } else {
             Handle<v8::Object> out = v8::Object::New();
             out->Set(String::NewSymbol("type"), String::NewSymbol("file"));
-            out->Set(String::NewSymbol("path"), String::New(cPath));
-            delete [] cPath;
+            out->Set(String::NewSymbol("path"), String::New(work->filename));
+            delete work;
             return scope.Close(out);
         }
     }

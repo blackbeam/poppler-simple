@@ -8,3 +8,8 @@ test: all
 
 clean:
 	npm run-script clean
+
+debug: all
+	npm run-script build-debug
+	valgrind --trace-children=yes ./node_modules/mocha/bin/mocha -gc
+	rm -rf ./build/Debug

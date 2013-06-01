@@ -12,7 +12,8 @@
     "install": "(node-gyp rebuild) || (exit 0)",
     "preinstall": "(node-gyp configure) || (exit 0)",
     "test": "./node_modules/mocha/bin/mocha -gc",
-    "clean": "((node-gyp clean) && (rm -rf node_modules)) || (exit 0)"
+    "clean": "((node-gyp clean) && (rm -rf node_modules)) || (exit 0)",
+    "build-debug": "(node-gyp configure --debug && node-gyp rebuild --debug) || (exit 0)"
   },
   "main": "./lib/poppler.js",
   "engines": {
