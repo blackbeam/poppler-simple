@@ -540,7 +540,7 @@ namespace node {
     }
 
     /**
-     * Render page to file stream
+     * Renders page to a file stream
      *
      * Backend function for \see NodePopplerPage::renderToBuffer and \see NodePopplerPage::renderToFile
      */
@@ -682,7 +682,7 @@ namespace node {
     }
 
     /**
-     * Render page to Buffer
+     * Renders page to a Buffer
      *
      * Javascript function
      *
@@ -794,7 +794,7 @@ namespace node {
     }
 
     /**
-     * Render page to file
+     * Renders page to a file
      *
      * Javascript function
      *
