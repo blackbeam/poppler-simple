@@ -78,6 +78,7 @@ namespace node {
             char *mstrm_buf;
             char *filename;
             char *compression;
+            char format[5];
             int quality;
             int sx;
             int sy;

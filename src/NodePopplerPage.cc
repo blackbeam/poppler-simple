@@ -639,7 +639,6 @@ namespace node {
                 {
                     Buffer *buffer;
                     Local<v8::Object> out = v8::Object::New();
-                    Local<String> format;
 
                     if (work->w == W_TIFF) {
                         struct stat s;
@@ -658,18 +657,11 @@ namespace node {
                         fclose(work->f);
                         work->f = NULL;
                     }
-                    if (work->w == W_JPEG) {
-                        format = String::NewSymbol("jpeg");
-                    } else if (work->w == W_TIFF) {
-                        format = String::NewSymbol("tiff");
-                    } else {
-                        format = String::NewSymbol("png");
-                    }
 
                     buffer = Buffer::New(work->mstrm_len);
                     memcpy(Buffer::Data(buffer), work->mstrm_buf, work->mstrm_len);
                     out->Set(String::NewSymbol("type"), String::NewSymbol("buffer"));
-                    out->Set(String::NewSymbol("format"), format);
+                    out->Set(String::NewSymbol("format"), String::NewSymbol(work->format));
                     out->Set(String::NewSymbol("data"), buffer->handle_);
                     Local<Value> args[] = {Local<Value>::New(Null()), Local<Value>::New(out)};
                     work->callback->Call(Context::GetCurrent()->Global(), 2, args);
@@ -722,6 +714,7 @@ namespace node {
             Local<Value> err = Exception::Error(String::New("Unsupported compression method"));
             THROW_SYNC_ASYNC_ERR(work, err);
         }
+        strcpy(work->format, *m);
 
         // Hack. libtiff fail on writing to memstream
         if (work->w == W_TIFF) {
