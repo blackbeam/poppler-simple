@@ -42,8 +42,8 @@ namespace node {
                 , quality(100)
                 , sx(0)
                 , sy(0)
-                , sw(0)
-                , sh(0)
+                , sw(1)
+                , sh(1)
                 , PPI(72)
                 , f(NULL)
                 , mstrm_len(0)
@@ -118,15 +118,8 @@ namespace node {
         static void AsyncRenderWork(uv_work_t *req);
         static void AsyncRenderAfter(uv_work_t *req, int status);
         static void parseRenderArguments(
-            v8::Handle<v8::Value> argv[], int argc,
-            Writer *wr, char **compression, int *quality, bool *progressive, double *PPI,
-            double *x, double *y, double *w, double *h,
-            char **error);
-        static void parseWriterOptions(
-            v8::Handle<v8::Value> options,
-            Writer w,
-            char **compression, int *quality, bool *progressive,
-            char **error);
+            v8::Handle<v8::Value> argv[], int argc, RenderWork *work, double *x, double *y, double *w, double *h);
+        static void parseWriterOptions(v8::Handle<v8::Value> options, RenderWork *work);
         static Writer parseWriter(v8::Handle<v8::Value> method, char **error);
         static double parsePPI(v8::Handle<v8::Value> PPI, char **error);
         static void parseSlice(

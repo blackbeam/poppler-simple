@@ -550,8 +550,7 @@ namespace node {
         HandleScope scope;
         double x, y, w, h, scale, scaledWidth, scaledHeight;
 
-        parseRenderArguments(argv, argc, &work->w, &work->compression, &work->quality, &work->progressive, &work->PPI,
-            &x, &y, &w, &h, &work->error);
+        parseRenderArguments(argv, argc, work, &x, &y, &w, &h);
 
         if (work->error) {
             if (!work->callback.IsEmpty()) {
@@ -898,31 +897,25 @@ namespace node {
      * Caller must free error and compression if was set
      */
     void NodePopplerPage::parseRenderArguments(
-            Handle<Value> argv[], int argc,
-            Writer *wr, char **compression, int *quality, bool *progressive, double *PPI,
-            double *x, double *y, double *w, double *h,
-            char **error) {
+            Handle<Value> argv[], int argc, RenderWork *work,
+            double *x, double *y, double *w, double *h) {
         HandleScope scope;
 
-        *wr = parseWriter(argv[0], error);
-        if (*error) { return; }
+        work->w = parseWriter(argv[0], &work->error);
+        if (work->error) { return; }
 
-        *PPI = parsePPI(argv[1], error);
-        if (*error) { return; }
+        work->PPI = parsePPI(argv[1], &work->error);
+        if (work->error) { return; }
 
         if (argc == 3) {
-            parseWriterOptions(argv[2], *wr, compression, quality, progressive, error);
-            if (*error) { return; }
-        } else {
-            *compression = NULL;
-            *quality = 100;
-            *progressive = false;
+            parseWriterOptions(argv[2], work);
+            if (work->error) { return; }
         }
 
         Handle<String> sk = String::NewSymbol("slice");
         if (argc == 3 && argv[2]->ToObject()->Has(sk)) {
-            parseSlice(argv[2]->ToObject()->Get(sk), x, y, w, h, error);
-            if (*error) { return; }
+            parseSlice(argv[2]->ToObject()->Get(sk), x, y, w, h, &work->error);
+            if (work->error) { return; }
         } else {
             *x = *y = 0;
             *w = *h = 1;
@@ -984,11 +977,7 @@ namespace node {
      *
      * Caller must free compression and error if was set.
      */
-    void NodePopplerPage::parseWriterOptions(
-            Handle<Value> optionsValue,
-            Writer w,
-            char **compression, int *quality, bool *progressive,
-            char **error) {
+    void NodePopplerPage::parseWriterOptions(Handle<Value> optionsValue, RenderWork *work) {
         HandleScope scope;
 
         Local<String> ck = String::NewSymbol("compression");
@@ -998,57 +987,49 @@ namespace node {
 
         if (!optionsValue->IsObject()) {
             char *e = (char*)"'options' must be an instance of Object";
-            *error = new char[strlen(e)+1];
-            strcpy(*error, e);
+            work->error = new char[strlen(e)+1];
+            strcpy(work->error, e);
             return;
         } else {
             options = optionsValue->ToObject();
         }
         
-        switch (w) {
+        switch (work->w) {
             case W_TIFF:
                 if (options->Has(ck)) {
                     Handle<Value> cv = options->Get(ck);
                     if (cv->IsString() && cv->ToString()->Utf8Length() > 0) {
                         Handle<String> cmp = cv->ToString();
-                        *compression = new char[cmp->Utf8Length()+1];
-                        cmp->WriteUtf8(*compression);
-                    } else {
-                        compression = NULL;
+                        work->compression = new char[cmp->Utf8Length()+1];
+                        cmp->WriteUtf8(work->compression);
                     }
-                } else {
-                    compression = NULL;
                 }
                 break;
             case W_JPEG:
                 if (options->Has(qk)) {
                     Handle<Value> qv = options->Get(qk);
                     if (qv->IsUint32()) {
-                        *quality = qv->Uint32Value();
-                        if (0 > *quality || *quality > 100) {
+                        work->quality = qv->Uint32Value();
+                        if (0 > work->quality || work->quality > 100) {
                             char *e = (char*)"'quality' not in 0 - 100 interval";
-                            *error = new char[strlen(e)+1];
-                            strcpy(*error, e);
+                            work->error = new char[strlen(e)+1];
+                            strcpy(work->error, e);
                         }
                     } else {
                         char *e = (char*)"'quality' must be 0 - 100 interval integer";
-                        *error = new char[strlen(e)+1];
-                        strcpy(*error, e);
+                        work->error = new char[strlen(e)+1];
+                        strcpy(work->error, e);
                     }
-                } else {
-                    *quality = 100;
                 }
                 if (options->Has(pk)) {
                     Handle<Value> pv = options->Get(pk);
                     if (pv->IsBoolean()) {
-                        *progressive = pv->BooleanValue();
+                        work->progressive = pv->BooleanValue();
                     } else {
                         char *e = (char*)"'progressive' must be a boolean value";
-                        *error = new char[strlen(e)+1];
-                        strcpy(*error, e);
+                        work->error = new char[strlen(e)+1];
+                        strcpy(work->error, e);
                     }
-                } else {
-                    *progressive = false;
                 }
                 break;
             case W_PNG:
