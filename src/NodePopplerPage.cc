@@ -5,6 +5,21 @@
 #include "NodePopplerDocument.h"
 #include "NodePopplerPage.h"
 
+#define THROW_SYNC_ASYNC_ERR(work, err) \
+    if (work->callback.IsEmpty()) { \
+        delete work; \
+        return ThrowException(err); \
+    } else { \
+        Local<Value> argv[] = {err}; \
+        TryCatch try_catch; \
+        work->callback->Call(Context::GetCurrent()->Global(), 1, argv); \
+        if (try_catch.HasCaught()) { \
+            node::FatalException(try_catch); \
+        } \
+        delete work; \
+        return scope.Close(Undefined()); \
+    }
+
 using namespace v8;
 using namespace node;
 
@@ -539,7 +554,19 @@ namespace node {
             &x, &y, &w, &h, &work->error);
 
         if (work->error) {
-            return;
+            if (!work->callback.IsEmpty()) {
+                Local<Value> err = Exception::Error(String::New(work->error));
+                Local<Value> argv[] = {err};
+                TryCatch try_catch;
+                work->callback->Call(Context::GetCurrent()->Global(), 1, argv);
+                if (try_catch.HasCaught()) {
+                    node::FatalException(try_catch);
+                }
+                delete work;
+                return;
+            } else {
+                return;
+            }
         }
 
         // cap width and height to fit page size
@@ -552,16 +579,109 @@ namespace node {
         work->sw = scaledWidth * w;
         work->sh = scaledHeight * h;
         work->sx = scaledWidth * x;
-        work->sy = scaledHeight - scaledHeight * y - work->sh; // converto to bottom related coords
+        work->sy = scaledHeight - scaledHeight * y - work->sh; // convert to bottom related coords
 
         if ((unsigned long)work->sh * work->sw > 100000000L) {
-            char *e = (char*)"Result image is too big";
-            work->error = new char[strlen(e)+1];
-            strcpy(work->error, e);
-            return;
+            if (!work->callback.IsEmpty()) {
+                Local<Value> err = Exception::Error(String::New("Result image is too big"));
+                Local<Value> argv[] = {err};
+                TryCatch try_catch;
+                work->callback->Call(Context::GetCurrent()->Global(), 1, argv);
+                if (try_catch.HasCaught()) {
+                    node::FatalException(try_catch);
+                }
+                delete work;
+                return;
+            } else {
+                char *e = (char*)"Result image is too big";
+                work->error = new char[strlen(e)+1];
+                strcpy(work->error, e);
+                return;
+            }
         }
 
-        display(this, work);
+        if (work->callback.IsEmpty()) {
+            display(this, work);
+        } else {
+            uv_queue_work(uv_default_loop(), &work->request, AsyncRenderWork, AsyncRenderAfter);
+        }
+    }
+
+    void NodePopplerPage::AsyncRenderWork(uv_work_t *req) {
+        RenderWork *work = static_cast<RenderWork*>(req->data);
+        display(work->self, work);
+    }
+
+    void NodePopplerPage::AsyncRenderAfter(uv_work_t *req, int status) {
+        HandleScope scope;
+        RenderWork *work = static_cast<RenderWork*>(req->data);
+
+        if (work->error) {
+            Local<Value> err = Exception::Error(String::New(work->error));
+            Local<Value> argv[] = {err};
+            TryCatch try_catch;
+            work->callback->Call(Context::GetCurrent()->Global(), 1, argv);
+            if (try_catch.HasCaught()) {
+                node::FatalException(try_catch);
+            }
+            if (work->dest == DEST_FILE || work->w == W_TIFF) {
+                unlink(work->filename);
+            }
+        } else {
+            switch (work->dest) {
+                case DEST_FILE:
+                {
+                    Local<v8::Object> out = v8::Object::New();
+                    out->Set(String::NewSymbol("type"), String::NewSymbol("file"));
+                    out->Set(String::NewSymbol("path"), String::New(work->filename));
+                    Local<Value> args[] = {Local<Value>::New(Null()), Local<Value>::New(out)};
+                    work->callback->Call(Context::GetCurrent()->Global(), 2, args);
+                    break;
+                }
+                case DEST_BUFFER:
+                {
+                    Buffer *buffer;
+                    Local<v8::Object> out = v8::Object::New();
+                    Local<String> format;
+
+                    if (work->w == W_TIFF) {
+                        struct stat s;
+                        int filedes;
+                        filedes = open(work->filename, O_RDONLY);
+                        fstat(filedes, &s);
+                        if (s.st_size > 0) {
+                            work->mstrm_len = s.st_size;
+                            work->mstrm_buf = (char*) malloc(work->mstrm_len);
+                            read(filedes, work->mstrm_buf, work->mstrm_len);
+                        }
+                        close(filedes);
+                        remove(work->filename);
+                    } else {
+                        // must close memstream before read from it's buffer
+                        fclose(work->f);
+                        work->f = NULL;
+                    }
+                    if (work->w == W_JPEG) {
+                        format = String::NewSymbol("jpeg");
+                    } else if (work->w == W_TIFF) {
+                        format = String::NewSymbol("tiff");
+                    } else {
+                        format = String::NewSymbol("png");
+                    }
+
+                    buffer = Buffer::New(work->mstrm_len);
+                    memcpy(Buffer::Data(buffer), work->mstrm_buf, work->mstrm_len);
+                    out->Set(String::NewSymbol("type"), String::NewSymbol("buffer"));
+                    out->Set(String::NewSymbol("format"), format);
+                    out->Set(String::NewSymbol("data"), buffer->handle_);
+                    Local<Value> args[] = {Local<Value>::New(Null()), Local<Value>::New(out)};
+                    work->callback->Call(Context::GetCurrent()->Global(), 2, args);
+                    break;
+                }
+            }
+        }
+
+        delete work;
     }
 
     /**
@@ -576,19 +696,22 @@ namespace node {
     Handle<Value> NodePopplerPage::renderToBuffer(const Arguments &args) {
         HandleScope scope;
         NodePopplerPage* self = ObjectWrap::Unwrap<NodePopplerPage>(args.Holder());
-        RenderWork *work = new RenderWork();
+        RenderWork *work = new RenderWork(self, DEST_BUFFER);
         work->filename = new char[L_tmpnam];
-
-        if (self->isDocClosed()) {
-            delete work;
-            return ThrowException(Exception::Error(String::New(
-                "Document closed. You must delete this page")));
-        }
 
         if (args.Length() < 2 || !args[0]->IsString()) {
             delete work;
             return ThrowException(Exception::Error(String::New(
                 "Arguments: (method: String, PPI: Number[, options: Object]")));
+        }
+
+        if (args[args.Length() - 1]->IsFunction()) {
+            work->callback = Persistent<v8::Function>::New(Local<v8::Function>::Cast(args[args.Length() - 1]));
+        }
+
+        if (self->isDocClosed()) {
+            Local<Value> err = Exception::Error(String::New("Document closed. You must delete this page"));
+            THROW_SYNC_ASYNC_ERR(work, err);
         }
 
         String::Utf8Value m(args[0]);
@@ -599,9 +722,8 @@ namespace node {
         } else if (strncmp(*m, "tiff", 4) == 0) {
             work->w = W_TIFF;
         } else {
-            delete work;
-            return ThrowException(Exception::Error(String::New(
-                "Unsupported compression method")));
+            Local<Value> err = Exception::Error(String::New("Unsupported compression method"));
+            THROW_SYNC_ASYNC_ERR(work, err);
         }
 
         // Hack. libtiff fail on writing to memstream
@@ -613,54 +735,64 @@ namespace node {
         }
         
         if (!work->f) {
-            delete work;
-            return ThrowException(Exception::Error(String::New(
-                "Can't open output stream")));
+            Local<Value> err = Exception::Error(String::New("Can't open output stream"));
+            THROW_SYNC_ASYNC_ERR(work, err);
         }
 
-        if (args.Length() > 2) {
-            Handle<Value> argv[3] = {args[0], args[1], args[2]};
-            self->renderToStream(3, argv, work);
-        } else {
-            Handle<Value> argv[2] = {args[0], args[1]};
-            self->renderToStream(2, argv, work);
-        }
-
-        if (work->w == W_TIFF) {
-            struct stat s;
-            int filedes;
-            filedes = open(work->filename, O_RDONLY);
-            fstat(filedes, &s);
-            if (s.st_size > 0) {
-                work->mstrm_len = s.st_size;
-                work->mstrm_buf = (char*) malloc(work->mstrm_len);
-                read(filedes, work->mstrm_buf, work->mstrm_len);
+        if (!work->callback.IsEmpty()) {
+            if (args.Length() > 3) {
+                Local<Value> argv[3] = {args[0], args[1], args[2]};
+                self->renderToStream(3, argv, work);
+            } else {
+                Local<Value> argv[2] = {args[0], args[1]};
+                self->renderToStream(2, argv, work);
             }
-            close(filedes);
-            remove(work->filename);
+            return scope.Close(Undefined());
         } else {
-            // must close memstream before read from it's buffer
-            fclose(work->f);
-            work->f = NULL;
-        }
+            if (args.Length() > 2) {
+                Handle<Value> argv[3] = {args[0], args[1], args[2]};
+                self->renderToStream(3, argv, work);
+            } else {
+                Handle<Value> argv[2] = {args[0], args[1]};
+                self->renderToStream(2, argv, work);
+            }
+
+            if (work->w == W_TIFF) {
+                struct stat s;
+                int filedes;
+                filedes = open(work->filename, O_RDONLY);
+                fstat(filedes, &s);
+                if (s.st_size > 0) {
+                    work->mstrm_len = s.st_size;
+                    work->mstrm_buf = (char*) malloc(work->mstrm_len);
+                    read(filedes, work->mstrm_buf, work->mstrm_len);
+                }
+                close(filedes);
+                remove(work->filename);
+            } else {
+                // must close memstream before read from it's buffer
+                fclose(work->f);
+                work->f = NULL;
+            }
 
 
-        if (work->error) {
-            Handle<Value> e = Exception::Error(String::New(work->error));
-            delete work;
-            return ThrowException(e);
-        } else {
-            Buffer *buffer = Buffer::New(work->mstrm_len);
-            Handle<v8::Object> out = v8::Object::New();
+            if (work->error) {
+                Handle<Value> e = Exception::Error(String::New(work->error));
+                delete work;
+                return ThrowException(e);
+            } else {
+                Buffer *buffer = Buffer::New(work->mstrm_len);
+                Handle<v8::Object> out = v8::Object::New();
 
-            memcpy(Buffer::Data(buffer), work->mstrm_buf, work->mstrm_len);
+                memcpy(Buffer::Data(buffer), work->mstrm_buf, work->mstrm_len);
 
-            out->Set(String::NewSymbol("type"), String::NewSymbol("buffer"));
-            out->Set(String::NewSymbol("format"), args[0]);
-            out->Set(String::NewSymbol("data"), buffer->handle_);
+                out->Set(String::NewSymbol("type"), String::NewSymbol("buffer"));
+                out->Set(String::NewSymbol("format"), args[0]);
+                out->Set(String::NewSymbol("data"), buffer->handle_);
 
-            delete work;
-            return scope.Close(out);
+                delete work;
+                return scope.Close(out);
+            }
         }
     }
 
@@ -689,62 +821,72 @@ namespace node {
     Handle<Value> NodePopplerPage::renderToFile(const Arguments &args) {
         HandleScope scope;
         NodePopplerPage* self = ObjectWrap::Unwrap<NodePopplerPage>(args.Holder());
-        RenderWork *work = new RenderWork();
-
-        if (self->isDocClosed()) {
-            delete work;
-            return ThrowException(Exception::Error(String::New(
-                "Document closed. You must delete this page")));
-        }
+        RenderWork *work = new RenderWork(self, DEST_FILE);
 
         if (args.Length() < 3) {
-            delete work;
-            return ThrowException(Exception::Error(String::New(
-                "Arguments: (path: String, method: String, PPI: Number[, options: Object])"
-                )));
+            Local<Value> err = Exception::Error(String::New(
+                "Arguments: (path: String, method: String, PPI: Number[, options: Object, callback: Function])"));
+            THROW_SYNC_ASYNC_ERR(work, err);
+        }
+
+        if (args[args.Length() - 1]->IsFunction()) {
+            work->callback = Persistent<v8::Function>::New(Local<v8::Function>::Cast(args[args.Length() - 1]));
+        }
+
+        if (self->isDocClosed()) {
+            Local<Value> err = Exception::Error(String::New("Document closed. You must delete this page"));
+            THROW_SYNC_ASYNC_ERR(work, err);
         }
 
         if (!args[0]->IsString()) {
-            delete work;
-            return ThrowException(Exception::TypeError(String::New(
-                "'path' must be an instance of string")));
+            Local<Value> err = Exception::TypeError(String::New("'path' must be an instance of string"));
+            THROW_SYNC_ASYNC_ERR(work, err);
         } else {
             if (args[0]->ToString()->Utf8Length() > 0) {
                 work->filename = new char[args[0]->ToString()->Utf8Length() + 1];
                 args[0]->ToString()->WriteUtf8(work->filename);
             } else {
-                delete work;
-                return ThrowException(Exception::TypeError(String::New(
-                    "'path' can't be empty")));
+                Local<Value> err = Exception::TypeError(String::New("'path' can't be empty"));
+                THROW_SYNC_ASYNC_ERR(work, err);
             }
         }
 
         work->f = fopen(work->filename, "wb");
         if (!work->f) {
-            delete work;
-            return ThrowException(Exception::Error(String::New(
-                "Can't open output file")));
+            Local<Value> err = Exception::Error(String::New("Can't open output file"));
+            THROW_SYNC_ASYNC_ERR(work, err);
         }
 
-        if (args.Length() == 3) {
-            Handle<Value> argv[2] = {args[1], args[2]};
-            self->renderToStream(2, argv, work);
+        if (!work->callback.IsEmpty()) {
+            if (args.Length() == 4) {
+                Handle<Value> argv[2] = {args[1], args[2]};
+                self->renderToStream(2, argv, work);
+            } else {
+                Handle<Value> argv[3] = {args[1], args[2], args[3]};
+                self->renderToStream(3, argv, work);
+            }
+            return scope.Close(Undefined());
         } else {
-            Handle<Value> argv[3] = {args[1], args[2], args[3]};
-            self->renderToStream(3, argv, work);
-        }
+            if (args.Length() == 3) {
+                Handle<Value> argv[2] = {args[1], args[2]};
+                self->renderToStream(2, argv, work);
+            } else {
+                Handle<Value> argv[3] = {args[1], args[2], args[3]};
+                self->renderToStream(3, argv, work);
+            }
 
-        if (work->error) {
-            Handle<Value> e = Exception::Error(String::New(work->error));
-            unlink(work->filename);
-            delete work;
-            return ThrowException(e);
-        } else {
-            Handle<v8::Object> out = v8::Object::New();
-            out->Set(String::NewSymbol("type"), String::NewSymbol("file"));
-            out->Set(String::NewSymbol("path"), String::New(work->filename));
-            delete work;
-            return scope.Close(out);
+            if (work->error) {
+                Handle<Value> e = Exception::Error(String::New(work->error));
+                unlink(work->filename);
+                delete work;
+                return ThrowException(e);
+            } else {
+                Handle<v8::Object> out = v8::Object::New();
+                out->Set(String::NewSymbol("type"), String::NewSymbol("file"));
+                out->Set(String::NewSymbol("path"), String::New(work->filename));
+                delete work;
+                return scope.Close(out);
+            }
         }
     }
 

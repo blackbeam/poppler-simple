@@ -33,10 +33,25 @@ namespace node {
         class RenderWork
         {
         public:
-            RenderWork() {
-                error = mstrm_buf = filename = compression = NULL;
-                f = NULL;
-                mstrm_len = 0;
+            RenderWork(NodePopplerPage *self, NodePopplerPage::Destination dest)
+                : progressive(false)
+                , error(NULL)
+                , mstrm_buf(NULL)
+                , filename(NULL)
+                , compression(NULL)
+                , quality(100)
+                , sx(0)
+                , sy(0)
+                , sw(0)
+                , sh(0)
+                , PPI(72)
+                , f(NULL)
+                , mstrm_len(0)
+                , w(W_JPEG)
+            {
+                this->self = self;
+                this->dest = dest;
+                request.data = this;
             }
             ~RenderWork() {
                 if (error) delete [] error;
@@ -50,12 +65,20 @@ namespace node {
             uv_work_t request;
             v8::Persistent<v8::Function> callback;
             bool progressive;
-            char *error, *mstrm_buf, *filename, *compression;
-            int quality, sx, sy, sw, sh;
+            char *error;
+            char *mstrm_buf;
+            char *filename;
+            char *compression;
+            int quality;
+            int sx;
+            int sy;
+            int sw;
+            int sh;
             double PPI;
             FILE *f;
             size_t mstrm_len;
             NodePopplerPage::Writer w;
+            NodePopplerPage::Destination dest;
             NodePopplerPage *self;
         };
 
@@ -92,6 +115,8 @@ namespace node {
         static v8::Handle<v8::Value> addAnnot(const v8::Arguments &args);
         static v8::Handle<v8::Value> deleteAnnots(const v8::Arguments &args);
 
+        static void AsyncRenderWork(uv_work_t *req);
+        static void AsyncRenderAfter(uv_work_t *req, int status);
         static void parseRenderArguments(
             v8::Handle<v8::Value> argv[], int argc,
             Writer *wr, char **compression, int *quality, bool *progressive, double *PPI,
