@@ -70,6 +70,8 @@ namespace node {
                 if (!callback.IsEmpty()) callback.Dispose();
                 if (f) fclose(f);
             }
+            void setWriter(v8::Handle<v8::Value> method);
+            void setPPI(v8::Handle<v8::Value> PPI);
 
             uv_work_t request;
             v8::Persistent<v8::Function> callback;

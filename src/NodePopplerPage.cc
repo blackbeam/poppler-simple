@@ -703,18 +703,17 @@ namespace node {
             THROW_SYNC_ASYNC_ERR(work, err);
         }
 
-        String::Utf8Value m(args[0]);
-        if (strncmp(*m, "png", 3) == 0) {
-            work->w = W_PNG;
-        } else if (strncmp(*m, "jpeg", 4) == 0) {
-            work->w = W_JPEG;
-        } else if (strncmp(*m, "tiff", 4) == 0) {
-            work->w = W_TIFF;
-        } else {
-            Local<Value> err = Exception::Error(String::New("Unsupported compression method"));
+        work->setWriter(args[0]);
+        if (work->error) {
+            Local<Value> err = Exception::Error(String::New(work->error));
             THROW_SYNC_ASYNC_ERR(work, err);
         }
-        strcpy(work->format, *m);
+
+        work->setPPI(args[1]);
+        if (work->error) {
+            Local<Value> err = Exception::Error(String::New(work->error));
+            THROW_SYNC_ASYNC_ERR(work, err);
+        }
 
         // Hack. libtiff fail on writing to memstream
         if (work->w == W_TIFF) {
@@ -842,6 +841,18 @@ namespace node {
             }
         }
 
+        work->setWriter(args[1]);
+        if (work->error) {
+            Local<Value> err = Exception::Error(String::New(work->error));
+            THROW_SYNC_ASYNC_ERR(work, err);
+        }
+
+        work->setPPI(args[2]);
+        if (work->error) {
+            Local<Value> err = Exception::Error(String::New(work->error));
+            THROW_SYNC_ASYNC_ERR(work, err);
+        }
+
         work->f = fopen(work->filename, "wb");
         if (!work->f) {
             Local<Value> err = Exception::Error(String::New("Can't open output file"));
@@ -892,12 +903,6 @@ namespace node {
             double *x, double *y, double *w, double *h) {
         HandleScope scope;
 
-        work->w = parseWriter(argv[0], &work->error);
-        if (work->error) { return; }
-
-        work->PPI = parsePPI(argv[1], &work->error);
-        if (work->error) { return; }
-
         if (argc == 3) {
             parseWriterOptions(argv[2], work);
             if (work->error) { return; }
@@ -910,54 +915,6 @@ namespace node {
         } else {
             *x = *y = 0;
             *w = *h = 1;
-        }
-    }
-
-    double NodePopplerPage::parsePPI(Handle<Value> PPI, char **error) {
-        HandleScope scope;
-        if (PPI->IsNumber()) {
-            double ppi;
-            ppi = PPI->NumberValue();
-            if (0 > ppi) {
-                char *e = (char*)"'PPI' value must be greater then 0";
-                *error = new char[strlen(e)+1];
-                strcpy(*error, e);
-            } else {
-                return ppi;
-            }
-        } else {
-            char *e = (char*)"'PPI' must be an instance of number";
-            *error = new char[strlen(e)+1];
-            strcpy(*error, e);
-        }
-        return 0;
-    }
-
-    /**
-     * Determine Writer type from image compression method string
-     */
-    NodePopplerPage::Writer NodePopplerPage::parseWriter(
-            Handle<Value> method, char **error) {
-        HandleScope scope;
-        if (method->IsString()) {
-            String::Utf8Value m(method);
-            if (strncmp(*m, "png", 3) == 0) {
-                return W_PNG;
-            } else if (strncmp(*m, "jpeg", 4) == 0) {
-                return W_JPEG;
-            } else if (strncmp(*m, "tiff", 4) == 0) {
-                return W_TIFF;
-            } else {
-                char *e = (char*)"Unknown image compression method";
-                *error = new char[strlen(e)+1];
-                strcpy(*error, e);
-                return (Writer) NULL;
-            }
-        } else {
-            char *e = (char*)"'method' must be an instance of String";
-            *error = new char[strlen(e)+1];
-            strcpy(*error, e);
-            return (Writer) NULL;
         }
     }
 
@@ -1077,6 +1034,48 @@ namespace node {
             char *e = (char*)"Not enough values for slice";
             *error = new char[strlen(e)+1];
             strcpy(*error, e);
+        }
+    }
+
+    void NodePopplerPage::RenderWork::setWriter(Handle<Value> method) {
+        HandleScope scope;
+        if (method->IsString()) {
+            String::Utf8Value m(method);
+            if (strncmp(*m, "png", 3) == 0) {
+                this->w = W_PNG;
+            } else if (strncmp(*m, "jpeg", 4) == 0) {
+                this->w = W_JPEG;
+            } else if (strncmp(*m, "tiff", 4) == 0) {
+                this->w = W_TIFF;
+            } else {
+                char *e = (char*)"Unsupported compression method";
+                this->error = new char[strlen(e)+1];
+                strcpy(this->error, e);
+            }
+            strcpy(this->format, *m);
+        } else {
+            char *e = (char*)"'method' must be an instance of String";
+            this->error = new char[strlen(e)+1];
+            strcpy(this->error, e);
+        }
+    }
+
+    void NodePopplerPage::RenderWork::setPPI(Handle<Value> PPI) {
+        HandleScope scope;
+        if (PPI->IsNumber()) {
+            double ppi;
+            ppi = PPI->NumberValue();
+            if (0 > ppi) {
+                char *e = (char*)"'PPI' value must be greater then 0";
+                this->error = new char[strlen(e)+1];
+                strcpy(this->error, e);
+            } else {
+                this->PPI = ppi;
+            }
+        } else {
+            char *e = (char*)"'PPI' must be an instance of number";
+            this->error = new char[strlen(e)+1];
+            strcpy(this->error, e);
         }
     }
 }
