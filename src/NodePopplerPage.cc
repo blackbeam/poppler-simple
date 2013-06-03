@@ -335,7 +335,7 @@ namespace node {
     }
 
     /**
-     * Delete all annotations
+     * Deletes all annotations
      */
     Handle<Value> NodePopplerPage::deleteAnnots(const Arguments &args) {
         HandleScope scope;
@@ -353,7 +353,7 @@ namespace node {
     }
 
     /**
-     * Add annotations to page
+     * Adds annotations to a page
      *
      * Javascript function
      *
@@ -494,9 +494,7 @@ namespace node {
     }
 
     /**
-     * Displaying page slice to f
-     *
-     * Caller must free error if it was set
+     * Displaying page slice to stream work->f
      */
     void NodePopplerPage::display(RenderWork *work) {
         SplashColor paperColor;
@@ -691,12 +689,12 @@ namespace node {
      * \param method String \see NodePopplerPage::renderToFile
      * \param PPI Number \see NodePopplerPage::renderToFile
      * \param options Object \see NodePopplerPage::renderToFile
+     * \param callback Function \see NodePopplerPage::renderToFile
      */
     Handle<Value> NodePopplerPage::renderToBuffer(const Arguments &args) {
         HandleScope scope;
         NodePopplerPage* self = ObjectWrap::Unwrap<NodePopplerPage>(args.Holder());
         RenderWork *work = new RenderWork(self, DEST_BUFFER);
-        work->filename = new char[L_tmpnam];
 
         if (args.Length() < 2 || !args[0]->IsString()) {
             delete work;
@@ -814,6 +812,7 @@ namespace node {
      *            y: for relative y coordinate of bottom left corner
      *            w: for relative slice width
      *            h: for relative slice height
+     * \param callback Function. If exists, then called asynchronously
      *
      * \return Node::Buffer Buffer with rendered image data.
      */
@@ -894,7 +893,6 @@ namespace node {
      *
      * Parses method, PPI and image compression method options (quality for jpeg and compression
      * string for tiff)
-     * Caller must free error and compression if was set
      */
     void NodePopplerPage::parseRenderArguments(
             Handle<Value> argv[], int argc, RenderWork *work,
@@ -944,8 +942,6 @@ namespace node {
 
     /**
      * Determine Writer type from image compression method string
-     *
-     * Caller must free error if was set
      */
     NodePopplerPage::Writer NodePopplerPage::parseWriter(
             Handle<Value> method, char **error) {
@@ -974,8 +970,6 @@ namespace node {
 
     /**
      * Parse writer options
-     *
-     * Caller must free compression and error if was set.
      */
     void NodePopplerPage::parseWriterOptions(Handle<Value> optionsValue, RenderWork *work) {
         HandleScope scope;

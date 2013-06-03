@@ -52,6 +52,15 @@ namespace node {
                 this->self = self;
                 this->dest = dest;
                 request.data = this;
+                switch (dest) {
+                    case DEST_FILE:
+                    break;
+                    case DEST_BUFFER:
+                    {
+                        this->filename = new char[L_tmpnam];
+                    }
+                    break;
+                }
             }
             ~RenderWork() {
                 if (error) delete [] error;
