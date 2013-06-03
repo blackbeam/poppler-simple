@@ -498,7 +498,7 @@ namespace node {
      *
      * Caller must free error if it was set
      */
-    void NodePopplerPage::display(NodePopplerPage* self, RenderWork *work) {
+    void NodePopplerPage::display(RenderWork *work) {
         SplashColor paperColor;
         paperColor[0] = 255;
         paperColor[1] = 255;
@@ -507,7 +507,7 @@ namespace node {
             splashModeRGB8,
             4, gFalse,
             paperColor);
-        splashOut->startDoc(self->doc);
+        splashOut->startDoc(work->self->doc);
         ImgWriter *writer = NULL;
         switch (work->w) {
             case W_PNG:
@@ -526,7 +526,7 @@ namespace node {
                 ((TiffWriter*)writer)->setCompressionString(work->compression);
         }
 
-        self->pg->displaySlice(splashOut, work->PPI, work->PPI, 0, gFalse, gTrue, work->sx, work->sy, work->sw, work->sh, gFalse);
+        work->self->pg->displaySlice(splashOut, work->PPI, work->PPI, 0, gFalse, gTrue, work->sx, work->sy, work->sw, work->sh, gFalse);
 
         SplashBitmap *bitmap = splashOut->getBitmap();
         SplashError e = bitmap->writeImgFile(writer, work->f, (int)work->PPI, (int)work->PPI);
@@ -601,7 +601,7 @@ namespace node {
         }
 
         if (work->callback.IsEmpty()) {
-            display(this, work);
+            display(work);
         } else {
             uv_queue_work(uv_default_loop(), &work->request, AsyncRenderWork, AsyncRenderAfter);
         }
@@ -609,7 +609,7 @@ namespace node {
 
     void NodePopplerPage::AsyncRenderWork(uv_work_t *req) {
         RenderWork *work = static_cast<RenderWork*>(req->data);
-        display(work->self, work);
+        display(work);
     }
 
     void NodePopplerPage::AsyncRenderAfter(uv_work_t *req, int status) {

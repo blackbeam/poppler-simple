@@ -104,7 +104,7 @@ namespace node {
         double getRotate() { return pg->getRotate(); }
         bool isDocClosed() { return docClosed; }
 
-        static void display(NodePopplerPage *self, RenderWork *work);
+        static void display(RenderWork *work);
 
     protected:
         static v8::Handle<v8::Value> New(const v8::Arguments &args);
