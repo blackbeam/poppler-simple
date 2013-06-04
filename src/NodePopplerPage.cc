@@ -650,18 +650,18 @@ namespace node {
             THROW_SYNC_ASYNC_ERR(work, err);
         }
 
-        work->openStream();
-        if (work->error) {
-            Local<Value> err = Exception::Error(String::New(work->error));
-            THROW_SYNC_ASYNC_ERR(work, err);
-        }
-
         if (args.Length() > 2 && args[2]->IsObject()) {
             work->setWriterOptions(args[2]);
             if (work->error) {
                 Local<Value> err = Exception::Error(String::New(work->error));
                 THROW_SYNC_ASYNC_ERR(work, err);
             }
+        }
+
+        work->openStream();
+        if (work->error) {
+            Local<Value> err = Exception::Error(String::New(work->error));
+            THROW_SYNC_ASYNC_ERR(work, err);
         }
 
         self->renderToStream(work);
@@ -751,18 +751,18 @@ namespace node {
             THROW_SYNC_ASYNC_ERR(work, err);
         }
 
-        work->openStream();
-        if (work->error) {
-            Local<Value> err = Exception::Error(String::New(work->error));
-            THROW_SYNC_ASYNC_ERR(work, err);
-        }
-
         if (args.Length() > 3 && args[3]->IsObject()) {
             work->setWriterOptions(args[3]);
             if (work->error) {
                 Local<Value> err = Exception::Error(String::New(work->error));
                 THROW_SYNC_ASYNC_ERR(work, err);
             }
+        }
+
+        work->openStream();
+        if (work->error) {
+            Local<Value> err = Exception::Error(String::New(work->error));
+            THROW_SYNC_ASYNC_ERR(work, err);
         }
 
         self->renderToStream(work);
