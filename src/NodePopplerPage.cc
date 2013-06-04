@@ -828,17 +828,10 @@ namespace node {
             THROW_SYNC_ASYNC_ERR(work, err);
         }
 
-        if (!args[0]->IsString()) {
-            Local<Value> err = Exception::TypeError(String::New("'path' must be an instance of string"));
+        work->setPath(args[0]);
+        if (work->error) {
+            Local<Value> err = Exception::Error(String::New(work->error));
             THROW_SYNC_ASYNC_ERR(work, err);
-        } else {
-            if (args[0]->ToString()->Utf8Length() > 0) {
-                work->filename = new char[args[0]->ToString()->Utf8Length() + 1];
-                args[0]->ToString()->WriteUtf8(work->filename);
-            } else {
-                Local<Value> err = Exception::TypeError(String::New("'path' can't be empty"));
-                THROW_SYNC_ASYNC_ERR(work, err);
-            }
         }
 
         work->setWriter(args[1]);
@@ -1074,6 +1067,24 @@ namespace node {
             }
         } else {
             char *e = (char*)"'PPI' must be an instance of number";
+            this->error = new char[strlen(e)+1];
+            strcpy(this->error, e);
+        }
+    }
+
+    void NodePopplerPage::RenderWork::setPath(Handle<Value> path) {
+        HandleScope scope;
+        if (path->IsString()) {
+            if (path->ToString()->Utf8Length() > 0) {
+                this->filename = new char[path->ToString()->Utf8Length() + 1];
+                path->ToString()->WriteUtf8(this->filename);
+            } else {
+                char *e = (char*) "'path' can't be empty";
+                this->error = new char[strlen(e)+1];
+                strcpy(this->error, e);
+            }
+        } else {
+            char *e = (char*) "'path' must be an instance of string";
             this->error = new char[strlen(e)+1];
             strcpy(this->error, e);
         }

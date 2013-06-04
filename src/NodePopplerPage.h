@@ -72,6 +72,7 @@ namespace node {
             }
             void setWriter(v8::Handle<v8::Value> method);
             void setPPI(v8::Handle<v8::Value> PPI);
+            void setPath(v8::Handle<v8::Value> path);
 
             uv_work_t request;
             v8::Persistent<v8::Function> callback;
