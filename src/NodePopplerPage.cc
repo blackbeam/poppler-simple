@@ -1025,8 +1025,9 @@ namespace node {
 
     void NodePopplerPage::RenderWork::setWriter(Handle<Value> method) {
         HandleScope scope;
-        if (method->IsString()) {
-            String::Utf8Value m(method);
+        char *e = NULL;
+        String::Utf8Value m(method);
+        if (m.length() > 0) {
             if (strncmp(*m, "png", 3) == 0) {
                 this->w = W_PNG;
             } else if (strncmp(*m, "jpeg", 4) == 0) {
@@ -1034,51 +1035,54 @@ namespace node {
             } else if (strncmp(*m, "tiff", 4) == 0) {
                 this->w = W_TIFF;
             } else {
-                char *e = (char*)"Unsupported compression method";
-                this->error = new char[strlen(e)+1];
-                strcpy(this->error, e);
+                e = (char*)"Unsupported compression method";
             }
-            strcpy(this->format, *m);
         } else {
-            char *e = (char*)"'method' must be an instance of String";
-            this->error = new char[strlen(e)+1];
+            e = (char*)"'method' must be an instance of String";
+        }
+        if (e) {
+            this->error = new char[strlen(e) + 1];
             strcpy(this->error, e);
+        } else {
+            strcpy(this->format, *m);
         }
     }
 
     void NodePopplerPage::RenderWork::setPPI(Handle<Value> PPI) {
         HandleScope scope;
+        char *e = NULL;
         if (PPI->IsNumber()) {
             double ppi;
             ppi = PPI->NumberValue();
             if (0 > ppi) {
-                char *e = (char*)"'PPI' value must be greater then 0";
-                this->error = new char[strlen(e)+1];
-                strcpy(this->error, e);
+                e = (char*)"'PPI' value must be greater then 0";
             } else {
                 this->PPI = ppi;
             }
         } else {
-            char *e = (char*)"'PPI' must be an instance of number";
-            this->error = new char[strlen(e)+1];
+            e = (char*)"'PPI' must be an instance of number";
+        }
+        if (e) {
+            this->error = new char[strlen(e) + 1];
             strcpy(this->error, e);
         }
     }
 
     void NodePopplerPage::RenderWork::setPath(Handle<Value> path) {
         HandleScope scope;
+        char *e = NULL;
         if (path->IsString()) {
             if (path->ToString()->Utf8Length() > 0) {
                 this->filename = new char[path->ToString()->Utf8Length() + 1];
                 path->ToString()->WriteUtf8(this->filename);
             } else {
-                char *e = (char*) "'path' can't be empty";
-                this->error = new char[strlen(e)+1];
-                strcpy(this->error, e);
+                e = (char*) "'path' can't be empty";
             }
         } else {
-            char *e = (char*) "'path' must be an instance of string";
-            this->error = new char[strlen(e)+1];
+            e = (char*) "'path' must be an instance of string";
+        }
+        if (e) {
+            this->error = new char[strlen(e) + 1];
             strcpy(this->error, e);
         }
     }
