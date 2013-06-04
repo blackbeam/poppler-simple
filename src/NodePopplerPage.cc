@@ -544,59 +544,7 @@ namespace node {
      *
      * Backend function for \see NodePopplerPage::renderToBuffer and \see NodePopplerPage::renderToFile
      */
-    void NodePopplerPage::renderToStream(int argc, Handle<Value> argv[], RenderWork *work) {
-        HandleScope scope;
-        double x, y, w, h, scale, scaledWidth, scaledHeight;
-
-        parseRenderArguments(argv, argc, work, &x, &y, &w, &h);
-
-        if (work->error) {
-            if (!work->callback.IsEmpty()) {
-                Local<Value> err = Exception::Error(String::New(work->error));
-                Local<Value> argv[] = {err};
-                TryCatch try_catch;
-                work->callback->Call(Context::GetCurrent()->Global(), 1, argv);
-                if (try_catch.HasCaught()) {
-                    node::FatalException(try_catch);
-                }
-                delete work;
-                return;
-            } else {
-                return;
-            }
-        }
-
-        // cap width and height to fit page size
-        if (y + h > 1.0) { h = 1.0 - y; }
-        if (x + w > 1.0) { w = 1.0 - x; }
-
-        scale = work->PPI / 72.0;
-        scaledWidth = getWidth() * scale;
-        scaledHeight = getHeight() * scale;
-        work->sw = scaledWidth * w;
-        work->sh = scaledHeight * h;
-        work->sx = scaledWidth * x;
-        work->sy = scaledHeight - scaledHeight * y - work->sh; // convert to bottom related coords
-
-        if ((unsigned long)work->sh * work->sw > 100000000L) {
-            if (!work->callback.IsEmpty()) {
-                Local<Value> err = Exception::Error(String::New("Result image is too big"));
-                Local<Value> argv[] = {err};
-                TryCatch try_catch;
-                work->callback->Call(Context::GetCurrent()->Global(), 1, argv);
-                if (try_catch.HasCaught()) {
-                    node::FatalException(try_catch);
-                }
-                delete work;
-                return;
-            } else {
-                char *e = (char*)"Result image is too big";
-                work->error = new char[strlen(e)+1];
-                strcpy(work->error, e);
-                return;
-            }
-        }
-
+    void NodePopplerPage::renderToStream(RenderWork *work) {
         if (work->callback.IsEmpty()) {
             display(work);
         } else {
@@ -625,46 +573,27 @@ namespace node {
                 unlink(work->filename);
             }
         } else {
+            work->closeStream();
             switch (work->dest) {
                 case DEST_FILE:
                 {
                     Local<v8::Object> out = v8::Object::New();
                     out->Set(String::NewSymbol("type"), String::NewSymbol("file"));
                     out->Set(String::NewSymbol("path"), String::New(work->filename));
-                    Local<Value> args[] = {Local<Value>::New(Null()), Local<Value>::New(out)};
-                    work->callback->Call(Context::GetCurrent()->Global(), 2, args);
+                    Local<Value> argv[] = {Local<Value>::New(Null()), Local<Value>::New(out)};
+                    work->callback->Call(Context::GetCurrent()->Global(), 2, argv);
                     break;
                 }
                 case DEST_BUFFER:
                 {
-                    Buffer *buffer;
+                    Buffer *buffer = Buffer::New(work->mstrm_len);
                     Local<v8::Object> out = v8::Object::New();
-
-                    if (work->w == W_TIFF) {
-                        struct stat s;
-                        int filedes;
-                        filedes = open(work->filename, O_RDONLY);
-                        fstat(filedes, &s);
-                        if (s.st_size > 0) {
-                            work->mstrm_len = s.st_size;
-                            work->mstrm_buf = (char*) malloc(work->mstrm_len);
-                            read(filedes, work->mstrm_buf, work->mstrm_len);
-                        }
-                        close(filedes);
-                        remove(work->filename);
-                    } else {
-                        // must close memstream before read from it's buffer
-                        fclose(work->f);
-                        work->f = NULL;
-                    }
-
-                    buffer = Buffer::New(work->mstrm_len);
                     memcpy(Buffer::Data(buffer), work->mstrm_buf, work->mstrm_len);
                     out->Set(String::NewSymbol("type"), String::NewSymbol("buffer"));
                     out->Set(String::NewSymbol("format"), String::NewSymbol(work->format));
                     out->Set(String::NewSymbol("data"), buffer->handle_);
-                    Local<Value> args[] = {Local<Value>::New(Null()), Local<Value>::New(out)};
-                    work->callback->Call(Context::GetCurrent()->Global(), 2, args);
+                    Local<Value> argv[] = {Local<Value>::New(Null()), Local<Value>::New(out)};
+                    work->callback->Call(Context::GetCurrent()->Global(), 2, argv);
                     break;
                 }
             }
@@ -721,42 +650,19 @@ namespace node {
             THROW_SYNC_ASYNC_ERR(work, err);
         }
 
-        if (!work->callback.IsEmpty()) {
-            if (args.Length() > 3) {
-                Local<Value> argv[3] = {args[0], args[1], args[2]};
-                self->renderToStream(3, argv, work);
-            } else {
-                Local<Value> argv[2] = {args[0], args[1]};
-                self->renderToStream(2, argv, work);
+        if (args.Length() > 2 && args[2]->IsObject()) {
+            work->setWriterOptions(args[2]);
+            if (work->error) {
+                Local<Value> err = Exception::Error(String::New(work->error));
+                THROW_SYNC_ASYNC_ERR(work, err);
             }
+        }
+
+        self->renderToStream(work);
+        if (!work->callback.IsEmpty()) {
             return scope.Close(Undefined());
         } else {
-            if (args.Length() > 2) {
-                Handle<Value> argv[3] = {args[0], args[1], args[2]};
-                self->renderToStream(3, argv, work);
-            } else {
-                Handle<Value> argv[2] = {args[0], args[1]};
-                self->renderToStream(2, argv, work);
-            }
-
-            if (work->w == W_TIFF) {
-                struct stat s;
-                int filedes;
-                filedes = open(work->filename, O_RDONLY);
-                fstat(filedes, &s);
-                if (s.st_size > 0) {
-                    work->mstrm_len = s.st_size;
-                    work->mstrm_buf = (char*) malloc(work->mstrm_len);
-                    read(filedes, work->mstrm_buf, work->mstrm_len);
-                }
-                close(filedes);
-                remove(work->filename);
-            } else {
-                // must close memstream before read from it's buffer
-                fclose(work->f);
-                work->f = NULL;
-            }
-
+            work->closeStream();
 
             if (work->error) {
                 Handle<Value> e = Exception::Error(String::New(work->error));
@@ -845,24 +751,19 @@ namespace node {
             THROW_SYNC_ASYNC_ERR(work, err);
         }
 
-        if (!work->callback.IsEmpty()) {
-            if (args.Length() == 4) {
-                Handle<Value> argv[2] = {args[1], args[2]};
-                self->renderToStream(2, argv, work);
-            } else {
-                Handle<Value> argv[3] = {args[1], args[2], args[3]};
-                self->renderToStream(3, argv, work);
+        if (args.Length() > 3 && args[3]->IsObject()) {
+            work->setWriterOptions(args[3]);
+            if (work->error) {
+                Local<Value> err = Exception::Error(String::New(work->error));
+                THROW_SYNC_ASYNC_ERR(work, err);
             }
+        }
+
+        self->renderToStream(work);
+        if (!work->callback.IsEmpty()) {
             return scope.Close(Undefined());
         } else {
-            if (args.Length() == 3) {
-                Handle<Value> argv[2] = {args[1], args[2]};
-                self->renderToStream(2, argv, work);
-            } else {
-                Handle<Value> argv[3] = {args[1], args[2], args[3]};
-                self->renderToStream(3, argv, work);
-            }
-
+            work->closeStream();
             if (work->error) {
                 Handle<Value> e = Exception::Error(String::New(work->error));
                 unlink(work->filename);
@@ -875,151 +776,6 @@ namespace node {
                 delete work;
                 return scope.Close(out);
             }
-        }
-    }
-
-    /**
-     * Parses render arguments in order [method, PPI, options]
-     *
-     * Parses method, PPI and image compression method options (quality for jpeg and compression
-     * string for tiff)
-     */
-    void NodePopplerPage::parseRenderArguments(
-            Handle<Value> argv[], int argc, RenderWork *work,
-            double *x, double *y, double *w, double *h) {
-        HandleScope scope;
-
-        if (argc == 3) {
-            parseWriterOptions(argv[2], work);
-            if (work->error) { return; }
-        }
-
-        Handle<String> sk = String::NewSymbol("slice");
-        if (argc == 3 && argv[2]->ToObject()->Has(sk)) {
-            parseSlice(argv[2]->ToObject()->Get(sk), x, y, w, h, &work->error);
-            if (work->error) { return; }
-        } else {
-            *x = *y = 0;
-            *w = *h = 1;
-        }
-    }
-
-    /**
-     * Parse writer options
-     */
-    void NodePopplerPage::parseWriterOptions(Handle<Value> optionsValue, RenderWork *work) {
-        HandleScope scope;
-
-        Local<String> ck = String::NewSymbol("compression");
-        Local<String> qk = String::NewSymbol("quality");
-        Local<String> pk = String::NewSymbol("progressive");
-        Local<v8::Object> options;
-
-        if (!optionsValue->IsObject()) {
-            char *e = (char*)"'options' must be an instance of Object";
-            work->error = new char[strlen(e)+1];
-            strcpy(work->error, e);
-            return;
-        } else {
-            options = optionsValue->ToObject();
-        }
-        
-        switch (work->w) {
-            case W_TIFF:
-                if (options->Has(ck)) {
-                    Handle<Value> cv = options->Get(ck);
-                    if (cv->IsString() && cv->ToString()->Utf8Length() > 0) {
-                        Handle<String> cmp = cv->ToString();
-                        work->compression = new char[cmp->Utf8Length()+1];
-                        cmp->WriteUtf8(work->compression);
-                    }
-                }
-                break;
-            case W_JPEG:
-                if (options->Has(qk)) {
-                    Handle<Value> qv = options->Get(qk);
-                    if (qv->IsUint32()) {
-                        work->quality = qv->Uint32Value();
-                        if (0 > work->quality || work->quality > 100) {
-                            char *e = (char*)"'quality' not in 0 - 100 interval";
-                            work->error = new char[strlen(e)+1];
-                            strcpy(work->error, e);
-                        }
-                    } else {
-                        char *e = (char*)"'quality' must be 0 - 100 interval integer";
-                        work->error = new char[strlen(e)+1];
-                        strcpy(work->error, e);
-                    }
-                }
-                if (options->Has(pk)) {
-                    Handle<Value> pv = options->Get(pk);
-                    if (pv->IsBoolean()) {
-                        work->progressive = pv->BooleanValue();
-                    } else {
-                        char *e = (char*)"'progressive' must be a boolean value";
-                        work->error = new char[strlen(e)+1];
-                        strcpy(work->error, e);
-                    }
-                }
-                break;
-            case W_PNG:
-                break;
-        }
-    }
-
-    /**
-     * Parse slice values
-     *
-     * \see NodePopplerPage::renderToFile
-     */
-    void NodePopplerPage::parseSlice(
-            Handle<Value> sliceValue,
-            double *x, double *y, double *w, double *h,
-            char **error) {
-        HandleScope scope;
-        Local<v8::Object> slice;
-        Local<String> xk = String::NewSymbol("x");
-        Local<String> yk = String::NewSymbol("y");
-        Local<String> wk = String::NewSymbol("w");
-        Local<String> hk = String::NewSymbol("h");
-
-        if (!sliceValue->IsObject()) {
-            char *e = (char*)"'slice' must be an instance of Object";
-            *error = new char[strlen(e)+1];
-            strcpy(*error, e);
-            return;
-        } else {
-            slice = sliceValue->ToObject();
-        }
-
-        if (slice->Has(xk) && slice->Has(yk) && slice->Has(wk) && slice->Has(hk)) {
-            Local<Value> xv = slice->Get(xk);
-            Local<Value> yv = slice->Get(yk);
-            Local<Value> wv = slice->Get(wk);
-            Local<Value> hv = slice->Get(hk);
-            if (!xv->IsNumber() || !yv->IsNumber() || !wv->IsNumber() || !hv->IsNumber()) {
-                char *e = (char*)"Wrong values for slice";
-                *error = new char[strlen(e)+1];
-                strcpy(*error, e);
-            } else {
-                *x = xv->NumberValue();
-                *y = yv->NumberValue();
-                *w = wv->NumberValue();
-                *h = hv->NumberValue();
-                if (
-                        (0 > *x || *x > 1) ||
-                        (0 > *y || *y > 1) ||
-                        (0 > *w || *w > 1) ||
-                        (0 > *h || *h > 1)) {
-                    char *e = (char*)"Slice values not in 0 - 1 interval";
-                    *error = new char[strlen(e)+1];
-                    strcpy(*error, e);
-                }
-            }
-        } else {
-            char *e = (char*)"Not enough values for slice";
-            *error = new char[strlen(e)+1];
-            strcpy(*error, e);
         }
     }
 
@@ -1045,6 +801,83 @@ namespace node {
             strcpy(this->error, e);
         } else {
             strcpy(this->format, *m);
+        }
+    }
+
+    void NodePopplerPage::RenderWork::setWriterOptions(Handle<Value> optsVal) {
+        HandleScope scope;
+
+        Local<String> ck = String::NewSymbol("compression");
+        Local<String> qk = String::NewSymbol("quality");
+        Local<String> pk = String::NewSymbol("progressive");
+        Local<String> sk = String::NewSymbol("slice");
+        Local<v8::Object> options;
+        char *e = NULL;
+
+        if (!optsVal->IsObject()) {
+            e = (char*) "'options' must be an instance of Object";
+        } else {
+            options = optsVal->ToObject();
+            switch (this->w) {
+                case W_TIFF:
+                {
+                    if (options->Has(ck)) {
+                        Handle<Value> cv = options->Get(ck);
+                        if (cv->IsString()) {
+                            Handle<String> cmp = cv->ToString();
+                            if (cmp->Utf8Length() > 0) {
+                                this->compression = new char[cmp->Utf8Length()+1];
+                                cmp->WriteUtf8(this->compression);
+                            } else {
+                                e = (char*) "'compression' option value could not be an empty string";
+                            }
+                        } else {
+                            e = (char*) "'compression' option must be an instance of string";
+                        }
+                    }
+                }
+                break;
+                case W_JPEG:
+                {
+                    if (options->Has(qk)) {
+                        Handle<Value> qv = options->Get(qk);
+                        if (qv->IsUint32()) {
+                            this->quality = qv->Uint32Value();
+                            if (0 > this->quality || this->quality > 100) {
+                                e = (char*) "'quality' not in 0 - 100 interval";
+                            }
+                        } else {
+                            e = (char*) "'quality' option value must be 0 - 100 interval integer";
+                        }
+                    }
+                    if (options->Has(pk)) {
+                        Handle<Value> pv = options->Get(pk);
+                        if (pv->IsBoolean()) {
+                            this->progressive = pv->BooleanValue();
+                        } else {
+                            e = (char*)"'progressive' option value must be a boolean value";
+                        }
+                    }
+                }
+                break;
+                case W_PNG:
+                break;
+            }
+            if (options->Has(sk)) {\
+                this->setSlice(options->Get(sk));
+            } else {
+                // Injecting fake slice to render whole page
+                Local<v8::Object> slice = v8::Object::New();
+                slice->Set(String::NewSymbol("x"), Number::New(0));
+                slice->Set(String::NewSymbol("y"), Number::New(0));
+                slice->Set(String::NewSymbol("w"), Number::New(1));
+                slice->Set(String::NewSymbol("h"), Number::New(1));
+                this->setSlice(slice);
+            }
+        }
+        if (e) {
+            this->error = new char[strlen(e)+1];
+            strcpy(this->error, e);
         }
     }
 
@@ -1087,6 +920,64 @@ namespace node {
         }
     }
 
+    void NodePopplerPage::RenderWork::setSlice(Handle<Value> sliceVal) {
+        HandleScope scope;
+        Local<v8::Object> slice;
+        Local<String> xk = String::NewSymbol("x");
+        Local<String> yk = String::NewSymbol("y");
+        Local<String> wk = String::NewSymbol("w");
+        Local<String> hk = String::NewSymbol("h");
+        char *e = NULL;
+        if (!sliceVal->IsObject()) {
+            e = (char*) "'slice' option value must be an instance of Object";
+        } else {
+            slice = sliceVal->ToObject();
+            if (slice->Has(xk) && slice->Has(yk) && slice->Has(wk) && slice->Has(hk)) {
+                Local<Value> xv = slice->Get(xk);
+                Local<Value> yv = slice->Get(yk);
+                Local<Value> wv = slice->Get(wk);
+                Local<Value> hv = slice->Get(hk);
+                if (xv->IsNumber() && yv->IsNumber() && wv->IsNumber() && hv->IsNumber()) {
+                    double x, y, w, h;
+                    x = xv->NumberValue();
+                    y = yv->NumberValue();
+                    w = wv->NumberValue();
+                    h = hv->NumberValue();
+                    if (
+                            (0.0 > x || x > 1.0) ||
+                            (0.0 > y || y > 1.0) ||
+                            (0.0 > w || w > 1.0) ||
+                            (0.0 > h || h > 1.0)) {
+                        e = (char*) "Slice values must be 0 - 1 interval numbers";
+                    } else {
+                        double scale, scaledWidth, scaledHeight;
+                        // cap width and height to fit page size
+                        if (y + h > 1.0) { h = 1.0 - y; }
+                        if (x + w > 1.0) { w = 1.0 - x; }
+                        scale = this->PPI / 72.0;
+                        scaledWidth = this->self->getWidth() * scale;
+                        scaledHeight = this->self->getHeight() * scale;
+                        this->sw = scaledWidth * w;
+                        this->sh = scaledHeight * h;
+                        this->sx = scaledWidth * x;
+                        this->sy = scaledHeight - scaledHeight * y - this->sh; // convert to bottom related coords
+                        if ((unsigned long)(this->sh * this->sw) > 100000000L) {
+                            e = (char*) "Result image is too big";
+                        }
+                    }
+                } else {
+                    e = (char*) "Slice must be an object: {x: Number, y: Number, w: Number, h: Number}";
+                }
+            } else {
+                e = (char*) "Slice must be an object: {x: Number, y: Number, w: Number, h: Number}";
+            }
+        }
+        if (e) {
+            this->error = new char[strlen(e) + 1];
+            strcpy(this->error, e);
+        }
+    }
+
     /**
      * Opens output stream for rendering
      */
@@ -1121,4 +1012,32 @@ namespace node {
             strcpy(this->error, e);
         }
     }
+
+    /**
+     * Closes output stream
+     */
+     void NodePopplerPage::RenderWork::closeStream() {
+        fclose(this->f);
+        this->f = NULL;
+        switch(this->dest) {
+            case DEST_FILE:
+            break;
+            case DEST_BUFFER:
+            {
+                if (this->w == W_TIFF) {
+                    struct stat s;
+                    int filedes;
+                    filedes = open(this->filename, O_RDONLY);
+                    fstat(filedes, &s);
+                    if (s.st_size > 0) {
+                        this->mstrm_len = s.st_size;
+                        this->mstrm_buf = (char*) malloc(this->mstrm_len);
+                        read(filedes, this->mstrm_buf, this->mstrm_len);
+                    }
+                    close(filedes);
+                    remove(this->filename);
+                }
+            }
+        }
+     }
 }

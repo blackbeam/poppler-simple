@@ -62,9 +62,12 @@ namespace node {
                 if (f) fclose(f);
             }
             void setWriter(v8::Handle<v8::Value> method);
+            void setWriterOptions(v8::Handle<v8::Value> optsVal);
             void setPPI(v8::Handle<v8::Value> PPI);
             void setPath(v8::Handle<v8::Value> path);
+            void setSlice(v8::Handle<v8::Value> sliceVal);
             void openStream();
+            void closeStream();
 
             uv_work_t request;
             v8::Persistent<v8::Function> callback;
@@ -122,15 +125,6 @@ namespace node {
 
         static void AsyncRenderWork(uv_work_t *req);
         static void AsyncRenderAfter(uv_work_t *req, int status);
-        static void parseRenderArguments(
-            v8::Handle<v8::Value> argv[], int argc, RenderWork *work, double *x, double *y, double *w, double *h);
-        static void parseWriterOptions(v8::Handle<v8::Value> options, RenderWork *work);
-        static Writer parseWriter(v8::Handle<v8::Value> method, char **error);
-        static double parsePPI(v8::Handle<v8::Value> PPI, char **error);
-        static void parseSlice(
-            v8::Handle<v8::Value> sliceValue,
-            double *x, double *y, double *w, double *h,
-            char **error);
         void parseAnnot(v8::Handle<v8::Value> rect,
             double *x1, double *y1,
             double *x2, double *y2,
@@ -165,7 +159,7 @@ namespace node {
             }
             return text;
         }
-        void renderToStream(int argc, v8::Handle<v8::Value> argv[], RenderWork *work);
+        void renderToStream(RenderWork *work);
         void addAnnot(v8::Handle<v8::Array> array, char **error);
 
         PDFDoc *doc;
