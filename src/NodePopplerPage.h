@@ -52,6 +52,7 @@ namespace node {
                 this->self = self;
                 this->dest = dest;
                 request.data = this;
+                format[0] = '\0';
             }
             ~RenderWork() {
                 if (error) delete [] error;
