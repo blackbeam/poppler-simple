@@ -233,12 +233,44 @@ describe('PopplerPage', function () {
                 fs.unlinkSync(out.path);
             });
         });
+        it('should throw on wrong arguments', function () {
+            pages.forEach(function (x) {
+                a.throws(function () {
+                    var out = x.renderToFile('foo');
+                    out = null;
+                }, new RegExp("Arguments"));
+            });
+        });
         it('should throw on bad output path', function () {
             pages.forEach(function (x) {
                 a.throws(function () {
                     var out = x.renderToFile('/t/t/t/t/t/t/t/123', 'jpeg', 50);
                     out = null;
                 }, new RegExp("Could not open output stream"));
+            });
+        });
+        it('should throw on unknown format', function () {
+            pages.forEach(function (x) {
+                a.throws(function () {
+                    var out = x.renderToFile('test/out.bmp', 'bmp', 50);
+                    out = null;
+                }, new RegExp('Unsupported compression method'));
+            });
+        });
+        it('should throw on bad PPI value', function () {
+            pages.forEach(function (x) {
+                a.throws(function () {
+                    var out = x.renderToFile('test/x.jpeg', 'jpeg', -1);
+                    out = null;
+                }, new RegExp("PPI' value must be greater then 0"));
+            });
+        });
+        it('should throw on bad writer options', function () {
+            pages.forEach(function (x) {
+                a.throws(function () {
+                    var out = x.renderToFile('test/x.jpeg', 'jpeg', 50, {quality: 'foobar'});
+                    out = null;
+                }, new RegExp("'quality' option value must be 0 - 100 interval integer"));
             });
         });
     });
@@ -297,10 +329,31 @@ describe('PopplerPage', function () {
                 }
             }, 10);
         });
-        it('should pass errors asyncronously', function (done) {
+        it('should pass error on bad output path', function (done) {
             pages[0].renderToFile('/t/t/t/t/t/t/t/123', 'jpeg', 50, function (err, out) {
                 a.equal(out, undefined);
                 a.equal(err.message, "Could not open output stream");
+                done();
+            });
+        });
+        it('should pass error on unknown format', function (done) {
+            pages[0].renderToFile('test/out.bmp', 'bmp', 50, function (err, out) {
+                a.equal(out, undefined);
+                a.equal(err.message, "Unsupported compression method");
+                done();
+            });
+        });
+        it('should pass error on bad PPI value', function (done) {
+            pages[0].renderToFile('test/x.jpeg', 'jpeg', -1, function (err, out) {
+                a.equal(out, undefined);
+                a.equal(err.message, "'PPI' value must be greater then 0");
+                done();
+            });
+        });
+        it('should pass error on bad writer options', function (done) {
+            pages[0].renderToFile('test/x.jpeg', 'jpeg', 50, {quality: 'foobar'}, function (err, out) {
+                a.equal(out, undefined);
+                a.equal(err.message, "'quality' option value must be 0 - 100 interval integer");
                 done();
             });
         });
