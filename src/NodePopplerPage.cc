@@ -561,6 +561,8 @@ namespace node {
         HandleScope scope;
         RenderWork *work = static_cast<RenderWork*>(req->data);
 
+        work->closeStream();
+
         if (work->error) {
             Local<Value> err = Exception::Error(String::New(work->error));
             Local<Value> argv[] = {err};
@@ -569,11 +571,7 @@ namespace node {
             if (try_catch.HasCaught()) {
                 node::FatalException(try_catch);
             }
-            if (work->dest == DEST_FILE || work->w == W_TIFF) {
-                unlink(work->filename);
-            }
         } else {
-            work->closeStream();
             switch (work->dest) {
                 case DEST_FILE:
                 {
@@ -581,7 +579,11 @@ namespace node {
                     out->Set(String::NewSymbol("type"), String::NewSymbol("file"));
                     out->Set(String::NewSymbol("path"), String::New(work->filename));
                     Local<Value> argv[] = {Local<Value>::New(Null()), Local<Value>::New(out)};
+                    TryCatch try_catch;
                     work->callback->Call(Context::GetCurrent()->Global(), 2, argv);
+                    if (try_catch.HasCaught()) {
+                        node::FatalException(try_catch);
+                    }
                     break;
                 }
                 case DEST_BUFFER:
@@ -593,7 +595,11 @@ namespace node {
                     out->Set(String::NewSymbol("format"), String::NewSymbol(work->format));
                     out->Set(String::NewSymbol("data"), buffer->handle_);
                     Local<Value> argv[] = {Local<Value>::New(Null()), Local<Value>::New(out)};
+                    TryCatch try_catch;
                     work->callback->Call(Context::GetCurrent()->Global(), 2, argv);
+                    if (try_catch.HasCaught()) {
+                        node::FatalException(try_catch);
+                    }
                     break;
                 }
             }
@@ -1035,7 +1041,7 @@ namespace node {
                         read(filedes, this->mstrm_buf, this->mstrm_len);
                     }
                     close(filedes);
-                    remove(this->filename);
+                    unlink(this->filename);
                 }
             }
         }
