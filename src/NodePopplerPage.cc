@@ -691,7 +691,7 @@ namespace node {
         if (args.Length() < 2 || !args[0]->IsString()) {
             delete work;
             return ThrowException(Exception::Error(String::New(
-                "Arguments: (method: String, PPI: Number[, options: Object]")));
+                "Arguments: (method: String, PPI: Number[, options: Object, callback: Function]")));
         }
 
         if (args[args.Length() - 1]->IsFunction()) {
@@ -715,16 +715,9 @@ namespace node {
             THROW_SYNC_ASYNC_ERR(work, err);
         }
 
-        // Hack. libtiff fail on writing to memstream
-        if (work->w == W_TIFF) {
-            tmpnam(work->filename);
-            work->f = fopen(work->filename, "wb");
-        } else {
-            work->f = open_memstream(&work->mstrm_buf, &work->mstrm_len);
-        }
-        
-        if (!work->f) {
-            Local<Value> err = Exception::Error(String::New("Can't open output stream"));
+        work->openStream();
+        if (work->error) {
+            Local<Value> err = Exception::Error(String::New(work->error));
             THROW_SYNC_ASYNC_ERR(work, err);
         }
 
@@ -846,9 +839,9 @@ namespace node {
             THROW_SYNC_ASYNC_ERR(work, err);
         }
 
-        work->f = fopen(work->filename, "wb");
-        if (!work->f) {
-            Local<Value> err = Exception::Error(String::New("Can't open output file"));
+        work->openStream();
+        if (work->error) {
+            Local<Value> err = Exception::Error(String::New(work->error));
             THROW_SYNC_ASYNC_ERR(work, err);
         }
 
@@ -1086,6 +1079,41 @@ namespace node {
         } else {
             char *e = (char*) "'path' must be an instance of string";
             this->error = new char[strlen(e)+1];
+            strcpy(this->error, e);
+        }
+    }
+
+    /**
+     * Opens output stream for rendering
+     */
+    void NodePopplerPage::RenderWork::openStream() {
+        char *e = NULL;
+        switch(this->dest) {
+            case DEST_FILE:
+            {
+                if (this->filename) {
+                    this->f = fopen(this->filename, "wb");
+                } else {
+                    e = (char*) "Output file name was not set";
+                }
+            }
+            break;
+            case DEST_BUFFER:
+            {
+                if (this->w == W_TIFF) {
+                    this->filename = new char[L_tmpnam];
+                    tmpnam(this->filename);
+                    this->f = fopen(this->filename, "wb");
+                } else {
+                    this->f = open_memstream(&this->mstrm_buf, &this->mstrm_len);
+                }
+            }
+        }
+        if (!this->f) {
+            e = (char*) "Could not open output stream";
+        }
+        if (e) {
+            this->error = new char[strlen(e) + 1];
             strcpy(this->error, e);
         }
     }

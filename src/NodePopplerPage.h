@@ -52,15 +52,6 @@ namespace node {
                 this->self = self;
                 this->dest = dest;
                 request.data = this;
-                switch (dest) {
-                    case DEST_FILE:
-                    break;
-                    case DEST_BUFFER:
-                    {
-                        this->filename = new char[L_tmpnam];
-                    }
-                    break;
-                }
             }
             ~RenderWork() {
                 if (error) delete [] error;
@@ -73,6 +64,7 @@ namespace node {
             void setWriter(v8::Handle<v8::Value> method);
             void setPPI(v8::Handle<v8::Value> PPI);
             void setPath(v8::Handle<v8::Value> path);
+            void openStream();
 
             uv_work_t request;
             v8::Persistent<v8::Function> callback;

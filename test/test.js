@@ -238,7 +238,7 @@ describe('PopplerPage', function () {
                 a.throws(function () {
                     var out = x.renderToFile('/t/t/t/t/t/t/t/123', 'jpeg', 50);
                     out = null;
-                }, new RegExp("Can't open output file"));
+                }, new RegExp("Could not open output stream"));
             });
         });
     });
@@ -300,7 +300,7 @@ describe('PopplerPage', function () {
         it('should pass errors asyncronously', function (done) {
             pages[0].renderToFile('/t/t/t/t/t/t/t/123', 'jpeg', 50, function (err, out) {
                 a.equal(out, undefined);
-                a.equal(err.message, "Can't open output file");
+                a.equal(err.message, "Could not open output stream");
                 done();
             });
         });
