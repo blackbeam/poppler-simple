@@ -51,6 +51,13 @@ namespace node {
         constructor_template->InstanceTemplate()->SetInternalFieldCount(1);
         constructor_template->SetClassName(String::NewSymbol("PopplerDocument"));
 
+        constructor_template->Set(
+            String::NewSymbol("POPPLER_VERSION_MAJOR"), Uint32::New(POPPLER_VERSION_MAJOR));
+        constructor_template->Set(
+            String::NewSymbol("POPPLER_VERSION_MINOR"), Uint32::New(POPPLER_VERSION_MINOR));
+        constructor_template->Set(
+            String::NewSymbol("POPPLER_VERSION_MICRO"), Uint32::New(POPPLER_VERSION_MICRO));
+
         /** Instance methods
          * Prototype looks like this:
          *  static Handle<Value> funcName(const Arguments &args);
