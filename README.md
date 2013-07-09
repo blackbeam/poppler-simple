@@ -1,9 +1,9 @@
 ## poppler-simple
-A simple javascript interface to [poppler](http://poppler.freedesktop.org/) pdf library.
+A simple javascript interface to [poppler](http://poppler.freedesktop.org/) library.
 
 ### Requirements:
 1. iconv implementation (usually included in glibc).
-2. Modern [poppler](http://poppler.freedesktop.org/) pdf library version (>= 0.20).
+2. Modern [poppler](http://poppler.freedesktop.org/) library version (>= 0.20).
 
 ### Install:
 ```bash
@@ -17,7 +17,7 @@ var PopplerDocument = require('poppler-simple').PopplerDocument;
 
 ### Open document:
 ```javascript
-var doc = new PopplerDocument('file://' + pathToPDFDocument);
+var doc = new PopplerDocument('file://' + pathToDocument);
 ```
 
 ### Get a page:
