@@ -20,8 +20,8 @@ namespace node {
 
     protected:
         static v8::Handle<v8::Value> New(const v8::Arguments &args);
-        void evPageOpened(NodePopplerPage *p);
-        void evPageClosed(NodePopplerPage *p);
+        void evPageOpened(const NodePopplerPage *p);
+        void evPageClosed(const NodePopplerPage *p);
         GooList *pages;
 
     private:

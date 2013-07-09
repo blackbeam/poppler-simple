@@ -62,11 +62,11 @@ namespace node {
                 if (!callback.IsEmpty()) callback.Dispose();
                 if (f) fclose(f);
             }
-            void setWriter(v8::Handle<v8::Value> method);
-            void setWriterOptions(v8::Handle<v8::Value> optsVal);
-            void setPPI(v8::Handle<v8::Value> PPI);
-            void setPath(v8::Handle<v8::Value> path);
-            void setSlice(v8::Handle<v8::Value> sliceVal);
+            void setWriter(const v8::Handle<v8::Value> method);
+            void setWriterOptions(const v8::Handle<v8::Value> optsVal);
+            void setPPI(const v8::Handle<v8::Value> PPI);
+            void setPath(const v8::Handle<v8::Value> path);
+            void setSlice(const v8::Handle<v8::Value> sliceVal);
             void openStream();
             void closeStream();
 
@@ -91,7 +91,7 @@ namespace node {
             NodePopplerPage *self;
         };
 
-        NodePopplerPage(NodePopplerDocument* doc, int32_t pageNum);
+        NodePopplerPage(NodePopplerDocument* doc, const int32_t pageNum);
         ~NodePopplerPage();
         static void Initialize(v8::Handle<v8::Object> target);
         bool isOk() {
@@ -126,7 +126,7 @@ namespace node {
 
         static void AsyncRenderWork(uv_work_t *req);
         static void AsyncRenderAfter(uv_work_t *req, int status);
-        void parseAnnot(v8::Handle<v8::Value> rect,
+        void parseAnnot(const v8::Handle<v8::Value> rect,
             double *x1, double *y1,
             double *x2, double *y2,
             double *x3, double *y3,
@@ -161,7 +161,7 @@ namespace node {
             return text;
         }
         void renderToStream(RenderWork *work);
-        void addAnnot(v8::Handle<v8::Array> array, char **error);
+        void addAnnot(const v8::Handle<v8::Array> array, char **error);
 
         PDFDoc *doc;
         Page *pg;

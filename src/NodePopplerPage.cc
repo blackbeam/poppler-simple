@@ -83,7 +83,7 @@ namespace node {
         if (!docClosed) { parent->evPageClosed(this); }
     }
 
-    NodePopplerPage::NodePopplerPage(NodePopplerDocument* doc, int32_t pageNum) : ObjectWrap() {
+    NodePopplerPage::NodePopplerPage(NodePopplerDocument* doc, const int32_t pageNum) : ObjectWrap() {
         text = NULL;
         color = NULL;
 
@@ -400,7 +400,7 @@ namespace node {
     /**
      * Add annotations to page
      */
-    void NodePopplerPage::addAnnot(Handle<v8::Array> array, char **error) {
+    void NodePopplerPage::addAnnot(const Handle<v8::Array> array, char **error) {
         HandleScope scope;
 
         double x1, y1, x2, y2, x3, y3, x4, y4;
@@ -439,7 +439,7 @@ namespace node {
     /**
      * Parse annotation quadrilateral
      */
-    void NodePopplerPage::parseAnnot(Handle<Value> rect,
+    void NodePopplerPage::parseAnnot(const Handle<Value> rect,
             double *x1, double *y1,
             double *x2, double *y2,
             double *x3, double *y3,
@@ -789,7 +789,7 @@ namespace node {
         }
     }
 
-    void NodePopplerPage::RenderWork::setWriter(Handle<Value> method) {
+    void NodePopplerPage::RenderWork::setWriter(const Handle<Value> method) {
         HandleScope scope;
         char *e = NULL;
         String::Utf8Value m(method);
@@ -814,7 +814,7 @@ namespace node {
         }
     }
 
-    void NodePopplerPage::RenderWork::setWriterOptions(Handle<Value> optsVal) {
+    void NodePopplerPage::RenderWork::setWriterOptions(const Handle<Value> optsVal) {
         HandleScope scope;
 
         Local<String> ck = String::NewSymbol("compression");
@@ -891,7 +891,7 @@ namespace node {
         }
     }
 
-    void NodePopplerPage::RenderWork::setPPI(Handle<Value> PPI) {
+    void NodePopplerPage::RenderWork::setPPI(const Handle<Value> PPI) {
         HandleScope scope;
         char *e = NULL;
         if (PPI->IsNumber()) {
@@ -911,7 +911,7 @@ namespace node {
         }
     }
 
-    void NodePopplerPage::RenderWork::setPath(Handle<Value> path) {
+    void NodePopplerPage::RenderWork::setPath(const Handle<Value> path) {
         HandleScope scope;
         char *e = NULL;
         if (path->IsString()) {
@@ -930,7 +930,7 @@ namespace node {
         }
     }
 
-    void NodePopplerPage::RenderWork::setSlice(Handle<Value> sliceVal) {
+    void NodePopplerPage::RenderWork::setSlice(const Handle<Value> sliceVal) {
         HandleScope scope;
         Local<v8::Object> slice;
         Local<String> xk = String::NewSymbol("x");

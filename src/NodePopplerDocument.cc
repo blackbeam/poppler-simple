@@ -11,7 +11,7 @@ using namespace node;
 namespace node {
     Persistent<FunctionTemplate> NodePopplerDocument::constructor_template;
 
-    void NodePopplerDocument::evPageOpened(NodePopplerPage *p) {
+    void NodePopplerDocument::evPageOpened(const NodePopplerPage *p) {
         for (int i = 0; i < pages->getLength(); i++) {
             if (p == (NodePopplerPage*) pages->get(i)) {
                 return;
@@ -20,7 +20,7 @@ namespace node {
         pages->append((void*)p);
     }
 
-    void NodePopplerDocument::evPageClosed(NodePopplerPage *p) {
+    void NodePopplerDocument::evPageClosed(const NodePopplerPage *p) {
         for (int i = 0; i < pages->getLength(); i++) {
             if (p == (NodePopplerPage*) pages->get(i)) {
                 pages->del(i);
