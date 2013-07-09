@@ -6,7 +6,7 @@
   "version": "0.1.0",
   "repository": {
     "type": "git",
-    "url": "git://github.com/blackbeam/node-poppler.git"
+    "url": "git://github.com/blackbeam/poppler-simple.git"
   },
   "scripts": {
     "install": "(node-gyp rebuild) || (exit 0)",
