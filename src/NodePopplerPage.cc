@@ -428,7 +428,7 @@ namespace node {
 
         PDFRectangle *rect = new PDFRectangle(0,0,0,0);
         AnnotQuadrilaterals *aq = new AnnotQuadrilaterals(quads, len);
-#if (POPPLER_VERSION_MINOR == 23) && (POPPLER_VERSION_MICRO >= 3)
+#if ((POPPLER_VERSION_MINOR == 23) && (POPPLER_VERSION_MICRO >= 3)) || (POPPLER_VERSION_MINOR > 23)
         AnnotTextMarkup *annot = new AnnotTextMarkup(doc, rect, Annot::typeHighlight);
         annot->setQuadrilaterals(aq);
 #else
