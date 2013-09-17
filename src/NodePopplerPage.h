@@ -145,13 +145,23 @@ namespace node {
             if (text == NULL) {
                 TextOutputDev *textDev;
                 Gfx *gfx;
-
+#if (POPPLER_VERSION_MINOR < 19)
+                textDev = new TextOutputDev(NULL, gTrue, gFalse, gFalse);
+                gfx = pg->createGfx(textDev, 72., 72., 0,
+                    gFalse,
+                    gTrue,
+                    -1, -1, -1, -1,
+                    gFalse,
+                    doc->getCatalog(),
+                    NULL, NULL, NULL, NULL);
+#else
                 textDev = new TextOutputDev(NULL, gTrue, 0, gFalse, gFalse);
                 gfx = pg->createGfx(textDev, 72., 72., 0,
                     gFalse,
                     gTrue,
                     -1, -1, -1, -1,
                     gFalse, NULL, NULL);
+#endif
                 pg->display(gfx);
                 textDev->endPage();
                 text = textDev->takeText();

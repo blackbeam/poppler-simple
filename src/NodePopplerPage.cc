@@ -57,8 +57,10 @@ namespace node {
         NODE_SET_PROTOTYPE_METHOD(constructor_template, "renderToBuffer", NodePopplerPage::renderToBuffer);
         NODE_SET_PROTOTYPE_METHOD(constructor_template, "findText", NodePopplerPage::findText);
         NODE_SET_PROTOTYPE_METHOD(constructor_template, "getWordList", NodePopplerPage::getWordList);
+#if POPPLER_VERSION_MINOR >= 19
         NODE_SET_PROTOTYPE_METHOD(constructor_template, "addAnnot", NodePopplerPage::addAnnot);
         NODE_SET_PROTOTYPE_METHOD(constructor_template, "deleteAnnots", NodePopplerPage::deleteAnnots);
+#endif
 
         /** Getters:
          *  static Handle<Value> funcName(Local<String> property, const AccessorInfo& info);
@@ -219,7 +221,11 @@ namespace node {
             return scope.Close(Int32::New(self->pg->getRotate()));
 
         } else if (strcmp(*propName, "numAnnots") == 0) {
+#if (POPPLER_VERSION_MINOR < 19)
+            Annots *annots = self->pg->getAnnots(self->doc->getCatalog());
+#else
             Annots *annots = self->pg->getAnnots();
+#endif
             return scope.Close(Uint32::New(annots->getNumAnnots()));
 
         } else if (strcmp(*propName, "isCropped") == 0) {
@@ -314,7 +320,9 @@ namespace node {
                  gFalse, gTrue, // startAtTop, stopAtBottom
                  gFalse, gFalse, // startAtLast, stopAtLast
                  gFalse, gFalse, // caseSensitive, backwards
+#if (POPPLER_VERSION_MINOR >= 19)
                  gFalse, // wholeWord
+#endif
                  &xMin, &yMin, &xMax, &yMax)) {
             PDFRectangle **t_matches = matches;
             cnt++;
@@ -341,6 +349,7 @@ namespace node {
         return scope.Close(v8results);
     }
 
+#if POPPLER_VERSION_MINOR >= 19
     /**
      * Deletes all annotations
      */
@@ -357,6 +366,7 @@ namespace node {
 
         return scope.Close(Null());
     }
+#endif
 
     /**
      * Adds annotations to a page
@@ -404,6 +414,7 @@ namespace node {
         }
     }
 
+#if POPPLER_VERSION_MINOR >= 19
     /**
      * Add annotations to page
      */
@@ -442,7 +453,9 @@ namespace node {
         delete aq;
         delete rect;
     }
+#endif
 
+#if POPPLER_VERSION_MINOR >= 19
     /**
      * Parse annotation quadrilateral
      */
@@ -503,6 +516,7 @@ namespace node {
             }
         }
     }
+#endif
 
     /**
      * Displaying page slice to stream work->f
@@ -516,7 +530,11 @@ namespace node {
             splashModeRGB8,
             4, gFalse,
             paperColor);
+#if POPPLER_VERSION_MINOR < 19
+        splashOut->startDoc(work->self->doc->getXRef());
+#else
         splashOut->startDoc(work->self->doc);
+#endif
         ImgWriter *writer = NULL;
         switch (work->w) {
             case W_PNG:
@@ -535,14 +553,30 @@ namespace node {
                 ((TiffWriter*)writer)->setCompressionString(work->compression);
         }
 
-        work->self->pg->displaySlice(splashOut, work->PPI, work->PPI, 0, gFalse, gTrue, work->sx, work->sy, work->sw, work->sh, gFalse);
+#if POPPLER_VERSION_MINOR < 19
+        work->self->pg->displaySlice(splashOut, work->PPI, work->PPI,
+            0, gFalse, gTrue,
+            work->sx, work->sy, work->sw, work->sh,
+            gFalse, work->self->doc->getCatalog(),
+            NULL, NULL, NULL, NULL);
+#else
+        work->self->pg->displaySlice(splashOut, work->PPI, work->PPI,
+            0, gFalse, gTrue,
+            work->sx, work->sy, work->sw, work->sh,
+            gFalse);
+#endif
 
         SplashBitmap *bitmap = splashOut->getBitmap();
         SplashError e = bitmap->writeImgFile(writer, work->f, (int)work->PPI, (int)work->PPI);
         delete splashOut;
         if (writer != NULL) delete writer;
 
-        if (e) {
+        if (e
+#if POPPLER_VERSION_MINOR < 19
+            // must ignore this due to a bug in poppler
+            && e != splashErrGeneric
+#endif
+            ) {
             char err[256];
             sprintf(err, "SplashError %d", e);
             work->error = new char[strlen(err)+1];
@@ -977,7 +1011,7 @@ namespace node {
                         this->sw = scaledWidth * w;
                         this->sh = scaledHeight * h;
                         this->sx = scaledWidth * x;
-                        this->sy = scaledHeight - scaledHeight * y - this->sh; // convert to bottom related coords
+                        this->sy = scaledHeight - scaledHeight * y - scaledHeight * h; // convert to bottom related coords
                         if ((unsigned long)(this->sh * this->sw) > 100000000L) {
                             e = (char*) "Result image is too big";
                         }
@@ -1014,7 +1048,7 @@ namespace node {
             {
                 if (this->w == W_TIFF) {
                     this->filename = new char[L_tmpnam];
-                    tmpnam(this->filename);
+                    this->filename = tmpnam(this->filename);
                     this->f = fopen(this->filename, "wb");
                 } else {
                     this->f = open_memstream(&this->mstrm_buf, &this->mstrm_len);
@@ -1049,7 +1083,13 @@ namespace node {
                     if (s.st_size > 0) {
                         this->mstrm_len = s.st_size;
                         this->mstrm_buf = (char*) malloc(this->mstrm_len);
-                        read(filedes, this->mstrm_buf, this->mstrm_len);
+                        ssize_t count = read(filedes, this->mstrm_buf, this->mstrm_len);
+                        if (count != (ssize_t) this->mstrm_len && this->error == NULL) {
+                            char err[256];
+                            sprintf(err, "Can't read temporary file");
+                            this->error = new char[strlen(err)+1];
+                            strcpy(this->error, err);
+                        }
                     }
                     close(filedes);
                     unlink(this->filename);

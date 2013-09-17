@@ -192,20 +192,22 @@ describe('PopplerPage', function () {
         ];
         a.deepEqual(results, tmp);
     });
-    it('should add annotations', function () {
-        pages.forEach(function (x) {
-            x.addAnnot(x.findText('ко'));
+    if (poppler.PopplerDocument.POPPLER_VERSION_MINOR > 18) {
+        it('should add annotations', function () {
+            pages.forEach(function (x) {
+                x.addAnnot(x.findText('ко'));
+            });
+            pages.forEach(function (x) {
+                a.equal(x.numAnnots, 1);
+            });
         });
-        pages.forEach(function (x) {
-            a.equal(x.numAnnots, 1);
+        it('should remove annotations', function () {
+            pages.forEach(function (x) {
+                x.deleteAnnots();
+                a.equal(x.numAnnots, 0);
+            });
         });
-    });
-    it('should remove annotations', function () {
-        pages.forEach(function (x) {
-            x.deleteAnnots();
-            a.equal(x.numAnnots, 0);
-        });
-    });
+    }
     describe('render to file', function () {
         it('should render to png', function () {
             pages.forEach(function (x) {
