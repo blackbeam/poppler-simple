@@ -571,7 +571,7 @@ namespace node {
         if (writer != NULL) delete writer;
 
         if (e
-#if POPPLER_VERSION_MINOR < 19
+#if POPPLER_VERSION_MINOR < 20 || (POPPLER_VERSION_MINOR == 20 && POPPLER_VERSION_MICRO < 1)
             // must ignore this due to a bug in poppler
             && e != splashErrGeneric
 #endif
