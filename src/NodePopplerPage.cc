@@ -349,7 +349,6 @@ namespace node {
         return scope.Close(v8results);
     }
 
-#if POPPLER_VERSION_MINOR >= 19
     /**
      * Deletes all annotations
      */
@@ -366,7 +365,6 @@ namespace node {
 
         return scope.Close(Null());
     }
-#endif
 
     /**
      * Adds annotations to a page
@@ -414,31 +412,34 @@ namespace node {
         }
     }
 
-#if POPPLER_VERSION_MINOR >= 19
     /**
      * Add annotations to page
      */
-    void NodePopplerPage::addAnnot(const Handle<v8::Array> array, char **error) {
+    void NodePopplerPage::addAnnot(const Handle<v8::Array> v8array, char **error) {
         HandleScope scope;
 
         double x1, y1, x2, y2, x3, y3, x4, y4;
-        int len = array->Length();
-        AnnotQuadrilaterals::AnnotQuadrilateral **quads =
-            (AnnotQuadrilaterals::AnnotQuadrilateral**) gmalloc(sizeof(AnnotQuadrilaterals::AnnotQuadrilateral*) * len);
+        int len = v8array->Length();
+        ::Array *array = new ::Array(doc->getXRef());
         for (int i = 0; i < len; i++) {
-            parseAnnot(array->Get(i), &x1, &y1, &x2, &y2, &x3, &y3, &x4, &y4, error);
+            parseAnnot(v8array->Get(i), &x1, &y1, &x2, &y2, &x3, &y3, &x4, &y4, error);
             if (*error) {
-                for (i--; i >= 0; i--) {
-                    delete quads[i];
-                }
-                delete [] quads;
+                delete array;
                 return;
+            } else {
+                array->add((new ::Object())->initReal(x1));
+                array->add((new ::Object())->initReal(y1));
+                array->add((new ::Object())->initReal(x2));
+                array->add((new ::Object())->initReal(y2));
+                array->add((new ::Object())->initReal(x3));
+                array->add((new ::Object())->initReal(y3));
+                array->add((new ::Object())->initReal(x4));
+                array->add((new ::Object())->initReal(y4));
             }
-            quads[i] = new AnnotQuadrilaterals::AnnotQuadrilateral(x1, y1, x2, y2, x3, y3, x4, y4);
         }
 
-        PDFRectangle *rect = new PDFRectangle(0,0,0,0);
-        AnnotQuadrilaterals *aq = new AnnotQuadrilaterals(quads, len);
+        PDFRectangle *rect = new PDFRectangle(0, 0, 0, 0);
+        AnnotQuadrilaterals *aq = new AnnotQuadrilaterals(array, rect);
 #if ((POPPLER_VERSION_MINOR == 23) && (POPPLER_VERSION_MICRO >= 3)) || (POPPLER_VERSION_MINOR > 23)
         AnnotTextMarkup *annot = new AnnotTextMarkup(doc, rect, Annot::typeHighlight);
         annot->setQuadrilaterals(aq);
@@ -450,12 +451,11 @@ namespace node {
         annot->setColor(color);
         pg->addAnnot(annot);
 
-        delete aq;
+        delete array;
         delete rect;
+        delete aq;
     }
-#endif
 
-#if POPPLER_VERSION_MINOR >= 19
     /**
      * Parse annotation quadrilateral
      */
@@ -516,7 +516,6 @@ namespace node {
             }
         }
     }
-#endif
 
     /**
      * Displaying page slice to stream work->f
