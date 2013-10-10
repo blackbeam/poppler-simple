@@ -93,7 +93,9 @@ namespace node {
 
         NodePopplerPage(NodePopplerDocument* doc, const int32_t pageNum);
         ~NodePopplerPage();
-        static void Initialize(v8::Handle<v8::Object> target);
+
+        static void Init(v8::Handle<v8::Object> exports);
+
         bool isOk() {
             return pg != NULL && pg->isOk();
         }

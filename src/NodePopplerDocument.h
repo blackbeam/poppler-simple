@@ -17,7 +17,7 @@ namespace node {
         inline bool isOk() {
             return doc->isOk();
         }
-        static void Initialize(v8::Handle<v8::Object> target);
+        static void Init(v8::Handle<v8::Object> exports);
 
     protected:
         static v8::Handle<v8::Value> New(const v8::Arguments &args);

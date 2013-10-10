@@ -30,60 +30,38 @@ static Persistent<String> index_sym;
 
 namespace node {
 
-    void NodePopplerPage::Initialize(v8::Handle<v8::Object> target) {
-        HandleScope scope;
-
+    void NodePopplerPage::Init(v8::Handle<v8::Object> exports) {
         width_sym = Persistent<String>::New(String::NewSymbol("width"));
         height_sym = Persistent<String>::New(String::NewSymbol("height"));
         index_sym = Persistent<String>::New(String::NewSymbol("index"));
 
-        Local<FunctionTemplate> t = FunctionTemplate::New(New);
-        constructor_template = Persistent<FunctionTemplate>::New(t);
-        constructor_template->InstanceTemplate()->SetInternalFieldCount(1);
-        constructor_template->SetClassName(String::NewSymbol("PopplerPage"));
+        Local<FunctionTemplate> tpl = FunctionTemplate::New(New);
+        tpl->SetClassName(String::NewSymbol("PopplerPage"));
+        tpl->InstanceTemplate()->SetInternalFieldCount(1);
 
-        constructor_template->Set(
-            String::NewSymbol("POPPLER_VERSION_MAJOR"), Uint32::New(POPPLER_VERSION_MAJOR));
-        constructor_template->Set(
-            String::NewSymbol("POPPLER_VERSION_MINOR"), Uint32::New(POPPLER_VERSION_MINOR));
-        constructor_template->Set(
-            String::NewSymbol("POPPLER_VERSION_MICRO"), Uint32::New(POPPLER_VERSION_MICRO));
-
-        /** Instance methods
-         *  static Handle<Value> funcName(const Arguments &args);
-         *  NODE_SET_PROTOTYPE_METHOD(constructor_template, "getPageCount", funcName);
-         */
-        NODE_SET_PROTOTYPE_METHOD(constructor_template, "renderToFile", NodePopplerPage::renderToFile);
-        NODE_SET_PROTOTYPE_METHOD(constructor_template, "renderToBuffer", NodePopplerPage::renderToBuffer);
-        NODE_SET_PROTOTYPE_METHOD(constructor_template, "findText", NodePopplerPage::findText);
-        NODE_SET_PROTOTYPE_METHOD(constructor_template, "getWordList", NodePopplerPage::getWordList);
+        NODE_SET_PROTOTYPE_METHOD(tpl, "renderToFile", NodePopplerPage::renderToFile);
+        NODE_SET_PROTOTYPE_METHOD(tpl, "renderToBuffer", NodePopplerPage::renderToBuffer);
+        NODE_SET_PROTOTYPE_METHOD(tpl, "findText", NodePopplerPage::findText);
+        NODE_SET_PROTOTYPE_METHOD(tpl, "getWordList", NodePopplerPage::getWordList);
 #if POPPLER_VERSION_MINOR >= 19
-        NODE_SET_PROTOTYPE_METHOD(constructor_template, "addAnnot", NodePopplerPage::addAnnot);
-        NODE_SET_PROTOTYPE_METHOD(constructor_template, "deleteAnnots", NodePopplerPage::deleteAnnots);
+        NODE_SET_PROTOTYPE_METHOD(tpl, "addAnnot", NodePopplerPage::addAnnot);
+        NODE_SET_PROTOTYPE_METHOD(tpl, "deleteAnnots", NodePopplerPage::deleteAnnots);
 #endif
 
-        /** Getters:
-         *  static Handle<Value> funcName(Local<String> property, const AccessorInfo& info);
-         *  constructor_template->PrototypeTemplate()->SetAccessor(String::NewSymbol("page_count"), funcName);
-         */
-        constructor_template->InstanceTemplate()->SetAccessor(String::NewSymbol("num"), NodePopplerPage::paramsGetter);
-        constructor_template->InstanceTemplate()->SetAccessor(String::NewSymbol("width"), NodePopplerPage::paramsGetter);
-        constructor_template->InstanceTemplate()->SetAccessor(String::NewSymbol("height"), NodePopplerPage::paramsGetter);
-        constructor_template->InstanceTemplate()->SetAccessor(String::NewSymbol("crop_box"), NodePopplerPage::paramsGetter);
-        constructor_template->InstanceTemplate()->SetAccessor(String::NewSymbol("numAnnots"), NodePopplerPage::paramsGetter);
-        constructor_template->InstanceTemplate()->SetAccessor(String::NewSymbol("media_box"), NodePopplerPage::paramsGetter);
-        constructor_template->InstanceTemplate()->SetAccessor(String::NewSymbol("art_box"), NodePopplerPage::paramsGetter);
-        constructor_template->InstanceTemplate()->SetAccessor(String::NewSymbol("trim_box"), NodePopplerPage::paramsGetter);
-        constructor_template->InstanceTemplate()->SetAccessor(String::NewSymbol("bleed_box"), NodePopplerPage::paramsGetter);
-        constructor_template->InstanceTemplate()->SetAccessor(String::NewSymbol("rotate"), NodePopplerPage::paramsGetter);
-        constructor_template->InstanceTemplate()->SetAccessor(String::NewSymbol("isCropped"), NodePopplerPage::paramsGetter);
+        tpl->InstanceTemplate()->SetAccessor(String::NewSymbol("num"), NodePopplerPage::paramsGetter);
+        tpl->InstanceTemplate()->SetAccessor(String::NewSymbol("width"), NodePopplerPage::paramsGetter);
+        tpl->InstanceTemplate()->SetAccessor(String::NewSymbol("height"), NodePopplerPage::paramsGetter);
+        tpl->InstanceTemplate()->SetAccessor(String::NewSymbol("crop_box"), NodePopplerPage::paramsGetter);
+        tpl->InstanceTemplate()->SetAccessor(String::NewSymbol("numAnnots"), NodePopplerPage::paramsGetter);
+        tpl->InstanceTemplate()->SetAccessor(String::NewSymbol("media_box"), NodePopplerPage::paramsGetter);
+        tpl->InstanceTemplate()->SetAccessor(String::NewSymbol("art_box"), NodePopplerPage::paramsGetter);
+        tpl->InstanceTemplate()->SetAccessor(String::NewSymbol("trim_box"), NodePopplerPage::paramsGetter);
+        tpl->InstanceTemplate()->SetAccessor(String::NewSymbol("bleed_box"), NodePopplerPage::paramsGetter);
+        tpl->InstanceTemplate()->SetAccessor(String::NewSymbol("rotate"), NodePopplerPage::paramsGetter);
+        tpl->InstanceTemplate()->SetAccessor(String::NewSymbol("isCropped"), NodePopplerPage::paramsGetter);
 
-	    /** Class methods
-	     * NODE_SET_METHOD(constructor_template->GetFunction(), "GetPageCount", funcName);
-	     */
-	    // NODE_SET_METHOD(constructor_template->GetFunction(), "pixbufToImage", NodePopplerPage::pixbufToImage);
-
-	    target->Set(String::NewSymbol("PopplerPage"), constructor_template->GetFunction());
+        Persistent<v8::Function> constructor = Persistent<v8::Function>::New(tpl->GetFunction());
+        exports->Set(String::NewSymbol("PopplerPage"), constructor);
     }
 
     NodePopplerPage::~NodePopplerPage() {

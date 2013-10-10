@@ -3,6 +3,7 @@
         {
             "target_name": "poppler",
             "sources": [
+                "src/poppler.cc",
                 "src/NodePopplerDocument.cc",
                 "src/NodePopplerPage.cc",
                 "src/iconv_string.cc"
