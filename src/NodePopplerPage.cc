@@ -31,6 +31,10 @@ static Persistent<String> index_sym;
 namespace node {
 
     void NodePopplerPage::Init(v8::Handle<v8::Object> exports) {
+#if (MAJOR_VERSION == 3 && MINOR_VERSION == 17 && BUILD_NUMBER >= 11) || (MAJOR_VERSION == 3 && MINOR_VERSION > 17) || MAJOR_VERSION > 3
+        Isolate* isolate = Isolate::GetCurrent();
+#endif
+
         width_sym = Persistent<String>::New(String::NewSymbol("width"));
         height_sym = Persistent<String>::New(String::NewSymbol("height"));
         index_sym = Persistent<String>::New(String::NewSymbol("index"));
@@ -59,8 +63,13 @@ namespace node {
         tpl->InstanceTemplate()->SetAccessor(String::NewSymbol("bleed_box"), NodePopplerPage::paramsGetter);
         tpl->InstanceTemplate()->SetAccessor(String::NewSymbol("rotate"), NodePopplerPage::paramsGetter);
         tpl->InstanceTemplate()->SetAccessor(String::NewSymbol("isCropped"), NodePopplerPage::paramsGetter);
-
+#if (MAJOR_VERSION == 3 && MINOR_VERSION == 17 && BUILD_NUMBER >= 11) || (MAJOR_VERSION == 3 && MINOR_VERSION > 17) || MAJOR_VERSION > 3
+        Persistent<v8::Function> constructor = Persistent<v8::Function>::New(isolate,
+                                                                             tpl->GetFunction());
+#else
         Persistent<v8::Function> constructor = Persistent<v8::Function>::New(tpl->GetFunction());
+#endif
+        
         exports->Set(String::NewSymbol("PopplerPage"), constructor);
     }
 

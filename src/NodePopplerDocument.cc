@@ -44,6 +44,9 @@ namespace node {
     }
 
     void NodePopplerDocument::Init(v8::Handle<v8::Object> exports) {
+#if (MAJOR_VERSION == 3 && MINOR_VERSION == 17 && BUILD_NUMBER >= 11) || (MAJOR_VERSION == 3 && MINOR_VERSION > 17) || MAJOR_VERSION > 3
+        Isolate* isolate = Isolate::GetCurrent();
+#endif
         Local<FunctionTemplate> tpl = FunctionTemplate::New(New);
         tpl->SetClassName(String::NewSymbol("PopplerDocument"));
         tpl->InstanceTemplate()->SetInternalFieldCount(1);
@@ -55,14 +58,25 @@ namespace node {
         tpl->PrototypeTemplate()->Set(
             String::NewSymbol("POPPLER_VERSION_MICRO"), Uint32::New(POPPLER_VERSION_MICRO));
 
-        tpl->InstanceTemplate()->SetAccessor(String::NewSymbol("pageCount"), NodePopplerDocument::paramsGetter);
-        tpl->InstanceTemplate()->SetAccessor(String::NewSymbol("PDFMajorVersion"), NodePopplerDocument::paramsGetter);
-        tpl->InstanceTemplate()->SetAccessor(String::NewSymbol("PDFMinorVersion"), NodePopplerDocument::paramsGetter);
-        tpl->InstanceTemplate()->SetAccessor(String::NewSymbol("pdfVersion"), NodePopplerDocument::paramsGetter);
-        tpl->InstanceTemplate()->SetAccessor(String::NewSymbol("isLinearized"), NodePopplerDocument::paramsGetter);
-        tpl->InstanceTemplate()->SetAccessor(String::NewSymbol("fileName"), NodePopplerDocument::paramsGetter);
-
+        tpl->InstanceTemplate()->SetAccessor(String::NewSymbol("pageCount"),
+                                             NodePopplerDocument::paramsGetter);
+        tpl->InstanceTemplate()->SetAccessor(String::NewSymbol("PDFMajorVersion"),
+                                             NodePopplerDocument::paramsGetter);
+        tpl->InstanceTemplate()->SetAccessor(String::NewSymbol("PDFMinorVersion"),
+                                             NodePopplerDocument::paramsGetter);
+        tpl->InstanceTemplate()->SetAccessor(String::NewSymbol("pdfVersion"),
+                                             NodePopplerDocument::paramsGetter);
+        tpl->InstanceTemplate()->SetAccessor(String::NewSymbol("isLinearized"),
+                                             NodePopplerDocument::paramsGetter);
+        tpl->InstanceTemplate()->SetAccessor(String::NewSymbol("fileName"),
+                                             NodePopplerDocument::paramsGetter);
+#if (MAJOR_VERSION == 3 && MINOR_VERSION == 17 && BUILD_NUMBER >= 11) || (MAJOR_VERSION == 3 && MINOR_VERSION > 17) || MAJOR_VERSION > 3
+        Persistent<v8::Function> constructor = Persistent<v8::Function>::New(isolate,
+                                                                             tpl->GetFunction());
+#else
         Persistent<v8::Function> constructor = Persistent<v8::Function>::New(tpl->GetFunction());
+#endif
+        
         exports->Set(String::NewSymbol("PopplerDocument"), constructor);
     }
 
