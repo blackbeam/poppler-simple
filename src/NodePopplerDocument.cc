@@ -43,51 +43,27 @@ namespace node {
         delete pages;
     }
 
-    void NodePopplerDocument::Initialize(v8::Handle<v8::Object> target) {
-        HandleScope scope;
+    void NodePopplerDocument::Init(v8::Handle<v8::Object> exports) {
+        Local<FunctionTemplate> tpl = FunctionTemplate::New(New);
+        tpl->SetClassName(String::NewSymbol("PopplerDocument"));
+        tpl->InstanceTemplate()->SetInternalFieldCount(1);
 
-        Local<FunctionTemplate> t = FunctionTemplate::New(New);
-        constructor_template = Persistent<FunctionTemplate>::New(t);
-        constructor_template->InstanceTemplate()->SetInternalFieldCount(1);
-        constructor_template->SetClassName(String::NewSymbol("PopplerDocument"));
-
-        constructor_template->Set(
+        tpl->PrototypeTemplate()->Set(
             String::NewSymbol("POPPLER_VERSION_MAJOR"), Uint32::New(POPPLER_VERSION_MAJOR));
-        constructor_template->Set(
+        tpl->PrototypeTemplate()->Set(
             String::NewSymbol("POPPLER_VERSION_MINOR"), Uint32::New(POPPLER_VERSION_MINOR));
-        constructor_template->Set(
+        tpl->PrototypeTemplate()->Set(
             String::NewSymbol("POPPLER_VERSION_MICRO"), Uint32::New(POPPLER_VERSION_MICRO));
 
-        /** Instance methods
-         * Prototype looks like this:
-         *  static Handle<Value> funcName(const Arguments &args);
-         * to access the object do:
-         *  ClassName* self = ObjectWrap::Unwrap<ClassName>(args.Holder());
-         * 
-         * Then do:
-         *  NODE_SET_PROTOTYPE_METHOD(constructor_template, "getPageCount", funcName);
-         */
+        tpl->InstanceTemplate()->SetAccessor(String::NewSymbol("pageCount"), NodePopplerDocument::paramsGetter);
+        tpl->InstanceTemplate()->SetAccessor(String::NewSymbol("PDFMajorVersion"), NodePopplerDocument::paramsGetter);
+        tpl->InstanceTemplate()->SetAccessor(String::NewSymbol("PDFMinorVersion"), NodePopplerDocument::paramsGetter);
+        tpl->InstanceTemplate()->SetAccessor(String::NewSymbol("pdfVersion"), NodePopplerDocument::paramsGetter);
+        tpl->InstanceTemplate()->SetAccessor(String::NewSymbol("isLinearized"), NodePopplerDocument::paramsGetter);
+        tpl->InstanceTemplate()->SetAccessor(String::NewSymbol("fileName"), NodePopplerDocument::paramsGetter);
 
-        /** Class methods
-         * NODE_SET_METHOD(constructor_template->GetFunction(), "GetPageCount", funcName);
-         */
-
-        /** Getters:
-         * Prototype looks like this:
-         *  static Handle<Value> funcName(Local<String> property, const AccessorInfo& info);
-         * to access the object do:
-         *  ClassName* self = ObjectWrap::Unwrap<ClassName>(info.This());
-         * 
-         * Then do:
-         *  constructor_template->PrototypeTemplate()->SetAccessor(String::NewSymbol("page_count"), funcName);
-         */
-        constructor_template->InstanceTemplate()->SetAccessor(String::NewSymbol("pageCount"), NodePopplerDocument::paramsGetter);
-        constructor_template->InstanceTemplate()->SetAccessor(String::NewSymbol("PDFMajorVersion"), NodePopplerDocument::paramsGetter);
-        constructor_template->InstanceTemplate()->SetAccessor(String::NewSymbol("PDFMinorVersion"), NodePopplerDocument::paramsGetter);
-        constructor_template->InstanceTemplate()->SetAccessor(String::NewSymbol("pdfVersion"), NodePopplerDocument::paramsGetter);
-        constructor_template->InstanceTemplate()->SetAccessor(String::NewSymbol("isLinearized"), NodePopplerDocument::paramsGetter);
-        constructor_template->InstanceTemplate()->SetAccessor(String::NewSymbol("fileName"), NodePopplerDocument::paramsGetter);
-        target->Set(String::NewSymbol("PopplerDocument"), constructor_template->GetFunction());
+        Persistent<v8::Function> constructor = Persistent<v8::Function>::New(tpl->GetFunction());
+        exports->Set(String::NewSymbol("PopplerDocument"), constructor);
     }
 
     Handle<Value> NodePopplerDocument::paramsGetter(Local< String > property, const AccessorInfo &info) {
@@ -183,18 +159,3 @@ namespace node {
     }
 
 }
-
-// Exporting function
-extern "C" void
-init (v8::Handle<v8::Object> target)
-{
-    HandleScope scope;
-
-    // Require for poppler
-    globalParams = new GlobalParams();
-
-    NodePopplerDocument::Initialize(target);
-    NodePopplerPage::Initialize(target);
-}
-
-NODE_MODULE(poppler, init);
