@@ -2,6 +2,7 @@
 #include <v8.h>
 #include <node.h>
 #include <node_object_wrap.h>
+#include "helpers.h"
 #include <poppler/poppler-config.h>
 #include <cpp/poppler-version.h>
 #include <poppler/Page.h>
@@ -59,7 +60,7 @@ namespace node {
                 if (mstrm_buf) free(mstrm_buf);
                 if (filename) delete [] filename;
                 if (compression) delete [] compression;
-                if (!callback.IsEmpty()) callback.Dispose();
+                if (!callback.IsEmpty()) DISPOSE_PERSISTENT(callback);
                 if (f) fclose(f);
             }
             void setWriter(const v8::Handle<v8::Value> method);
@@ -100,6 +101,10 @@ namespace node {
             return pg != NULL && pg->isOk();
         }
 
+        void wrap(v8::Handle<v8::Object> o) {
+            this->Wrap(o);
+        }
+
         double getWidth() {
             return ((getRotate() == 90 || getRotate() == 270)
                 ? pg->getCropHeight()
@@ -118,13 +123,13 @@ namespace node {
         static void display(RenderWork *work);
 
     protected:
-        static v8::Handle<v8::Value> New(const v8::Arguments &args);
-        static v8::Handle<v8::Value> findText(const v8::Arguments &args);
-        static v8::Handle<v8::Value> getWordList(const v8::Arguments &args);
-        static v8::Handle<v8::Value> renderToFile(const v8::Arguments &args);
-        static v8::Handle<v8::Value> renderToBuffer(const v8::Arguments &args);
-        static v8::Handle<v8::Value> addAnnot(const v8::Arguments &args);
-        static v8::Handle<v8::Value> deleteAnnots(const v8::Arguments &args);
+        V8_METHOD_DECL(New);
+        V8_METHOD_DECL(findText);
+        V8_METHOD_DECL(getWordList);
+        V8_METHOD_DECL(renderToFile);
+        V8_METHOD_DECL(renderToBuffer);
+        V8_METHOD_DECL(addAnnot);
+        V8_METHOD_DECL(deleteAnnots);
 
         static void AsyncRenderWork(uv_work_t *req);
         static void AsyncRenderAfter(uv_work_t *req, int status);
@@ -139,9 +144,7 @@ namespace node {
 
         bool docClosed;
     private:
-        static v8::Persistent<v8::FunctionTemplate> constructor_template;
-
-        static v8::Handle<v8::Value> paramsGetter(v8::Local<v8::String> property, const v8::AccessorInfo &info);
+        V8_ACCESSOR_GETTER_DECL(paramsGetter);
 
         TextPage *getTextPage() {
             if (text == NULL) {

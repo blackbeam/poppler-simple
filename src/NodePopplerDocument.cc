@@ -9,8 +9,6 @@ using namespace v8;
 using namespace node;
 
 namespace node {
-    Persistent<FunctionTemplate> NodePopplerDocument::constructor_template;
-
     void NodePopplerDocument::evPageOpened(const NodePopplerPage *p) {
         for (int i = 0; i < pages->getLength(); i++) {
             if (p == (NodePopplerPage*) pages->get(i)) {
@@ -44,19 +42,13 @@ namespace node {
     }
 
     void NodePopplerDocument::Init(v8::Handle<v8::Object> exports) {
-#if (MAJOR_VERSION == 3 && MINOR_VERSION == 17 && BUILD_NUMBER >= 11) || (MAJOR_VERSION == 3 && MINOR_VERSION > 17) || MAJOR_VERSION > 3
-        Isolate* isolate = Isolate::GetCurrent();
-#endif
-        Local<FunctionTemplate> tpl = FunctionTemplate::New(New);
+        Local<FunctionTemplate> tpl = FunctionTemplate::New(NodePopplerDocument::New);
         tpl->SetClassName(String::NewSymbol("PopplerDocument"));
         tpl->InstanceTemplate()->SetInternalFieldCount(1);
 
-        tpl->PrototypeTemplate()->Set(
-            String::NewSymbol("POPPLER_VERSION_MAJOR"), Uint32::New(POPPLER_VERSION_MAJOR));
-        tpl->PrototypeTemplate()->Set(
-            String::NewSymbol("POPPLER_VERSION_MINOR"), Uint32::New(POPPLER_VERSION_MINOR));
-        tpl->PrototypeTemplate()->Set(
-            String::NewSymbol("POPPLER_VERSION_MICRO"), Uint32::New(POPPLER_VERSION_MICRO));
+        NODE_DEFINE_CONSTANT(tpl, POPPLER_VERSION_MAJOR);
+        NODE_DEFINE_CONSTANT(tpl, POPPLER_VERSION_MINOR);
+        NODE_DEFINE_CONSTANT(tpl, POPPLER_VERSION_MICRO);
 
         tpl->InstanceTemplate()->SetAccessor(String::NewSymbol("pageCount"),
                                              NodePopplerDocument::paramsGetter);
@@ -70,68 +62,61 @@ namespace node {
                                              NodePopplerDocument::paramsGetter);
         tpl->InstanceTemplate()->SetAccessor(String::NewSymbol("fileName"),
                                              NodePopplerDocument::paramsGetter);
-#if (MAJOR_VERSION == 3 && MINOR_VERSION == 17 && BUILD_NUMBER >= 11) || (MAJOR_VERSION == 3 && MINOR_VERSION > 17) || MAJOR_VERSION > 3
-        Persistent<v8::Function> constructor = Persistent<v8::Function>::New(isolate,
-                                                                             tpl->GetFunction());
-#else
-        Persistent<v8::Function> constructor = Persistent<v8::Function>::New(tpl->GetFunction());
-#endif
         
-        exports->Set(String::NewSymbol("PopplerDocument"), constructor);
+        exports->Set(String::NewSymbol("PopplerDocument"), tpl->GetFunction());
     }
 
-    Handle<Value> NodePopplerDocument::paramsGetter(Local< String > property, const AccessorInfo &info) {
-        HandleScope scope;
+    V8_ACCESSOR_GETTER(NodePopplerDocument::paramsGetter) {
+        CREATE_HANDLE_SCOPE;
         String::Utf8Value propName(property);
         NodePopplerDocument *self = ObjectWrap::Unwrap<NodePopplerDocument>(info.This());
 
         if (strcmp(*propName, "pageCount") == 0) {
-            return scope.Close(Uint32::New(self->doc->getNumPages()));
+            V8_ACCESSOR_RETURN(scope.Close(Uint32::New(self->doc->getNumPages())));
 
         } else if (strcmp(*propName, "PDFMajorVersion") == 0) {
-            return scope.Close(Uint32::New(self->doc->getPDFMajorVersion()));
+            V8_ACCESSOR_RETURN(scope.Close(Uint32::New(self->doc->getPDFMajorVersion())));
 
         } else if (strcmp(*propName, "PDFMinorVersion") == 0) {
-            return scope.Close(Uint32::New(self->doc->getPDFMinorVersion()));
+            V8_ACCESSOR_RETURN(scope.Close(Uint32::New(self->doc->getPDFMinorVersion())));
 
         } else if (strcmp(*propName, "pdfVersion") == 0) {
             char versionString[16];
             sprintf(versionString, "PDF-%d.%d", self->doc->getPDFMajorVersion(), self->doc->getPDFMinorVersion());
-            return scope.Close(String::New(versionString, strlen(versionString)));
+            V8_ACCESSOR_RETURN(scope.Close(String::New(versionString, strlen(versionString))));
 
         } else if (strcmp(*propName, "isLinearized") == 0) {
-            return scope.Close(Boolean::New(self->doc->isLinearized()));
+            V8_ACCESSOR_RETURN(scope.Close(Boolean::New(self->doc->isLinearized())));
 
         } else if (strcmp(*propName, "fileName") == 0) {
             GooString *fileName = self->doc->getFileName();
-            return scope.Close(String::New(fileName->getCString(), fileName->getLength()));
+            V8_ACCESSOR_RETURN(scope.Close(String::New(fileName->getCString(), fileName->getLength())));
 
         } else {
-            return scope.Close(Null());
+            V8_ACCESSOR_RETURN(scope.Close(Null()));
         }
     }
 
-    Handle<Value> NodePopplerDocument::New(const Arguments &args) {
-        HandleScope scope;
+    V8_METHOD(NodePopplerDocument::New) {
+        CREATE_HANDLE_SCOPE;
+
         if(args.Length() != 1) {
-            return ThrowException(
-                Exception::Error(String::New("One argument required: (filename: String).")));
+            V8_THROW(Exception::Error(String::New("One argument required: (filename: String).")));
         }
         if(!args[0]->IsString()) {
-            return ThrowException(
-                Exception::TypeError(String::New("'filename' must be an instance of String.")));
+            V8_THROW(Exception::TypeError(String::New("'filename' must be an instance of String.")));
         }
 
         String::Utf8Value str(args[0]);
         NodePopplerDocument *doc = new NodePopplerDocument(*str);
 
         if (!doc->isOk()) {
-            int errorCode = doc->doc->getErrorCode();
+            int errorCode = doc->getDoc()->getErrorCode();
             char errorName[128];
             char errorDescription[256];
             switch (errorCode) {
                 case errOpenFile:
-                    sprintf(errorName, "fopen error. Errno: %d", doc->doc->getFopenErrno());
+                    sprintf(errorName, "fopen error. Errno: %d", doc->getDoc()->getFopenErrno());
                     break;
                 case errBadCatalog:
                     sprintf(errorName, "bad catalog");
@@ -165,11 +150,10 @@ namespace node {
             }
             sprintf(errorDescription, "Couldn't open file - %s.", errorName);
             delete doc;
-            return ThrowException(
-                Exception::Error(String::New(errorDescription, strlen(errorDescription))));
+            V8_THROW(Exception::Error(String::New(errorDescription, strlen(errorDescription))));
         }
-        doc->Wrap(args.This());
-        return args.This();
+        doc->wrap(args.This());
+        V8_RETURN(args.This());
     }
 
 }

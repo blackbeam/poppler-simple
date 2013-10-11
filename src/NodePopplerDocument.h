@@ -1,5 +1,6 @@
 #include <v8.h>
 #include <node.h>
+#include "helpers.h"
 #include <GlobalParams.h>
 #include <cpp/poppler-version.h>
 #include <poppler/PDFDoc.h>
@@ -14,21 +15,25 @@ namespace node {
     public:
         NodePopplerDocument(const char* cFileName);
         ~NodePopplerDocument();
+        void wrap(v8::Handle<v8::Object> o) {
+            this->Wrap(o);
+        }
         inline bool isOk() {
             return doc->isOk();
+        }
+        inline PDFDoc *getDoc() {
+            return doc;
         }
         static void Init(v8::Handle<v8::Object> exports);
 
     protected:
-        static v8::Handle<v8::Value> New(const v8::Arguments &args);
+        V8_METHOD_DECL(New);
         void evPageOpened(const NodePopplerPage *p);
         void evPageClosed(const NodePopplerPage *p);
         GooList *pages;
 
     private:
-        static v8::Persistent<v8::FunctionTemplate> constructor_template;
-
-        static v8::Handle<v8::Value> paramsGetter(v8::Local<v8::String> property, const v8::AccessorInfo &info);
+        V8_ACCESSOR_GETTER_DECL(paramsGetter);
 
         friend class NodePopplerPage;
         PDFDoc *doc;

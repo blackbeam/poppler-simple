@@ -8,38 +8,26 @@
 #define THROW_SYNC_ASYNC_ERR(work, err) \
     if (work->callback.IsEmpty()) { \
         delete work; \
-        return ThrowException(err); \
+        V8_THROW(err); \
     } else { \
         Local<Value> argv[] = {err}; \
         TryCatch try_catch; \
-        work->callback->Call(Context::GetCurrent()->Global(), 1, argv); \
+        EXTRACT_CALLBACK(callback, work->callback); \
+        callback->Call(Context::GetCurrent()->Global(), 1, argv); \
         if (try_catch.HasCaught()) { \
             node::FatalException(try_catch); \
         } \
         delete work; \
-        return scope.Close(Undefined()); \
+        V8_RETURN(scope.Close(Undefined())); \
     }
 
 using namespace v8;
 using namespace node;
 
-Persistent<FunctionTemplate> NodePopplerPage::constructor_template;
-static Persistent<String> width_sym;
-static Persistent<String> height_sym;
-static Persistent<String> index_sym;
-
 namespace node {
 
     void NodePopplerPage::Init(v8::Handle<v8::Object> exports) {
-#if (MAJOR_VERSION == 3 && MINOR_VERSION == 17 && BUILD_NUMBER >= 11) || (MAJOR_VERSION == 3 && MINOR_VERSION > 17) || MAJOR_VERSION > 3
-        Isolate* isolate = Isolate::GetCurrent();
-#endif
-
-        width_sym = Persistent<String>::New(String::NewSymbol("width"));
-        height_sym = Persistent<String>::New(String::NewSymbol("height"));
-        index_sym = Persistent<String>::New(String::NewSymbol("index"));
-
-        Local<FunctionTemplate> tpl = FunctionTemplate::New(New);
+        Local<FunctionTemplate> tpl = FunctionTemplate::New(NodePopplerPage::New);
         tpl->SetClassName(String::NewSymbol("PopplerPage"));
         tpl->InstanceTemplate()->SetInternalFieldCount(1);
 
@@ -63,14 +51,8 @@ namespace node {
         tpl->InstanceTemplate()->SetAccessor(String::NewSymbol("bleed_box"), NodePopplerPage::paramsGetter);
         tpl->InstanceTemplate()->SetAccessor(String::NewSymbol("rotate"), NodePopplerPage::paramsGetter);
         tpl->InstanceTemplate()->SetAccessor(String::NewSymbol("isCropped"), NodePopplerPage::paramsGetter);
-#if (MAJOR_VERSION == 3 && MINOR_VERSION == 17 && BUILD_NUMBER >= 11) || (MAJOR_VERSION == 3 && MINOR_VERSION > 17) || MAJOR_VERSION > 3
-        Persistent<v8::Function> constructor = Persistent<v8::Function>::New(isolate,
-                                                                             tpl->GetFunction());
-#else
-        Persistent<v8::Function> constructor = Persistent<v8::Function>::New(tpl->GetFunction());
-#endif
         
-        exports->Set(String::NewSymbol("PopplerPage"), constructor);
+        exports->Set(String::NewSymbol("PopplerPage"), tpl->GetFunction());
     }
 
     NodePopplerPage::~NodePopplerPage() {
@@ -99,55 +81,54 @@ namespace node {
         docClosed = true;
     }
 
-    Handle<Value> NodePopplerPage::New(const Arguments &args) {
-        HandleScope scope;
+    V8_METHOD(NodePopplerPage::New) {
+        CREATE_HANDLE_SCOPE;
         NodePopplerDocument* doc;
         int32_t pageNum;
 
         if (args.Length() != 2) {
-            return ThrowException(Exception::Error(
+            V8_THROW(Exception::Error(
                 String::New("Two arguments required: (doc: NodePopplerDocument, page: Uint32).")));
         }
         if (!args[1]->IsUint32()) {
-            return ThrowException(
+            V8_THROW(
                 Exception::TypeError(String::New("'page' must be an instance of Uint32.")));
         }
         pageNum = args[1]->ToUint32()->Value();
 
         if(!args[0]->IsObject()) { // TODO: hasInstance
-            return ThrowException(Exception::TypeError(
+            V8_THROW(Exception::TypeError(
                 String::New("'doc' must be an instance of NodePopplerDocument.")));
         }
 
         doc = ObjectWrap::Unwrap<NodePopplerDocument>(args[0]->ToObject());
         if (0 >= pageNum || pageNum > doc->doc->getNumPages()) {
-            return ThrowException(Exception::Error(String::New(
-                "Page number out of bounds.")));
+            V8_THROW(Exception::Error(String::New("Page number out of bounds.")));
         }
 
         NodePopplerPage* page = new NodePopplerPage(doc, pageNum);
         if(!page->isOk()) {
             delete page;
-            return ThrowException(Exception::Error(String::New("Can't open page.")));;
+            V8_THROW(Exception::Error(String::New("Can't open page.")));;
         }
-        page->Wrap(args.This());
-        return args.This();
+        page->wrap(args.This());
+        V8_RETURN(args.This());
     }
 
-    Handle<Value> NodePopplerPage::paramsGetter(Local<String> property, const AccessorInfo &info) {
-        HandleScope scope;
+    V8_ACCESSOR_GETTER(NodePopplerPage::paramsGetter) {
+        CREATE_HANDLE_SCOPE;
 
         String::Utf8Value propName(property);
         NodePopplerPage *self = ObjectWrap::Unwrap<NodePopplerPage>(info.This());
 
         if (strcmp(*propName, "width") == 0) {
-            return scope.Close(Number::New(self->getWidth()));
+            V8_ACCESSOR_RETURN(scope.Close(Number::New(self->getWidth())));
 
         } else if (strcmp(*propName, "height") == 0) {
-            return scope.Close(Number::New(self->getHeight()));
+            V8_ACCESSOR_RETURN(scope.Close(Number::New(self->getHeight())));
 
         } else if (strcmp(*propName, "num") == 0) {
-            return scope.Close(Uint32::New(self->pg->getNum()));
+            V8_ACCESSOR_RETURN(scope.Close(Uint32::New(self->pg->getNum())));
 
         } else if (strcmp(*propName, "crop_box") == 0) {
             PDFRectangle *rect = self->pg->getCropBox();
@@ -158,7 +139,7 @@ namespace node {
             crop_box->Set(String::NewSymbol("y1"), Number::New(rect->y1));
             crop_box->Set(String::NewSymbol("y2"), Number::New(rect->y2));
 
-            return scope.Close(crop_box);
+            V8_ACCESSOR_RETURN(scope.Close(crop_box));
 
         } else if (strcmp(*propName, "media_box") == 0) {
             PDFRectangle *rect = self->pg->getMediaBox();
@@ -169,7 +150,7 @@ namespace node {
             media_box->Set(String::NewSymbol("y1"), Number::New(rect->y1));
             media_box->Set(String::NewSymbol("y2"), Number::New(rect->y2));
 
-            return scope.Close(media_box);
+            V8_ACCESSOR_RETURN(scope.Close(media_box));
 
         } else if (strcmp(*propName, "bleed_box") == 0) {
             PDFRectangle *rect = self->pg->getBleedBox();
@@ -180,7 +161,7 @@ namespace node {
             bleed_box->Set(String::NewSymbol("y1"), Number::New(rect->y1));
             bleed_box->Set(String::NewSymbol("y2"), Number::New(rect->y2));
 
-            return scope.Close(bleed_box);
+            V8_ACCESSOR_RETURN(scope.Close(bleed_box));
 
         } else if (strcmp(*propName, "trim_box") == 0) {
             PDFRectangle *rect = self->pg->getTrimBox();
@@ -191,7 +172,7 @@ namespace node {
             trim_box->Set(String::NewSymbol("y1"), Number::New(rect->y1));
             trim_box->Set(String::NewSymbol("y2"), Number::New(rect->y2));
 
-            return scope.Close(trim_box);
+            V8_ACCESSOR_RETURN(scope.Close(trim_box));
 
         } else if (strcmp(*propName, "art_box") == 0) {
             PDFRectangle *rect = self->pg->getArtBox();
@@ -202,10 +183,10 @@ namespace node {
             art_box->Set(String::NewSymbol("y1"), Number::New(rect->y1));
             art_box->Set(String::NewSymbol("y2"), Number::New(rect->y2));
 
-            return scope.Close(art_box);
+            V8_ACCESSOR_RETURN(scope.Close(art_box));
 
         } else if (strcmp(*propName, "rotate") == 0) {
-            return scope.Close(Int32::New(self->pg->getRotate()));
+            V8_ACCESSOR_RETURN(scope.Close(Int32::New(self->pg->getRotate())));
 
         } else if (strcmp(*propName, "numAnnots") == 0) {
 #if (POPPLER_VERSION_MINOR < 19)
@@ -213,13 +194,13 @@ namespace node {
 #else
             Annots *annots = self->pg->getAnnots();
 #endif
-            return scope.Close(Uint32::New(annots->getNumAnnots()));
+            V8_ACCESSOR_RETURN(scope.Close(Uint32::New(annots->getNumAnnots())));
 
         } else if (strcmp(*propName, "isCropped") == 0) {
-            return scope.Close(Boolean::New(self->pg->isCropped()));
+            V8_ACCESSOR_RETURN(scope.Close(Boolean::New(self->pg->isCropped())));
 
         } else {
-            return scope.Close(Null());
+            V8_ACCESSOR_RETURN(scope.Close(Null()));
         }
     }
 
@@ -227,15 +208,14 @@ namespace node {
      * \return Object Array of Objects which represents individual words on page
      *                and stores word text and relative coords
      */
-    Handle<Value> NodePopplerPage::getWordList(const Arguments &args) {
-        HandleScope scope;
+    V8_METHOD(NodePopplerPage::getWordList) {
+        CREATE_HANDLE_SCOPE;
         NodePopplerPage* self = ObjectWrap::Unwrap<NodePopplerPage>(args.Holder());
         TextPage *text;
         TextWordList *wordList;
 
         if (self->isDocClosed()) {
-            return ThrowException(Exception::Error(String::New(
-                "Document closed. You must delete this page")));
+            V8_THROW(Exception::Error(String::New("Document closed. You must delete this page")));
         }
 
         text = self->getTextPage();
@@ -273,14 +253,14 @@ namespace node {
         }
         delete wordList;
 
-        return scope.Close(v8results);
+        V8_RETURN(scope.Close(v8results));
     }
 
     /**
      * \return Object Relative coors from lower left corner
      */
-    Handle<Value> NodePopplerPage::findText(const Arguments &args) {
-        HandleScope scope;
+    V8_METHOD(NodePopplerPage::findText) {
+        CREATE_HANDLE_SCOPE;
         NodePopplerPage* self = ObjectWrap::Unwrap<NodePopplerPage>(args.Holder());
         TextPage *text;
         char *ucs4 = NULL;
@@ -290,13 +270,11 @@ namespace node {
         unsigned int cnt = 0;
 
         if (self->isDocClosed()) {
-            return ThrowException(Exception::Error(String::New(
-                "Document closed. You must delete this page")));
+            V8_THROW(Exception::Error(String::New("Document closed. You must delete this page")));
         }
 
         if (args.Length() != 1 && !args[0]->IsString()) {
-            return ThrowException(Exception::Error(
-                String::New("One argument required: (str: String)")));
+            V8_THROW(Exception::Error(String::New("One argument required: (str: String)")));
         }
         String::Utf8Value str(args[0]);
 
@@ -333,14 +311,14 @@ namespace node {
         if (matches != NULL) {
             free(matches);
         }
-        return scope.Close(v8results);
+        V8_RETURN(scope.Close(v8results));
     }
 
     /**
      * Deletes all annotations
      */
-    Handle<Value> NodePopplerPage::deleteAnnots(const Arguments &args) {
-        HandleScope scope;
+    V8_METHOD(NodePopplerPage::deleteAnnots) {
+        CREATE_HANDLE_SCOPE;
         NodePopplerPage *self = ObjectWrap::Unwrap<NodePopplerPage>(args.Holder());
 
         Annots *annots = self->pg->getAnnots();
@@ -350,7 +328,7 @@ namespace node {
             self->pg->removeAnnot(annot);
         }
 
-        return scope.Close(Null());
+        V8_RETURN(scope.Close(Null()));
     }
 
     /**
@@ -364,19 +342,18 @@ namespace node {
      *  x2 - for upper right corner relative x ord
      *  y2 - for upper right corner relative y ord
      */
-    Handle<Value> NodePopplerPage::addAnnot(const Arguments &args) {
-        HandleScope scope;
+    V8_METHOD(NodePopplerPage::addAnnot) {
+        CREATE_HANDLE_SCOPE;
         NodePopplerPage* self = ObjectWrap::Unwrap<NodePopplerPage>(args.Holder());
 
         if (self->isDocClosed()) {
-            return ThrowException(Exception::Error(String::New(
-                "Document closed. You must delete this page")));
+            V8_THROW(Exception::Error(String::New("Document closed. You must delete this page")));
         }
 
         char *error = NULL;
 
         if (args.Length() < 1) {
-            return ThrowException(Exception::Error(String::New(
+            V8_THROW(Exception::Error(String::New(
                 "One argument required: (annot: Object | Array).")));
         }
 
@@ -393,9 +370,9 @@ namespace node {
         if (error) {
             Handle<Value> e = Exception::Error(String::New(error));
             delete [] error;
-            return ThrowException(e);
+            V8_THROW(e);
         } else {
-            return scope.Close(Null());
+            V8_RETURN(scope.Close(Null()));
         }
     }
 
@@ -403,7 +380,7 @@ namespace node {
      * Add annotations to page
      */
     void NodePopplerPage::addAnnot(const Handle<v8::Array> v8array, char **error) {
-        HandleScope scope;
+        CREATE_HANDLE_SCOPE;
 
         double x1, y1, x2, y2, x3, y3, x4, y4;
         int len = v8array->Length();
@@ -452,7 +429,7 @@ namespace node {
             double *x3, double *y3,
             double *x4, double *y4,
             char **error) {
-        HandleScope scope;
+        CREATE_HANDLE_SCOPE;
         Local<String> x1k = String::NewSymbol("x1");
         Local<String> x2k = String::NewSymbol("x2");
         Local<String> y1k = String::NewSymbol("y1");
@@ -589,7 +566,7 @@ namespace node {
     }
 
     void NodePopplerPage::AsyncRenderAfter(uv_work_t *req, int status) {
-        HandleScope scope;
+        CREATE_HANDLE_SCOPE;
         RenderWork *work = static_cast<RenderWork*>(req->data);
 
         work->closeStream();
@@ -598,7 +575,8 @@ namespace node {
             Local<Value> err = Exception::Error(String::New(work->error));
             Local<Value> argv[] = {err};
             TryCatch try_catch;
-            work->callback->Call(Context::GetCurrent()->Global(), 1, argv);
+            EXTRACT_CALLBACK(callback, work->callback);
+            callback->Call(Context::GetCurrent()->Global(), 1, argv);
             if (try_catch.HasCaught()) {
                 node::FatalException(try_catch);
             }
@@ -611,7 +589,8 @@ namespace node {
                     out->Set(String::NewSymbol("path"), String::New(work->filename));
                     Local<Value> argv[] = {Local<Value>::New(Null()), Local<Value>::New(out)};
                     TryCatch try_catch;
-                    work->callback->Call(Context::GetCurrent()->Global(), 2, argv);
+                    EXTRACT_CALLBACK(callback, work->callback);
+                    callback->Call(Context::GetCurrent()->Global(), 2, argv);
                     if (try_catch.HasCaught()) {
                         node::FatalException(try_catch);
                     }
@@ -619,15 +598,24 @@ namespace node {
                 }
                 case DEST_BUFFER:
                 {
-                    Buffer *buffer = Buffer::New(work->mstrm_len);
+#ifdef NODE_GT_10
+                    Local<v8::Object> buffer = Buffer::New(work->mstrm_len);
+#else
+                    Buffer* buffer = Buffer::New(work->mstrm_len);
+#endif
                     Local<v8::Object> out = v8::Object::New();
                     memcpy(Buffer::Data(buffer), work->mstrm_buf, work->mstrm_len);
                     out->Set(String::NewSymbol("type"), String::NewSymbol("buffer"));
                     out->Set(String::NewSymbol("format"), String::NewSymbol(work->format));
+#ifdef NODE_GT_10
+                    out->Set(String::NewSymbol("data"), buffer);
+#else
                     out->Set(String::NewSymbol("data"), buffer->handle_);
+#endif
                     Local<Value> argv[] = {Local<Value>::New(Null()), Local<Value>::New(out)};
                     TryCatch try_catch;
-                    work->callback->Call(Context::GetCurrent()->Global(), 2, argv);
+                    EXTRACT_CALLBACK(callback, work->callback);
+                    callback->Call(Context::GetCurrent()->Global(), 2, argv);
                     if (try_catch.HasCaught()) {
                         node::FatalException(try_catch);
                     }
@@ -649,19 +637,19 @@ namespace node {
      * \param options Object \see NodePopplerPage::renderToFile
      * \param callback Function \see NodePopplerPage::renderToFile
      */
-    Handle<Value> NodePopplerPage::renderToBuffer(const Arguments &args) {
-        HandleScope scope;
+    V8_METHOD(NodePopplerPage::renderToBuffer) {
+        CREATE_HANDLE_SCOPE;
         NodePopplerPage* self = ObjectWrap::Unwrap<NodePopplerPage>(args.Holder());
         RenderWork *work = new RenderWork(self, DEST_BUFFER);
 
         if (args.Length() < 2 || !args[0]->IsString()) {
             delete work;
-            return ThrowException(Exception::Error(String::New(
+            V8_THROW(Exception::Error(String::New(
                 "Arguments: (method: String, PPI: Number[, options: Object, callback: Function]")));
         }
 
         if (args[args.Length() - 1]->IsFunction()) {
-            work->callback = Persistent<v8::Function>::New(Local<v8::Function>::Cast(args[args.Length() - 1]));
+            PERSIST_CALLBACK(work->callback, v8::Local<v8::Function>::Cast(args[args.Length() - 1]));
         }
 
         if (self->isDocClosed()) {
@@ -697,26 +685,34 @@ namespace node {
 
         self->renderToStream(work);
         if (!work->callback.IsEmpty()) {
-            return scope.Close(Undefined());
+            V8_RETURN(scope.Close(Undefined()));
         } else {
             work->closeStream();
 
             if (work->error) {
                 Handle<Value> e = Exception::Error(String::New(work->error));
                 delete work;
-                return ThrowException(e);
+                V8_THROW(e);
             } else {
-                Buffer *buffer = Buffer::New(work->mstrm_len);
+#ifdef NODE_GT_10
+                Local<v8::Object> buffer = Buffer::New(work->mstrm_len);
+#else
+                Buffer* buffer = Buffer::New(work->mstrm_len);
+#endif
                 Handle<v8::Object> out = v8::Object::New();
 
                 memcpy(Buffer::Data(buffer), work->mstrm_buf, work->mstrm_len);
 
                 out->Set(String::NewSymbol("type"), String::NewSymbol("buffer"));
                 out->Set(String::NewSymbol("format"), args[0]);
+#ifdef NODE_GT_10
+                out->Set(String::NewSymbol("data"), buffer);
+#else
                 out->Set(String::NewSymbol("data"), buffer->handle_);
+#endif
 
                 delete work;
-                return scope.Close(out);
+                V8_RETURN(scope.Close(out));
             }
         }
     }
@@ -744,8 +740,8 @@ namespace node {
      *
      * \return Node::Buffer Buffer with rendered image data.
      */
-    Handle<Value> NodePopplerPage::renderToFile(const Arguments &args) {
-        HandleScope scope;
+    V8_METHOD(NodePopplerPage::renderToFile) {
+        CREATE_HANDLE_SCOPE;
         NodePopplerPage* self = ObjectWrap::Unwrap<NodePopplerPage>(args.Holder());
         RenderWork *work = new RenderWork(self, DEST_FILE);
 
@@ -756,7 +752,7 @@ namespace node {
         }
 
         if (args[args.Length() - 1]->IsFunction()) {
-            work->callback = Persistent<v8::Function>::New(Local<v8::Function>::Cast(args[args.Length() - 1]));
+            PERSIST_CALLBACK(work->callback, v8::Local<v8::Function>::Cast(args[args.Length() - 1]));
         }
 
         if (self->isDocClosed()) {
@@ -798,26 +794,26 @@ namespace node {
 
         self->renderToStream(work);
         if (!work->callback.IsEmpty()) {
-            return scope.Close(Undefined());
+            V8_RETURN(scope.Close(Undefined()));
         } else {
             work->closeStream();
             if (work->error) {
                 Handle<Value> e = Exception::Error(String::New(work->error));
                 unlink(work->filename);
                 delete work;
-                return ThrowException(e);
+                V8_THROW(e);
             } else {
                 Handle<v8::Object> out = v8::Object::New();
                 out->Set(String::NewSymbol("type"), String::NewSymbol("file"));
                 out->Set(String::NewSymbol("path"), String::New(work->filename));
                 delete work;
-                return scope.Close(out);
+                V8_RETURN(scope.Close(out));
             }
         }
     }
 
     void NodePopplerPage::RenderWork::setWriter(const Handle<Value> method) {
-        HandleScope scope;
+        CREATE_HANDLE_SCOPE;
         char *e = NULL;
         String::Utf8Value m(method);
         if (m.length() > 0) {
@@ -842,7 +838,7 @@ namespace node {
     }
 
     void NodePopplerPage::RenderWork::setWriterOptions(const Handle<Value> optsVal) {
-        HandleScope scope;
+        CREATE_HANDLE_SCOPE;
 
         Local<String> ck = String::NewSymbol("compression");
         Local<String> qk = String::NewSymbol("quality");
@@ -919,7 +915,7 @@ namespace node {
     }
 
     void NodePopplerPage::RenderWork::setPPI(const Handle<Value> PPI) {
-        HandleScope scope;
+        CREATE_HANDLE_SCOPE;
         char *e = NULL;
         if (PPI->IsNumber()) {
             double ppi;
@@ -939,7 +935,7 @@ namespace node {
     }
 
     void NodePopplerPage::RenderWork::setPath(const Handle<Value> path) {
-        HandleScope scope;
+        CREATE_HANDLE_SCOPE;
         char *e = NULL;
         if (path->IsString()) {
             if (path->ToString()->Utf8Length() > 0) {
@@ -958,7 +954,7 @@ namespace node {
     }
 
     void NodePopplerPage::RenderWork::setSlice(const Handle<Value> sliceVal) {
-        HandleScope scope;
+        CREATE_HANDLE_SCOPE;
         Local<v8::Object> slice;
         Local<String> xk = String::NewSymbol("x");
         Local<String> yk = String::NewSymbol("y");
