@@ -20,9 +20,9 @@
                 "<!@(pkg-config --cflags poppler)"
             ],
             "defines": [
-                "NODE_VERSION_MAJOR_<(major_version)",
-                "NODE_VERSION_MINOR_<(minor_version)",
-                "NODE_VERSION_MICRO_<(micro_version)"
+                "NODE_VERSION_MAJOR=<(major_version)",
+                "NODE_VERSION_MINOR=<(minor_version)",
+                "NODE_VERSION_MICRO=<(micro_version)"
             ]
         }
     ]

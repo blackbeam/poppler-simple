@@ -1,7 +1,7 @@
 #ifndef HELPERS_H_
 #define HELPERS_H_
 
-#if defined(NODE_VERSION_MINOR_8) || defined(NODE_VERSION_MINOR_9) || defined(NODE_VERSION_MINOR_10)
+#if NODE_VERSION_MAJOR == 0 && NODE_VERSION_MINOR <= 10
 #define V8_METHOD(method) v8::Handle<v8::Value> method(const v8::Arguments& args)
 #define V8_ACCESSOR_GETTER(method) v8::Handle<v8::Value> method(v8::Local<v8::String> property, \
                                                                 const v8::AccessorInfo &info)
@@ -17,7 +17,6 @@
     (container).Dispose()
 
 #else
-#define NODE_GT_10
 #define V8_METHOD(method) void method(const v8::FunctionCallbackInfo<v8::Value>& args)
 #define V8_ACCESSOR_GETTER(method) void method(v8::Local<v8::String> property, \
                                                const v8::PropertyCallbackInfo<v8::Value> &info)

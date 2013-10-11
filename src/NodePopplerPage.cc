@@ -598,19 +598,19 @@ namespace node {
                 }
                 case DEST_BUFFER:
                 {
-#ifdef NODE_GT_10
-                    Local<v8::Object> buffer = Buffer::New(work->mstrm_len);
-#else
+#if NODE_VERSION_MAJOR == 0 && NODE_VERSION_MINOR <= 10
                     Buffer* buffer = Buffer::New(work->mstrm_len);
+#else
+                    Local<v8::Object> buffer = Buffer::New(work->mstrm_len);
 #endif
                     Local<v8::Object> out = v8::Object::New();
                     memcpy(Buffer::Data(buffer), work->mstrm_buf, work->mstrm_len);
                     out->Set(String::NewSymbol("type"), String::NewSymbol("buffer"));
                     out->Set(String::NewSymbol("format"), String::NewSymbol(work->format));
-#ifdef NODE_GT_10
-                    out->Set(String::NewSymbol("data"), buffer);
-#else
+#if NODE_VERSION_MAJOR == 0 && NODE_VERSION_MINOR <= 10
                     out->Set(String::NewSymbol("data"), buffer->handle_);
+#else
+                    out->Set(String::NewSymbol("data"), buffer);
 #endif
                     Local<Value> argv[] = {Local<Value>::New(Null()), Local<Value>::New(out)};
                     TryCatch try_catch;
@@ -694,10 +694,10 @@ namespace node {
                 delete work;
                 V8_THROW(e);
             } else {
-#ifdef NODE_GT_10
-                Local<v8::Object> buffer = Buffer::New(work->mstrm_len);
-#else
+#if NODE_VERSION_MAJOR == 0 && NODE_VERSION_MINOR <= 10
                 Buffer* buffer = Buffer::New(work->mstrm_len);
+#else
+                Local<v8::Object> buffer = Buffer::New(work->mstrm_len);
 #endif
                 Handle<v8::Object> out = v8::Object::New();
 
@@ -705,10 +705,10 @@ namespace node {
 
                 out->Set(String::NewSymbol("type"), String::NewSymbol("buffer"));
                 out->Set(String::NewSymbol("format"), args[0]);
-#ifdef NODE_GT_10
-                out->Set(String::NewSymbol("data"), buffer);
-#else
+#if NODE_VERSION_MAJOR == 0 && NODE_VERSION_MINOR <= 10
                 out->Set(String::NewSymbol("data"), buffer->handle_);
+#else
+                out->Set(String::NewSymbol("data"), buffer);
 #endif
 
                 delete work;
