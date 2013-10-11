@@ -3,28 +3,28 @@
 
 #if defined(NODE_VERSION_MINOR_8) || defined(NODE_VERSION_MINOR_9) || defined(NODE_VERSION_MINOR_10)
 #define V8_METHOD(method) v8::Handle<v8::Value> method(const v8::Arguments& args)
-#define V8_ACCESSOR_GETTER(method) Handle<Value> method(v8::Local<v8::String> property, \
-                                                        const v8::AccessorInfo &info)
+#define V8_ACCESSOR_GETTER(method) v8::Handle<v8::Value> method(v8::Local<v8::String> property, \
+                                                                const v8::AccessorInfo &info)
 #define V8_ACCESSOR_RETURN(result) return result
 #define V8_RETURN(result) return result
 #define CREATE_HANDLE_SCOPE \
-    HandleScope scope
+    v8::HandleScope scope
 #define PERSIST_CALLBACK(container, callback) \
-    (container) = v8::Persistent<v8::Function>::New(Local<v8::Function>::Cast(callback))
+    (container) = v8::Persistent<v8::Function>::New(v8::Local<v8::Function>::Cast(callback))
 #define EXTRACT_CALLBACK(var, container) \
     v8::Local<v8::Function> (var) = v8::Local<v8::Function>::New(container)
 #define DISPOSE_PERSISTENT(container) \
     (container).Dispose()
 
 #else
+#define NODE_GT_10
 #define V8_METHOD(method) void method(const v8::FunctionCallbackInfo<v8::Value>& args)
 #define V8_ACCESSOR_GETTER(method) void method(v8::Local<v8::String> property, \
                                                const v8::PropertyCallbackInfo<v8::Value> &info)
 #define V8_ACCESSOR_RETURN(result) do { info.GetReturnValue().Set(result);return; } while(0)
 #define V8_RETURN(result) do { args.GetReturnValue().Set(result);return; } while(0)
-#define NODE_GT_10
 #define CREATE_HANDLE_SCOPE \
-    HandleScope scope(v8::Isolate::GetCurrent())
+    v8::HandleScope scope(v8::Isolate::GetCurrent())
 #define PERSIST_CALLBACK(container, callback) \
     (container).Reset(v8::Isolate::GetCurrent(), callback)
 #define EXTRACT_CALLBACK(var, container) \
