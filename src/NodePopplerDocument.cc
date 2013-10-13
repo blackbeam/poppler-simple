@@ -49,6 +49,10 @@ namespace node {
         NODE_DEFINE_CONSTANT(tpl, POPPLER_VERSION_MAJOR);
         NODE_DEFINE_CONSTANT(tpl, POPPLER_VERSION_MINOR);
         NODE_DEFINE_CONSTANT(tpl, POPPLER_VERSION_MICRO);
+        
+        NODE_DEFINE_CONSTANT(exports, POPPLER_VERSION_MAJOR);
+        NODE_DEFINE_CONSTANT(exports, POPPLER_VERSION_MINOR);
+        NODE_DEFINE_CONSTANT(exports, POPPLER_VERSION_MICRO);
 
         tpl->InstanceTemplate()->SetAccessor(String::NewSymbol("pageCount"),
                                              NodePopplerDocument::paramsGetter);

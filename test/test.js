@@ -84,7 +84,12 @@ describe('PopplerDocument', function () {
             a.equal(p.width, tmp[i].width);
             a.equal(p.rotate, tmp[i].rotate);
             a.equal(p.isCropped, false);
-            a.equal(p.numAnnots, 0);
+            if ((poppler.POPPLER_VERSION_MAJOR === 0 &&
+                poppler.POPPLER_VERSION_MINOR >= 20) ||
+                poppler.POPPLER_VERSION_MAJOR > 0)
+            {
+                a.equal(p.numAnnots, 0);
+            }
             a.deepEqual(p.media_box, { x1: 0, x2: 299, y1: 0, y2: 572 });
             a.deepEqual(p.crop_box, { x1: 0, x2: 299, y1: 0, y2: 572 });
             a.deepEqual(p.trim_box, { x1: 0, x2: 299, y1: 0, y2: 572 });
@@ -192,7 +197,9 @@ describe('PopplerPage', function () {
         ];
         a.deepEqual(results, tmp);
     });
-    if (poppler.PopplerDocument.POPPLER_VERSION_MINOR > 18) {
+    if ((poppler.POPPLER_VERSION_MAJOR === 0 &&
+         poppler.POPPLER_VERSION_MINOR >= 20) ||
+         poppler.POPPLER_VERSION_MAJOR > 0) {
         it('should add annotations', function () {
             pages.forEach(function (x) {
                 x.addAnnot(x.findText('ко'));

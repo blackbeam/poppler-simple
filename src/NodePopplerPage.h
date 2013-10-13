@@ -128,7 +128,10 @@ namespace node {
         V8_METHOD_DECL(getWordList);
         V8_METHOD_DECL(renderToFile);
         V8_METHOD_DECL(renderToBuffer);
+#if POPPLER_VERSION_MAJOR == 0 && POPPLER_VERSION_MINOR < 20
+#else
         V8_METHOD_DECL(addAnnot);
+#endif
         V8_METHOD_DECL(deleteAnnots);
 
         static void AsyncRenderWork(uv_work_t *req);
@@ -176,7 +179,10 @@ namespace node {
             return text;
         }
         void renderToStream(RenderWork *work);
+#if POPPLER_VERSION_MAJOR == 0 && POPPLER_VERSION_MINOR < 20
+#else
         void addAnnot(const v8::Handle<v8::Array> array, char **error);
+#endif
 
         PDFDoc *doc;
         Page *pg;

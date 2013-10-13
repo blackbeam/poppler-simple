@@ -35,7 +35,8 @@ namespace node {
         NODE_SET_PROTOTYPE_METHOD(tpl, "renderToBuffer", NodePopplerPage::renderToBuffer);
         NODE_SET_PROTOTYPE_METHOD(tpl, "findText", NodePopplerPage::findText);
         NODE_SET_PROTOTYPE_METHOD(tpl, "getWordList", NodePopplerPage::getWordList);
-#if POPPLER_VERSION_MINOR >= 19
+#if POPPLER_VERSION_MAJOR == 0 && POPPLER_VERSION_MINOR < 20
+#else
         NODE_SET_PROTOTYPE_METHOD(tpl, "addAnnot", NodePopplerPage::addAnnot);
         NODE_SET_PROTOTYPE_METHOD(tpl, "deleteAnnots", NodePopplerPage::deleteAnnots);
 #endif
@@ -44,7 +45,10 @@ namespace node {
         tpl->InstanceTemplate()->SetAccessor(String::NewSymbol("width"), NodePopplerPage::paramsGetter);
         tpl->InstanceTemplate()->SetAccessor(String::NewSymbol("height"), NodePopplerPage::paramsGetter);
         tpl->InstanceTemplate()->SetAccessor(String::NewSymbol("crop_box"), NodePopplerPage::paramsGetter);
+#if POPPLER_VERSION_MAJOR == 0 && POPPLER_VERSION_MINOR < 19
+#else
         tpl->InstanceTemplate()->SetAccessor(String::NewSymbol("numAnnots"), NodePopplerPage::paramsGetter);
+#endif
         tpl->InstanceTemplate()->SetAccessor(String::NewSymbol("media_box"), NodePopplerPage::paramsGetter);
         tpl->InstanceTemplate()->SetAccessor(String::NewSymbol("art_box"), NodePopplerPage::paramsGetter);
         tpl->InstanceTemplate()->SetAccessor(String::NewSymbol("trim_box"), NodePopplerPage::paramsGetter);
@@ -189,7 +193,7 @@ namespace node {
             V8_ACCESSOR_RETURN(scope.Close(Int32::New(self->pg->getRotate())));
 
         } else if (strcmp(*propName, "numAnnots") == 0) {
-#if (POPPLER_VERSION_MINOR < 19)
+#if POPPLER_VERSION_MAJOR == 0 && POPPLER_VERSION_MINOR < 19
             Annots *annots = self->pg->getAnnots(self->doc->getCatalog());
 #else
             Annots *annots = self->pg->getAnnots();
@@ -285,7 +289,8 @@ namespace node {
                  gFalse, gTrue, // startAtTop, stopAtBottom
                  gFalse, gFalse, // startAtLast, stopAtLast
                  gFalse, gFalse, // caseSensitive, backwards
-#if (POPPLER_VERSION_MINOR >= 19)
+#if POPPLER_VERSION_MAJOR == 0 && POPPLER_VERSION_MINOR < 19
+#else
                  gFalse, // wholeWord
 #endif
                  &xMin, &yMin, &xMax, &yMax)) {
@@ -314,6 +319,8 @@ namespace node {
         V8_RETURN(scope.Close(v8results));
     }
 
+#if POPPLER_VERSION_MAJOR == 0 && POPPLER_VERSION_MINOR < 20
+#else
     /**
      * Deletes all annotations
      */
@@ -330,7 +337,10 @@ namespace node {
 
         V8_RETURN(scope.Close(Null()));
     }
+#endif
 
+#if POPPLER_VERSION_MAJOR == 0 && POPPLER_VERSION_MINOR < 20
+#else
     /**
      * Adds annotations to a page
      *
@@ -419,6 +429,7 @@ namespace node {
         delete rect;
         delete aq;
     }
+#endif
 
     /**
      * Parse annotation quadrilateral
@@ -493,7 +504,7 @@ namespace node {
             splashModeRGB8,
             4, gFalse,
             paperColor);
-#if POPPLER_VERSION_MINOR < 19
+#if POPPLER_VERSION_MAJOR == 0 && POPPLER_VERSION_MINOR < 19
         splashOut->startDoc(work->self->doc->getXRef());
 #else
         splashOut->startDoc(work->self->doc);
@@ -507,16 +518,15 @@ namespace node {
                 writer = new JpegWriter(work->quality, work->progressive);
                 break;
             case W_TIFF:
-#if (POPPLER_VERSION_MINOR > 20)
-                writer = new TiffWriter(TiffWriter::RGB);
-#else
+#if POPPLER_VERSION_MAJOR == 0 && POPPLER_VERSION_MINOR < 21
                 writer = new TiffWriter();
                 ((TiffWriter*)writer)->setSplashMode(splashModeRGB8);
+#else
+                writer = new TiffWriter(TiffWriter::RGB);
 #endif
                 ((TiffWriter*)writer)->setCompressionString(work->compression);
         }
-
-#if POPPLER_VERSION_MINOR < 19
+#if POPPLER_VERSION_MAJOR == 0 && POPPLER_VERSION_MINOR < 19
         work->self->pg->displaySlice(splashOut, work->PPI, work->PPI,
             0, gFalse, gTrue,
             work->sx, work->sy, work->sw, work->sh,
