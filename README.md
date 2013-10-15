@@ -3,7 +3,7 @@ A simple javascript interface to [poppler](http://poppler.freedesktop.org/) libr
 
 ### Requirements:
 1. iconv implementation (usually included in glibc).
-2. Modern [poppler](http://poppler.freedesktop.org/) library version (>= 0.20).
+2. Modern [poppler](http://poppler.freedesktop.org/) library version (>= 0.18).
 
 ### Install:
 ```bash
