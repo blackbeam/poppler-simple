@@ -322,17 +322,24 @@ namespace node {
 #if POPPLER_VERSION_MAJOR == 0 && POPPLER_VERSION_MINOR < 20
 #else
     /**
-     * Deletes all annotations
+     * Deletes typeHighlight annotations from end of an annotations array
      */
     V8_METHOD(NodePopplerPage::deleteAnnots) {
         CREATE_HANDLE_SCOPE;
         NodePopplerPage *self = ObjectWrap::Unwrap<NodePopplerPage>(args.Holder());
 
-        Annots *annots = self->pg->getAnnots();
-
-        while (annots->getNumAnnots()) {
-            Annot *annot = annots->getAnnot(0);
-            self->pg->removeAnnot(annot);
+        while (true) {
+            Annots *annots = self->pg->getAnnots();
+            int num_annots = annots->getNumAnnots();
+            if (num_annots > 0) {
+                Annot *annot = annots->getAnnot(num_annots - 1);
+                if (annot->getType() != Annot::typeHighlight) {
+                    break;
+                }
+                self->pg->removeAnnot(annot);
+            } else {
+                break;
+            }
         }
 
         V8_RETURN(scope.Close(Null()));

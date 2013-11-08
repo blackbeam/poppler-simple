@@ -214,6 +214,13 @@ describe('PopplerPage', function () {
                 a.equal(x.numAnnots, 0);
             });
         });
+        it('should remove only typeHighlight annotations', function () {
+            var p = new poppler.PopplerDocument(__dirname + '/fixtures/annot.pdf').getPage(1);
+            p.addAnnot(p.findText('Лейла'));
+            a.equal(p.numAnnots, 9);
+            p.deleteAnnots();
+            a.equal(p.numAnnots, 8);
+        });
     }
     describe('render to file', function () {
         it('should render to png', function () {
