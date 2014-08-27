@@ -26,12 +26,14 @@ describe('poppler module', function () {
 
 describe('PopplerDocument', function () {
     it('should throw on non existing document', function () {
+        this.timeout(0);
         a.throws(function () {
             var doc = new poppler.PopplerDocument('file:///123.pdf');
             doc = null;
         }, new RegExp("Couldn't open file - fopen error. Errno: 2."));
     });
     it('should open pdf file', function () {
+        this.timeout(0);
         docs = targets.map(function (x) {
             return new poppler.PopplerDocument(x);
         });
@@ -46,12 +48,14 @@ describe('PopplerDocument', function () {
         }
     });
     it('should throw on non existing page', function () {
+        this.timeout(0);
         a.throws(function () {
             var page = docs[0].getPage(65536);
             page = null;
         }, new RegExp('Page number out of bounds'));
     });
     it('should open pages', function () {
+        this.timeout(0);
         pages = docs.map(function (x) {
             return x.getPage(1);
         });
@@ -101,6 +105,7 @@ describe('PopplerDocument', function () {
 
 describe('PopplerPage', function () {
     it('should return word list', function () {
+        this.timeout(0);
         var results = pages.map(function (x) {
             return x.getWordList();
         });
@@ -134,6 +139,7 @@ describe('PopplerPage', function () {
             text: 'вв.)' });
     });
     it('should search for text', function () {
+        this.timeout(0);
         var results = pages.map(function (x) {
             return x.findText("ко");
         });
@@ -201,6 +207,7 @@ describe('PopplerPage', function () {
          poppler.POPPLER_VERSION_MINOR >= 20) ||
          poppler.POPPLER_VERSION_MAJOR > 0) {
         it('should add annotations', function () {
+            this.timeout(0);
             pages.forEach(function (x) {
                 x.addAnnot(x.findText('ко'));
             });
@@ -209,12 +216,14 @@ describe('PopplerPage', function () {
             });
         });
         it('should remove annotations', function () {
+            this.timeout(0);
             pages.forEach(function (x) {
                 x.deleteAnnots();
                 a.equal(x.numAnnots, 0);
             });
         });
         it('should remove only typeHighlight annotations', function () {
+            this.timeout(0);
             var p = new poppler.PopplerDocument(__dirname + '/fixtures/annot.pdf').getPage(1);
             p.addAnnot(p.findText('Лейла'));
             a.equal(p.numAnnots, 9);
@@ -224,6 +233,7 @@ describe('PopplerPage', function () {
     }
     describe('render to file', function () {
         it('should render to png', function () {
+            this.timeout(0);
             pages.forEach(function (x) {
                 var out = x.renderToFile('test/out.png', 'png', 50, {
                     slice: { x: 0, y: 0, w: 1, h: 0.5 }
@@ -234,6 +244,7 @@ describe('PopplerPage', function () {
             });
         });
         it('should render to jpeg', function () {
+            this.timeout(0);
             pages.forEach(function (x) {
                 var out = x.renderToFile('test/out.jpeg', 'jpeg', 50, {quality: 100});
                 a.deepEqual(out, {type: 'file', path: 'test/out.jpeg'});
@@ -242,6 +253,7 @@ describe('PopplerPage', function () {
             });
         });
         it('should render to tiff', function () {
+            this.timeout(0);
             pages.forEach(function (x) {
                 var out = x.renderToFile('test/out.tiff', 'tiff', 50, {compression: 'lzw'});
                 a.deepEqual(out, {type: 'file', path: 'test/out.tiff'});
@@ -250,6 +262,7 @@ describe('PopplerPage', function () {
             });
         });
         it('should throw on wrong arguments', function () {
+            this.timeout(0);
             pages.forEach(function (x) {
                 a.throws(function () {
                     var out = x.renderToFile('foo');
@@ -258,6 +271,7 @@ describe('PopplerPage', function () {
             });
         });
         it('should throw on bad output path', function () {
+            this.timeout(0);
             pages.forEach(function (x) {
                 a.throws(function () {
                     var out = x.renderToFile('/t/t/t/t/t/t/t/123', 'jpeg', 50);
@@ -266,6 +280,7 @@ describe('PopplerPage', function () {
             });
         });
         it('should throw on unknown format', function () {
+            this.timeout(0);
             pages.forEach(function (x) {
                 a.throws(function () {
                     var out = x.renderToFile('test/out.bmp', 'bmp', 50);
@@ -274,6 +289,7 @@ describe('PopplerPage', function () {
             });
         });
         it('should throw on bad PPI value', function () {
+            this.timeout(0);
             pages.forEach(function (x) {
                 a.throws(function () {
                     var out = x.renderToFile('test/x.jpeg', 'jpeg', -1);
@@ -282,6 +298,7 @@ describe('PopplerPage', function () {
             });
         });
         it('should throw on bad writer options', function () {
+            this.timeout(0);
             pages.forEach(function (x) {
                 a.throws(function () {
                     var out = x.renderToFile('test/x.jpeg', 'jpeg', 50, {quality: 'foobar'});
@@ -292,6 +309,7 @@ describe('PopplerPage', function () {
     });
     describe('render to file async', function () {
         it('should render to png', function (done) {
+            this.timeout(0);
             var n = pages.length, i = 0;
             pages.forEach(function (x, j) {
                 x.renderToFile('test/out'+j+'.png', 'png', 50, {slice: { x: 0, y: 0, w: 1, h: 0.5 }}, function (err, out) {
@@ -310,6 +328,7 @@ describe('PopplerPage', function () {
             }, 10);
         });
         it('should render to jpeg', function (done) {
+            this.timeout(0);
             var n = pages.length, i = 0;
             pages.forEach(function (x, j) {
                 x.renderToFile('test/out'+j+'.jpeg', 'jpeg', 50, {quality: 100}, function (err, out) {
@@ -328,6 +347,7 @@ describe('PopplerPage', function () {
             }, 10);
         });
         it('should render to tiff', function (done) {
+            this.timeout(0);
             var n = pages.length, i = 0;
             pages.forEach(function (x, j) {
                 x.renderToFile('test/out'+j+'.tiff', 'tiff', 50, {compression: 'lzw'}, function (err, out) {
@@ -346,6 +366,7 @@ describe('PopplerPage', function () {
             }, 10);
         });
         it('should pass error on bad output path', function (done) {
+            this.timeout(0);
             pages[0].renderToFile('/t/t/t/t/t/t/t/123', 'jpeg', 50, function (err, out) {
                 a.equal(out, undefined);
                 a.equal(err.message, "Could not open output stream");
@@ -353,6 +374,7 @@ describe('PopplerPage', function () {
             });
         });
         it('should pass error on unknown format', function (done) {
+            this.timeout(0);
             pages[0].renderToFile('test/out.bmp', 'bmp', 50, function (err, out) {
                 a.equal(out, undefined);
                 a.equal(err.message, "Unsupported compression method");
@@ -360,6 +382,7 @@ describe('PopplerPage', function () {
             });
         });
         it('should pass error on bad PPI value', function (done) {
+            this.timeout(0);
             pages[0].renderToFile('test/x.jpeg', 'jpeg', -1, function (err, out) {
                 a.equal(out, undefined);
                 a.equal(err.message, "'PPI' value must be greater then 0");
@@ -367,6 +390,7 @@ describe('PopplerPage', function () {
             });
         });
         it('should pass error on bad writer options', function (done) {
+            this.timeout(0);
             pages[0].renderToFile('test/x.jpeg', 'jpeg', 50, {quality: 'foobar'}, function (err, out) {
                 a.equal(out, undefined);
                 a.equal(err.message, "'quality' option value must be 0 - 100 interval integer");
@@ -376,6 +400,7 @@ describe('PopplerPage', function () {
     });
     describe('render to buffer', function () {
         it('should render to png', function () {
+            this.timeout(0);
             pages.forEach(function (x) {
                 var out = x.renderToBuffer('png', 50, {
                     slice: { x: 0, y: 0, w: 1, h: 0.5 }
@@ -387,6 +412,7 @@ describe('PopplerPage', function () {
             });
         });
         it('should render to jpeg', function () {
+            this.timeout(0);
             pages.forEach(function (x) {
                 var out = x.renderToBuffer('jpeg', 50, {quality: 100});
                 a.equal(out.type, 'buffer');
@@ -396,6 +422,7 @@ describe('PopplerPage', function () {
             });
         });
         it('should render to tiff', function () {
+            this.timeout(0);
             pages.forEach(function (x) {
                 var out = x.renderToBuffer('tiff', 50, {compression: 'lzw'});
                 a.equal(out.type, 'buffer');
@@ -407,6 +434,7 @@ describe('PopplerPage', function () {
     });
     describe('render to buffer async', function () {
         it('should render to png', function (done) {
+            this.timeout(0);
             var n = pages.length, i = 0;
             pages.forEach(function (x, j) {
                 x.renderToBuffer('png', 50, {slice: { x: 0, y: 0, w: 1, h: 0.5 }}, function (err, out) {
@@ -426,6 +454,7 @@ describe('PopplerPage', function () {
             }, 10);
         });
         it('should render to jpeg', function (done) {
+            this.timeout(0);
             var n = pages.length, i = 0;
             pages.forEach(function (x, j) {
                 x.renderToBuffer('jpeg', 50, {quality: 100}, function (err, out) {
@@ -445,6 +474,7 @@ describe('PopplerPage', function () {
             }, 10);
         });
         it('should render to tiff', function (done) {
+            this.timeout(0);
             var n = pages.length, i = 0;
             pages.forEach(function (x, j) {
                 x.renderToBuffer('tiff', 50, {compression: 'lzw'}, function (err, out) {
@@ -464,6 +494,7 @@ describe('PopplerPage', function () {
             }, 10);
         });
         it('should pass errors asyncronously', function (done) {
+            this.timeout(0);
             pages[0].renderToBuffer('jpg', 50, function (err, out) {
                 a.equal(out, undefined);
                 a.equal(err.message, "Unsupported compression method");
@@ -475,6 +506,7 @@ describe('PopplerPage', function () {
 
 describe('freeing', function () {
     before(function () {
+        this.timeout(0);
         for (var i = docs.length - 1; i >= 0; i--) {
             delete docs[i];
             docs[i] = null;
@@ -483,6 +515,7 @@ describe('freeing', function () {
     });
 
     it('page should throw if document deleted', function () {
+        this.timeout(0);
         a.throws(function () {
             pages.forEach(function (x) {
                 x.renderToBuffer('jpeg', 72);

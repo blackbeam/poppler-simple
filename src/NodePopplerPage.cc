@@ -1045,13 +1045,9 @@ namespace node {
             break;
             case DEST_BUFFER:
             {
-                if (this->w == W_TIFF) {
-                    this->filename = new char[L_tmpnam];
-                    this->filename = tmpnam(this->filename);
-                    this->f = fopen(this->filename, "wb");
-                } else {
-                    this->f = open_memstream(&this->mstrm_buf, &this->mstrm_len);
-                }
+                this->filename = new char[L_tmpnam];
+                this->filename = tmpnam(this->filename);
+                this->f = fopen(this->filename, "wb");
             }
         }
         if (!this->f) {
@@ -1074,25 +1070,23 @@ namespace node {
             break;
             case DEST_BUFFER:
             {
-                if (this->w == W_TIFF) {
-                    struct stat s;
-                    int filedes;
-                    filedes = open(this->filename, O_RDONLY);
-                    fstat(filedes, &s);
-                    if (s.st_size > 0) {
-                        this->mstrm_len = s.st_size;
-                        this->mstrm_buf = (char*) malloc(this->mstrm_len);
-                        ssize_t count = read(filedes, this->mstrm_buf, this->mstrm_len);
-                        if (count != (ssize_t) this->mstrm_len && this->error == NULL) {
-                            char err[256];
-                            sprintf(err, "Can't read temporary file");
-                            this->error = new char[strlen(err)+1];
-                            strcpy(this->error, err);
-                        }
+                struct stat s;
+                int filedes;
+                filedes = open(this->filename, O_RDONLY);
+                fstat(filedes, &s);
+                if (s.st_size > 0) {
+                    this->mstrm_len = s.st_size;
+                    this->mstrm_buf = (char*) malloc(this->mstrm_len);
+                    ssize_t count = read(filedes, this->mstrm_buf, this->mstrm_len);
+                    if (count != (ssize_t) this->mstrm_len && this->error == NULL) {
+                        char err[256];
+                        sprintf(err, "Can't read temporary file");
+                        this->error = new char[strlen(err)+1];
+                        strcpy(this->error, err);
                     }
-                    close(filedes);
-                    unlink(this->filename);
                 }
+                close(filedes);
+                unlink(this->filename);
             }
         }
      }

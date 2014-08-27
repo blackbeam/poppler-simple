@@ -23,7 +23,12 @@
                 "NODE_VERSION_MAJOR=<(major_version)",
                 "NODE_VERSION_MINOR=<(minor_version)",
                 "NODE_VERSION_MICRO=<(micro_version)"
-            ]
+            ],
+            "xcode_settings": {
+                "OTHER_CFLAGS": [
+                    "<!@(pkg-config --cflags poppler)"
+                ]
+            }
         }
     ]
 }
