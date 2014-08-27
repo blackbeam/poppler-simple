@@ -3,7 +3,7 @@
   "name": "poppler-simple",
   "description": "A simple interface to poppler library",
   "keywords": ["poppler"],
-  "version": "0.1.4",
+  "version": "0.1.5",
   "repository": {
     "type": "git",
     "url": "git://github.com/blackbeam/poppler-simple.git"
