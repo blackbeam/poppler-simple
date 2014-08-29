@@ -1049,9 +1049,12 @@ namespace node {
                     this->stream = new MemoryStream();
                     this->f = this->stream->open();
                 } else {
-                    this->filename = new char[L_tmpnam];
-                    this->filename = tmpnam(this->filename);
-                    this->f = fopen(this->filename, "wb");
+                    this->filename = new char[17];
+                    strcpy(this->filename, "/tmp/psmplXXXXXX");
+                    int fd = mkstemp(this->filename);
+                    if (fd != -1) {
+                        this->f = fdopen(fd, "wb");
+                    }
                 }
             }
         }
@@ -1068,14 +1071,16 @@ namespace node {
      * Closes output stream
      */
      void NodePopplerPage::RenderWork::closeStream() {
-        fclose(this->f);
-        this->f = NULL;
         switch(this->dest) {
             case DEST_FILE:
+                fclose(this->f);
+                this->f = NULL;
             break;
             case DEST_BUFFER:
             {
                 if (this->w != W_TIFF) {
+                    fclose(this->f);
+                    this->f = NULL;
                     this->mstrm_len = this->stream->getBufferLen();
                     this->mstrm_buf = this->stream->giveBuffer();
                 } else {
@@ -1095,7 +1100,8 @@ namespace node {
                         }
                     }
                     close(filedes);
-                    unlink(this->filename);
+                    fclose(this->f);
+                    this->f = NULL;
                 }
             }
         }
