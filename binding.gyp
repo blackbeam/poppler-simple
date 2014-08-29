@@ -11,7 +11,8 @@
                 "src/poppler.cc",
                 "src/NodePopplerDocument.cc",
                 "src/NodePopplerPage.cc",
-                "src/iconv_string.cc"
+                "src/iconv_string.cc",
+                "src/MemoryStream.cc"
             ],
             "libraries": [
                 "<!@(pkg-config --libs poppler)"

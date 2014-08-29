@@ -22,6 +22,7 @@
 #include <unistd.h>
 
 #include "iconv_string.h"
+#include "MemoryStream.h"
 
 
 namespace node {
@@ -47,6 +48,7 @@ namespace node {
                 , sh(1)
                 , PPI(72)
                 , f(NULL)
+                , stream(NULL)
                 , mstrm_len(0)
                 , w(W_JPEG)
             {
@@ -62,6 +64,7 @@ namespace node {
                 if (compression) delete [] compression;
                 if (!callback.IsEmpty()) DISPOSE_PERSISTENT(callback);
                 if (f) fclose(f);
+                if (stream) delete stream;
             }
             void setWriter(const v8::Handle<v8::Value> method);
             void setWriterOptions(const v8::Handle<v8::Value> optsVal);
@@ -86,6 +89,7 @@ namespace node {
             int sh;
             double PPI;
             FILE *f;
+            MemoryStream* stream;
             size_t mstrm_len;
             NodePopplerPage::Writer w;
             NodePopplerPage::Destination dest;
