@@ -33,7 +33,7 @@ SSIZE_TYPE MemoryStream::write(const char *buf, SIZE_TYPE size) {
         return 0;
     }
     buffer_len = offset + size;
-    memcpy(buffer, buf, size);
+    memcpy(buffer + offset, buf, size);
     offset += size;
     return size;
 }
