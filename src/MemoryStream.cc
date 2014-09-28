@@ -1,5 +1,16 @@
 #include "MemoryStream.h"
 
+inline OFFSET_TYPE pow2roundup(OFFSET_TYPE x) {
+    --x;
+    x |= x >> 1;
+    x |= x >> 2;
+    x |= x >> 4;
+    x |= x >> 8;
+    x |= x >> 16;
+    x |= x >> 32;
+    return x+1;
+}
+
 inline SSIZE_TYPE memory_stream_write(void *cookie, const char *buf, SIZE_TYPE size) {
     return ((Cookie*) cookie)->write(buf, size);
 }
@@ -27,12 +38,12 @@ FILE* MemoryStream::open() {
 
 SSIZE_TYPE MemoryStream::write(const char *buf, SIZE_TYPE size) {
     if (((OFFSET_TYPE)(offset + size)) > buffer_len) {
-        buffer = (char*) realloc(buffer, offset + size);
+        buffer_len = pow2roundup(offset + size);
+        buffer = (char*) realloc(buffer, buffer_len);
     }
     if (! buffer) {
         return 0;
     }
-    buffer_len = offset + size;
     memcpy(buffer + offset, buf, size);
     offset += size;
     return size;

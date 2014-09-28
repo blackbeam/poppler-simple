@@ -46,7 +46,7 @@ public:
     };
 
     FILE* open();
-    OFFSET_TYPE getBufferLen() { return buffer_len; };
+    OFFSET_TYPE getBufferLen() { return offset; };
     char* giveBuffer() {
         buffer_given = true;
         return buffer;
