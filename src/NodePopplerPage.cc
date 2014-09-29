@@ -465,7 +465,7 @@ namespace node {
             Handle<Value> y2v = rect->ToObject()->Get(y2k);
             if (!x1v->IsNumber() || !x2v->IsNumber() || !y1v->IsNumber() || !y2v->IsNumber()) {
                 char *e = (char*)"Wrong values for rectangle corners definition";
-                *error = new char(strlen(e)+1);
+                *error = new char[strlen(e)+1];
                 strcpy(*error, e);
             } else {
                 int rotation = getRotate();
