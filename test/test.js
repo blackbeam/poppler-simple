@@ -107,7 +107,8 @@ describe('PopplerPage', function () {
     it('should return word list', function () {
         this.timeout(0);
         var results = pages.map(function (x) {
-            return x.getWordList();
+            var word_list = x.getWordList();
+            return word_list;
         });
         a.equal(results[0].length, 45);
         a.equal(results[1].length, 45);

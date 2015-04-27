@@ -1,7 +1,7 @@
 #include <unistd.h>
 #include <v8.h>
 #include <node.h>
-#include <node_object_wrap.h>
+#include <nan.h>
 #include "helpers.h"
 #include <poppler/poppler-config.h>
 #include <cpp/poppler-version.h>
@@ -36,7 +36,8 @@ namespace node {
         {
         public:
             RenderWork(NodePopplerPage *self, NodePopplerPage::Destination dest)
-                : progressive(false)
+                : callback(NULL)
+                , progressive(false)
                 , error(NULL)
                 , mstrm_buf(NULL)
                 , filename(NULL)
@@ -62,7 +63,7 @@ namespace node {
                 if (mstrm_buf) free(mstrm_buf);
                 if (filename) delete [] filename;
                 if (compression) delete [] compression;
-                if (!callback.IsEmpty()) DISPOSE_PERSISTENT(callback);
+                if (callback != NULL) delete callback;
                 if (f) fclose(f);
                 if (stream) delete stream;
             }
@@ -75,7 +76,7 @@ namespace node {
             void closeStream();
 
             uv_work_t request;
-            v8::Persistent<v8::Function> callback;
+            NanCallback* callback;
             bool progressive;
             char *error;
             char *mstrm_buf;
@@ -127,16 +128,16 @@ namespace node {
         static void display(RenderWork *work);
 
     protected:
-        V8_METHOD_DECL(New);
-        V8_METHOD_DECL(findText);
-        V8_METHOD_DECL(getWordList);
-        V8_METHOD_DECL(renderToFile);
-        V8_METHOD_DECL(renderToBuffer);
+        static NAN_METHOD(New);
+        static NAN_METHOD(findText);
+        static NAN_METHOD(getWordList);
+        static NAN_METHOD(renderToFile);
+        static NAN_METHOD(renderToBuffer);
 #if POPPLER_VERSION_MAJOR == 0 && POPPLER_VERSION_MINOR < 20
 #else
-        V8_METHOD_DECL(addAnnot);
+        static NAN_METHOD(addAnnot);
 #endif
-        V8_METHOD_DECL(deleteAnnots);
+        static NAN_METHOD(deleteAnnots);
 
         static void AsyncRenderWork(uv_work_t *req);
         static void AsyncRenderAfter(uv_work_t *req, int status);

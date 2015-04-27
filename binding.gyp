@@ -29,7 +29,10 @@
                 "OTHER_CFLAGS": [
                     "<!@(pkg-config --cflags poppler)"
                 ]
-            }
+            },
+            "include_dirs": [
+                "<!(node -e \"require('nan')\")"
+            ]
         }
     ]
 }

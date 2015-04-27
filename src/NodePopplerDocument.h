@@ -1,5 +1,6 @@
 #include <v8.h>
 #include <node.h>
+#include <nan.h>
 #include "helpers.h"
 #include <GlobalParams.h>
 #include <cpp/poppler-version.h>
@@ -15,9 +16,7 @@ namespace node {
     public:
         NodePopplerDocument(const char* cFileName);
         ~NodePopplerDocument();
-        void wrap(v8::Handle<v8::Object> o) {
-            this->Wrap(o);
-        }
+
         inline bool isOk() {
             return doc->isOk();
         }
@@ -27,7 +26,7 @@ namespace node {
         static void Init(v8::Handle<v8::Object> exports);
 
     protected:
-        V8_METHOD_DECL(New);
+        static NAN_METHOD(New);
         void evPageOpened(const NodePopplerPage *p);
         void evPageClosed(const NodePopplerPage *p);
         GooList *pages;
