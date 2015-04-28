@@ -28,6 +28,9 @@
             "xcode_settings": {
                 "OTHER_CFLAGS": [
                     "<!@(pkg-config --cflags poppler)"
+                ],
+                "OTHER_LDFLAGS": [
+                    "-liconv"
                 ]
             },
             "include_dirs": [
