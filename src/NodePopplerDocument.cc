@@ -150,7 +150,7 @@ namespace node {
             }
             sprintf(errorDescription, "Couldn't open file - %s.", errorName);
             delete doc;
-            return NanThrowError(NanNew<String>(errorDescription, strlen(errorDescription)));
+            return NanThrowError(Exception::Error(NanNew<String>(errorDescription, strlen(errorDescription))));
         }
         doc->Wrap(args.This());
         NanReturnValue(args.This());
