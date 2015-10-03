@@ -11,10 +11,10 @@
         return Nan::ThrowError(err); \
     } else { \
         Local<Value> argv[] = {err}; \
-        TryCatch try_catch; \
+        Nan::TryCatch try_catch; \
         work->callback->Call(1, argv); \
         if (try_catch.HasCaught()) { \
-            node::FatalException(try_catch); \
+            Nan::FatalException(try_catch); \
         } \
         delete work; \
         return; \
@@ -586,10 +586,10 @@ namespace node {
         if (work->error) {
             Local<Value> err = Nan::Error(work->error);
             Local<Value> argv[] = {err};
-            TryCatch try_catch;
+            Nan::TryCatch try_catch;
             work->callback->Call(1, argv);
             if (try_catch.HasCaught()) {
-                node::FatalException(try_catch);
+                Nan::FatalException(try_catch);
             }
         } else {
             switch (work->dest) {
@@ -598,20 +598,22 @@ namespace node {
                     Local<v8::Object> out = Nan::New<v8::Object>();
                     out->Set(Nan::New("type").ToLocalChecked(), Nan::New("file").ToLocalChecked());
                     out->Set(Nan::New("path").ToLocalChecked(), Nan::New(work->filename).ToLocalChecked());
-                    Local<Value> argv[] = {Nan::New<v8::Value>(Nan::Null()), Nan::New<v8::Value>(out)};
-                    TryCatch try_catch;
+                    Local<Value> argv[] = {Nan::Null(), out};
+                    Nan::TryCatch try_catch;
                     work->callback->Call(2, argv);
                     if (try_catch.HasCaught()) {
-                        node::FatalException(try_catch);
+                        Nan::FatalException(try_catch);
                     }
                     break;
                 }
                 case DEST_BUFFER:
                 {
 #if NODE_VERSION_MAJOR == 0 && NODE_VERSION_MINOR <= 10
-                    Buffer* buffer = Buffer::New(work->mstrm_len);
+                    Buffer* buffer = Nan::NewBuffer(work->mstrm_len)
+                                         .ToLocalChecked();
 #else
-                    Local<v8::Object> buffer = Buffer::New(work->mstrm_len);
+                    Local<v8::Object> buffer = Nan::NewBuffer(work->mstrm_len)
+                                                   .ToLocalChecked();
 #endif
                     Local<v8::Object> out = Nan::New<v8::Object>();
                     memcpy(Buffer::Data(buffer), work->mstrm_buf, work->mstrm_len);
@@ -622,11 +624,11 @@ namespace node {
 #else
                     out->Set(Nan::New("data").ToLocalChecked(), buffer);
 #endif
-                    Local<Value> argv[] = {Nan::New<v8::Value>(Nan::Null()), Nan::New<v8::Value>(out)};
-                    TryCatch try_catch;
+                    Local<Value> argv[] = {Nan::Null(), out};
+                    Nan::TryCatch try_catch;
                     work->callback->Call(2, argv);
                     if (try_catch.HasCaught()) {
-                        node::FatalException(try_catch);
+                        Nan::FatalException(try_catch);
                     }
                     break;
                 }
@@ -704,9 +706,11 @@ namespace node {
                 return Nan::ThrowError(e);
             } else {
 #if NODE_VERSION_MAJOR == 0 && NODE_VERSION_MINOR <= 10
-                Buffer* buffer = Buffer::New(work->mstrm_len);
+                Buffer* buffer = Nan::NewBuffer(work->mstrm_len)
+                                     .ToLocalChecked();
 #else
-                Local<v8::Object> buffer = Buffer::New(work->mstrm_len);
+                Local<v8::Object> buffer = Nan::NewBuffer(work->mstrm_len)
+                                               .ToLocalChecked();
 #endif
                 Local<v8::Object> out = Nan::New<v8::Object>();
 
