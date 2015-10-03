@@ -8,7 +8,7 @@
 #define THROW_SYNC_ASYNC_ERR(work, err) \
     if (work->callback == NULL) { \
         delete work; \
-        return NanThrowError(err); \
+        return Nan::ThrowError(err); \
     } else { \
         Local<Value> argv[] = {err}; \
         TryCatch try_catch; \
@@ -17,7 +17,7 @@
             node::FatalException(try_catch); \
         } \
         delete work; \
-        NanReturnUndefined(); \
+        return; \
     }
 
 using namespace v8;
@@ -25,37 +25,37 @@ using namespace node;
 
 namespace node {
 
-    void NodePopplerPage::Init(v8::Handle<v8::Object> exports) {
-        Local<FunctionTemplate> tpl = NanNew<FunctionTemplate>(NodePopplerPage::New);
-        tpl->SetClassName(NanNew<String>("PopplerPage"));
+    void NodePopplerPage::Init(v8::Local<v8::Object> exports) {
+        Local<FunctionTemplate> tpl = Nan::New<FunctionTemplate>(NodePopplerPage::New);
+        tpl->SetClassName(Nan::New<String>("PopplerPage").ToLocalChecked());
         tpl->InstanceTemplate()->SetInternalFieldCount(1);
 
-        NODE_SET_PROTOTYPE_METHOD(tpl, "renderToFile", NodePopplerPage::renderToFile);
-        NODE_SET_PROTOTYPE_METHOD(tpl, "renderToBuffer", NodePopplerPage::renderToBuffer);
-        NODE_SET_PROTOTYPE_METHOD(tpl, "findText", NodePopplerPage::findText);
-        NODE_SET_PROTOTYPE_METHOD(tpl, "getWordList", NodePopplerPage::getWordList);
+        Nan::SetPrototypeMethod(tpl, "renderToFile", NodePopplerPage::renderToFile);
+        Nan::SetPrototypeMethod(tpl, "renderToBuffer", NodePopplerPage::renderToBuffer);
+        Nan::SetPrototypeMethod(tpl, "findText", NodePopplerPage::findText);
+        Nan::SetPrototypeMethod(tpl, "getWordList", NodePopplerPage::getWordList);
 #if POPPLER_VERSION_MAJOR == 0 && POPPLER_VERSION_MINOR < 20
 #else
-        NODE_SET_PROTOTYPE_METHOD(tpl, "addAnnot", NodePopplerPage::addAnnot);
-        NODE_SET_PROTOTYPE_METHOD(tpl, "deleteAnnots", NodePopplerPage::deleteAnnots);
+        Nan::SetPrototypeMethod(tpl, "addAnnot", NodePopplerPage::addAnnot);
+        Nan::SetPrototypeMethod(tpl, "deleteAnnots", NodePopplerPage::deleteAnnots);
 #endif
 
-        tpl->InstanceTemplate()->SetAccessor(NanNew("num"), NodePopplerPage::paramsGetter);
-        tpl->InstanceTemplate()->SetAccessor(NanNew("width"), NodePopplerPage::paramsGetter);
-        tpl->InstanceTemplate()->SetAccessor(NanNew("height"), NodePopplerPage::paramsGetter);
-        tpl->InstanceTemplate()->SetAccessor(NanNew("crop_box"), NodePopplerPage::paramsGetter);
+        tpl->InstanceTemplate()->SetAccessor(Nan::New("num").ToLocalChecked(), NodePopplerPage::paramsGetter);
+        tpl->InstanceTemplate()->SetAccessor(Nan::New("width").ToLocalChecked(), NodePopplerPage::paramsGetter);
+        tpl->InstanceTemplate()->SetAccessor(Nan::New("height").ToLocalChecked(), NodePopplerPage::paramsGetter);
+        tpl->InstanceTemplate()->SetAccessor(Nan::New("crop_box").ToLocalChecked(), NodePopplerPage::paramsGetter);
 #if POPPLER_VERSION_MAJOR == 0 && POPPLER_VERSION_MINOR < 19
 #else
-        tpl->InstanceTemplate()->SetAccessor(NanNew("numAnnots"), NodePopplerPage::paramsGetter);
+        tpl->InstanceTemplate()->SetAccessor(Nan::New("numAnnots").ToLocalChecked(), NodePopplerPage::paramsGetter);
 #endif
-        tpl->InstanceTemplate()->SetAccessor(NanNew("media_box"), NodePopplerPage::paramsGetter);
-        tpl->InstanceTemplate()->SetAccessor(NanNew("art_box"), NodePopplerPage::paramsGetter);
-        tpl->InstanceTemplate()->SetAccessor(NanNew("trim_box"), NodePopplerPage::paramsGetter);
-        tpl->InstanceTemplate()->SetAccessor(NanNew("bleed_box"), NodePopplerPage::paramsGetter);
-        tpl->InstanceTemplate()->SetAccessor(NanNew("rotate"), NodePopplerPage::paramsGetter);
-        tpl->InstanceTemplate()->SetAccessor(NanNew("isCropped"), NodePopplerPage::paramsGetter);
-        
-        exports->Set(NanNew<String>("PopplerPage"), tpl->GetFunction());
+        tpl->InstanceTemplate()->SetAccessor(Nan::New("media_box").ToLocalChecked(), NodePopplerPage::paramsGetter);
+        tpl->InstanceTemplate()->SetAccessor(Nan::New("art_box").ToLocalChecked(), NodePopplerPage::paramsGetter);
+        tpl->InstanceTemplate()->SetAccessor(Nan::New("trim_box").ToLocalChecked(), NodePopplerPage::paramsGetter);
+        tpl->InstanceTemplate()->SetAccessor(Nan::New("bleed_box").ToLocalChecked(), NodePopplerPage::paramsGetter);
+        tpl->InstanceTemplate()->SetAccessor(Nan::New("rotate").ToLocalChecked(), NodePopplerPage::paramsGetter);
+        tpl->InstanceTemplate()->SetAccessor(Nan::New("isCropped").ToLocalChecked(), NodePopplerPage::paramsGetter);
+
+        exports->Set(Nan::New<String>("PopplerPage").ToLocalChecked(), tpl->GetFunction());
     }
 
     NodePopplerPage::~NodePopplerPage() {
@@ -85,108 +85,108 @@ namespace node {
     }
 
     NAN_METHOD(NodePopplerPage::New) {
-        NanScope();
+        Nan::HandleScope scope;
         NodePopplerDocument* doc;
         int32_t pageNum;
 
-        if (args.Length() != 2) {
-            return NanThrowError("Two arguments required: (doc: NodePopplerDocument, page: Uint32).");
+        if (info.Length() != 2) {
+            return Nan::ThrowError("Two arguments required: (doc: NodePopplerDocument, page: Uint32).");
         }
-        if (!args[1]->IsUint32()) {
-            return NanThrowTypeError("'page' must be an instance of Uint32.");
+        if (!info[1]->IsUint32()) {
+            return Nan::ThrowTypeError("'page' must be an instance of Uint32.");
         }
-        pageNum = args[1]->ToUint32()->Value();
+        pageNum = info[1]->ToUint32()->Value();
 
-        if(!args[0]->IsObject()) { // TODO: hasInstance
-            return NanThrowTypeError("'doc' must be an instance of NodePopplerDocument.");
+        if(!info[0]->IsObject()) { // TODO: hasInstance
+            return Nan::ThrowTypeError("'doc' must be an instance of NodePopplerDocument.");
         }
 
-        doc = ObjectWrap::Unwrap<NodePopplerDocument>(args[0]->ToObject());
+        doc = Nan::ObjectWrap::Unwrap<NodePopplerDocument>(info[0]->ToObject());
         if (0 >= pageNum || pageNum > doc->doc->getNumPages()) {
-            return NanThrowError("Page number out of bounds.");
+            return Nan::ThrowError("Page number out of bounds.");
         }
 
         NodePopplerPage* page = new NodePopplerPage(doc, pageNum);
         if(!page->isOk()) {
             delete page;
-            return NanThrowError("Can't open page.");
+            return Nan::ThrowError("Can't open page.");
         }
-        page->wrap(args.This());
-        NanReturnValue(args.This());
+        page->wrap(info.This());
+        info.GetReturnValue().Set(info.This());
     }
 
     V8_ACCESSOR_GETTER(NodePopplerPage::paramsGetter) {
-        NanScope();
+        Nan::HandleScope scope;
 
         String::Utf8Value propName(property);
-        NodePopplerPage *self = ObjectWrap::Unwrap<NodePopplerPage>(info.This());
+        NodePopplerPage *self = Nan::ObjectWrap::Unwrap<NodePopplerPage>(info.This());
 
         if (strcmp(*propName, "width") == 0) {
-            V8_ACCESSOR_RETURN(NanNew<Number>(self->getWidth()));
+            V8_ACCESSOR_RETURN(Nan::New<Number>(self->getWidth()));
 
         } else if (strcmp(*propName, "height") == 0) {
-            V8_ACCESSOR_RETURN(NanNew<Number>(self->getHeight()));
+            V8_ACCESSOR_RETURN(Nan::New<Number>(self->getHeight()));
 
         } else if (strcmp(*propName, "num") == 0) {
-            V8_ACCESSOR_RETURN(NanNew<Uint32>(self->pg->getNum()));
+            V8_ACCESSOR_RETURN(Nan::New<Uint32>(self->pg->getNum()));
 
         } else if (strcmp(*propName, "crop_box") == 0) {
             PDFRectangle *rect = self->pg->getCropBox();
-            Local<v8::Object> crop_box = NanNew<v8::Object>();
+            Local<v8::Object> crop_box = Nan::New<v8::Object>();
 
-            crop_box->Set(NanNew("x1"), NanNew<Number>(rect->x1));
-            crop_box->Set(NanNew("x2"), NanNew<Number>(rect->x2));
-            crop_box->Set(NanNew("y1"), NanNew<Number>(rect->y1));
-            crop_box->Set(NanNew("y2"), NanNew<Number>(rect->y2));
+            crop_box->Set(Nan::New("x1").ToLocalChecked(), Nan::New<Number>(rect->x1));
+            crop_box->Set(Nan::New("x2").ToLocalChecked(), Nan::New<Number>(rect->x2));
+            crop_box->Set(Nan::New("y1").ToLocalChecked(), Nan::New<Number>(rect->y1));
+            crop_box->Set(Nan::New("y2").ToLocalChecked(), Nan::New<Number>(rect->y2));
 
             V8_ACCESSOR_RETURN(crop_box);
 
         } else if (strcmp(*propName, "media_box") == 0) {
             PDFRectangle *rect = self->pg->getMediaBox();
-            Local<v8::Object> media_box = NanNew<v8::Object>();
+            Local<v8::Object> media_box = Nan::New<v8::Object>();
 
-            media_box->Set(NanNew("x1"), NanNew<Number>(rect->x1));
-            media_box->Set(NanNew("x2"), NanNew<Number>(rect->x2));
-            media_box->Set(NanNew("y1"), NanNew<Number>(rect->y1));
-            media_box->Set(NanNew("y2"), NanNew<Number>(rect->y2));
+            media_box->Set(Nan::New("x1").ToLocalChecked(), Nan::New<Number>(rect->x1));
+            media_box->Set(Nan::New("x2").ToLocalChecked(), Nan::New<Number>(rect->x2));
+            media_box->Set(Nan::New("y1").ToLocalChecked(), Nan::New<Number>(rect->y1));
+            media_box->Set(Nan::New("y2").ToLocalChecked(), Nan::New<Number>(rect->y2));
 
             V8_ACCESSOR_RETURN(media_box);
 
         } else if (strcmp(*propName, "bleed_box") == 0) {
             PDFRectangle *rect = self->pg->getBleedBox();
-            Local<v8::Object> bleed_box = NanNew<v8::Object>();
+            Local<v8::Object> bleed_box = Nan::New<v8::Object>();
 
-            bleed_box->Set(NanNew("x1"), NanNew<Number>(rect->x1));
-            bleed_box->Set(NanNew("x2"), NanNew<Number>(rect->x2));
-            bleed_box->Set(NanNew("y1"), NanNew<Number>(rect->y1));
-            bleed_box->Set(NanNew("y2"), NanNew<Number>(rect->y2));
+            bleed_box->Set(Nan::New("x1").ToLocalChecked(), Nan::New<Number>(rect->x1));
+            bleed_box->Set(Nan::New("x2").ToLocalChecked(), Nan::New<Number>(rect->x2));
+            bleed_box->Set(Nan::New("y1").ToLocalChecked(), Nan::New<Number>(rect->y1));
+            bleed_box->Set(Nan::New("y2").ToLocalChecked(), Nan::New<Number>(rect->y2));
 
             V8_ACCESSOR_RETURN(bleed_box);
 
         } else if (strcmp(*propName, "trim_box") == 0) {
             PDFRectangle *rect = self->pg->getTrimBox();
-            Local<v8::Object> trim_box = NanNew<v8::Object>();
+            Local<v8::Object> trim_box = Nan::New<v8::Object>();
 
-            trim_box->Set(NanNew("x1"), NanNew<Number>(rect->x1));
-            trim_box->Set(NanNew("x2"), NanNew<Number>(rect->x2));
-            trim_box->Set(NanNew("y1"), NanNew<Number>(rect->y1));
-            trim_box->Set(NanNew("y2"), NanNew<Number>(rect->y2));
+            trim_box->Set(Nan::New("x1").ToLocalChecked(), Nan::New<Number>(rect->x1));
+            trim_box->Set(Nan::New("x2").ToLocalChecked(), Nan::New<Number>(rect->x2));
+            trim_box->Set(Nan::New("y1").ToLocalChecked(), Nan::New<Number>(rect->y1));
+            trim_box->Set(Nan::New("y2").ToLocalChecked(), Nan::New<Number>(rect->y2));
 
             V8_ACCESSOR_RETURN(trim_box);
 
         } else if (strcmp(*propName, "art_box") == 0) {
             PDFRectangle *rect = self->pg->getArtBox();
-            Local<v8::Object> art_box = NanNew<v8::Object>();
+            Local<v8::Object> art_box = Nan::New<v8::Object>();
 
-            art_box->Set(NanNew("x1"), NanNew<Number>(rect->x1));
-            art_box->Set(NanNew("x2"), NanNew<Number>(rect->x2));
-            art_box->Set(NanNew("y1"), NanNew<Number>(rect->y1));
-            art_box->Set(NanNew("y2"), NanNew<Number>(rect->y2));
+            art_box->Set(Nan::New("x1").ToLocalChecked(), Nan::New<Number>(rect->x1));
+            art_box->Set(Nan::New("x2").ToLocalChecked(), Nan::New<Number>(rect->x2));
+            art_box->Set(Nan::New("y1").ToLocalChecked(), Nan::New<Number>(rect->y1));
+            art_box->Set(Nan::New("y2").ToLocalChecked(), Nan::New<Number>(rect->y2));
 
             V8_ACCESSOR_RETURN(art_box);
 
         } else if (strcmp(*propName, "rotate") == 0) {
-            V8_ACCESSOR_RETURN(NanNew<Int32>(self->pg->getRotate()));
+            V8_ACCESSOR_RETURN(Nan::New<Int32>(self->pg->getRotate()));
 
         } else if (strcmp(*propName, "numAnnots") == 0) {
 #if POPPLER_VERSION_MAJOR == 0 && POPPLER_VERSION_MINOR < 19
@@ -194,13 +194,13 @@ namespace node {
 #else
             Annots *annots = self->pg->getAnnots();
 #endif
-            V8_ACCESSOR_RETURN(NanNew<Uint32>(annots->getNumAnnots()));
+            V8_ACCESSOR_RETURN(Nan::New<Uint32>(annots->getNumAnnots()));
 
         } else if (strcmp(*propName, "isCropped") == 0) {
-            V8_ACCESSOR_RETURN(NanNew<Boolean>(self->pg->isCropped()));
+            V8_ACCESSOR_RETURN(Nan::New<Boolean>(self->pg->isCropped()));
 
         } else {
-            V8_ACCESSOR_RETURN(NanNull());
+            V8_ACCESSOR_RETURN(Nan::Null());
         }
     }
 
@@ -209,21 +209,21 @@ namespace node {
      *                and stores word text and relative coords
      */
     NAN_METHOD(NodePopplerPage::getWordList) {
-        NanScope();
-        NodePopplerPage* self = ObjectWrap::Unwrap<NodePopplerPage>(args.Holder());
+        Nan::HandleScope scope;
+        NodePopplerPage* self = Nan::ObjectWrap::Unwrap<NodePopplerPage>(info.Holder());
         TextPage *text;
         TextWordList *wordList;
 
         if (self->isDocClosed()) {
-            return NanThrowError("Document closed. You must delete this page");
+            return Nan::ThrowError("Document closed. You must delete this page");
         }
 
         text = self->getTextPage();
         wordList = text->makeWordList(gTrue);
         int l = wordList->getLength();
-        Local<v8::Array> v8results = NanNew<v8::Array>(l);
+        Local<v8::Array> v8results = Nan::New<v8::Array>(l);
         for (int i = 0; i < l; i++) {
-            Local<v8::Object> v8result = NanNew<v8::Object>();
+            Local<v8::Object> v8result = Nan::New<v8::Object>();
             TextWord *word = wordList->get(i);
             GooString *str = word->getText();
             double x1, y1, x2, y2;
@@ -241,11 +241,11 @@ namespace node {
             y2 = y1 - y2;
             y1 = y1 - y2;
 
-            v8result->Set(NanNew("x1", 2), NanNew<Number>(x1));
-            v8result->Set(NanNew("x2", 2), NanNew<Number>(x2));
-            v8result->Set(NanNew("y1", 2), NanNew<Number>(y1));
-            v8result->Set(NanNew("y2", 2), NanNew<Number>(y2));
-            v8result->Set(NanNew("text", 4), NanNew(str->getCString()));
+            v8result->Set(Nan::New("x1", 2).ToLocalChecked(), Nan::New<Number>(x1));
+            v8result->Set(Nan::New("x2", 2).ToLocalChecked(), Nan::New<Number>(x2));
+            v8result->Set(Nan::New("y1", 2).ToLocalChecked(), Nan::New<Number>(y1));
+            v8result->Set(Nan::New("y2", 2).ToLocalChecked(), Nan::New<Number>(y2));
+            v8result->Set(Nan::New("text", 4).ToLocalChecked(), Nan::New(str->getCString()).ToLocalChecked());
 
             v8results->Set(i, v8result);
 
@@ -253,15 +253,15 @@ namespace node {
         }
         delete wordList;
 
-        NanReturnValue(v8results);
+        info.GetReturnValue().Set(v8results);
     }
 
     /**
      * \return Object Relative coors from lower left corner
      */
     NAN_METHOD(NodePopplerPage::findText) {
-        NanScope();
-        NodePopplerPage* self = ObjectWrap::Unwrap<NodePopplerPage>(args.Holder());
+        Nan::HandleScope scope;
+        NodePopplerPage* self = Nan::ObjectWrap::Unwrap<NodePopplerPage>(info.Holder());
         TextPage *text;
         char *ucs4 = NULL;
         size_t ucs4_len;
@@ -270,13 +270,13 @@ namespace node {
         unsigned int cnt = 0;
 
         if (self->isDocClosed()) {
-            return NanThrowError("Document closed. You must delete this page");
+            return Nan::ThrowError("Document closed. You must delete this page");
         }
 
-        if (args.Length() != 1 && !args[0]->IsString()) {
-            return NanThrowError("One argument required: (str: String)");
+        if (info.Length() != 1 && !info[0]->IsString()) {
+            return Nan::ThrowError("One argument required: (str: String)");
         }
-        String::Utf8Value str(args[0]);
+        String::Utf8Value str(info[0]);
 
         iconv_string("UCS-4LE", "UTF-8", *str, *str+strlen(*str)+1, &ucs4, &ucs4_len);
         text = self->getTextPage();
@@ -295,14 +295,14 @@ namespace node {
             matches = (PDFRectangle**) realloc(t_matches, sizeof(PDFRectangle*) * cnt);
             matches[cnt-1] = new PDFRectangle(xMin, self->getHeight() - yMax, xMax, self->getHeight() - yMin);
         }
-        Local<v8::Array> v8results = NanNew<v8::Array>(cnt);
+        Local<v8::Array> v8results = Nan::New<v8::Array>(cnt);
         for (unsigned int i = 0; i < cnt; i++) {
             PDFRectangle *match = matches[i];
-            Local<v8::Object> v8result = NanNew<v8::Object>();
-            v8result->Set(NanNew("x1"), NanNew<Number>(match->x1 / self->getWidth()));
-            v8result->Set(NanNew("x2"), NanNew<Number>(match->x2 / self->getWidth()));
-            v8result->Set(NanNew("y1"), NanNew<Number>(match->y1 / self->getHeight()));
-            v8result->Set(NanNew("y2"), NanNew<Number>(match->y2 / self->getHeight()));
+            Local<v8::Object> v8result = Nan::New<v8::Object>();
+            v8result->Set(Nan::New("x1").ToLocalChecked(), Nan::New<Number>(match->x1 / self->getWidth()));
+            v8result->Set(Nan::New("x2").ToLocalChecked(), Nan::New<Number>(match->x2 / self->getWidth()));
+            v8result->Set(Nan::New("y1").ToLocalChecked(), Nan::New<Number>(match->y1 / self->getHeight()));
+            v8result->Set(Nan::New("y2").ToLocalChecked(), Nan::New<Number>(match->y2 / self->getHeight()));
             v8results->Set(i, v8result);
             delete match;
         }
@@ -312,7 +312,7 @@ namespace node {
         if (matches != NULL) {
             free(matches);
         }
-        NanReturnValue(v8results);
+        info.GetReturnValue().Set(v8results);
     }
 
 #if POPPLER_VERSION_MAJOR == 0 && POPPLER_VERSION_MINOR < 20
@@ -321,8 +321,8 @@ namespace node {
      * Deletes typeHighlight annotations from end of an annotations array
      */
     NAN_METHOD(NodePopplerPage::deleteAnnots) {
-        NanScope();
-        NodePopplerPage *self = ObjectWrap::Unwrap<NodePopplerPage>(args.Holder());
+        Nan::HandleScope scope;
+        NodePopplerPage *self = Nan::ObjectWrap::Unwrap<NodePopplerPage>(info.Holder());
 
         while (true) {
             Annots *annots = self->pg->getAnnots();
@@ -338,7 +338,7 @@ namespace node {
             }
         }
 
-        NanReturnNull();
+        info.GetReturnValue().Set(Nan::Null());
     }
 #endif
 
@@ -356,43 +356,43 @@ namespace node {
      *  y2 - for upper right corner relative y ord
      */
     NAN_METHOD(NodePopplerPage::addAnnot) {
-        NanScope();
-        NodePopplerPage* self = ObjectWrap::Unwrap<NodePopplerPage>(args.Holder());
+        Nan::HandleScope scope;
+        NodePopplerPage* self = Nan::ObjectWrap::Unwrap<NodePopplerPage>(info.Holder());
 
         if (self->isDocClosed()) {
-            return NanThrowError("Document closed. You must delete this page");
+            return Nan::ThrowError("Document closed. You must delete this page");
         }
 
         char *error = NULL;
 
-        if (args.Length() < 1) {
-            return NanThrowError("One argument required: (annot: Object | Array).");
+        if (info.Length() < 1) {
+            return Nan::ThrowError("One argument required: (annot: Object | Array).");
         }
 
-        if (args[0]->IsArray()) {
-            if (Handle<v8::Array>::Cast(args[0])->Length() > 0) {
-                self->addAnnot(Handle<v8::Array>::Cast(args[0]), &error);
+        if (info[0]->IsArray()) {
+            if (Local<v8::Array>::Cast(info[0])->Length() > 0) {
+                self->addAnnot(Local<v8::Array>::Cast(info[0]), &error);
             }
-        } else if (args[0]->IsObject()) {
-            Handle<v8::Array> annot = NanNew<v8::Array>(1);
-            annot->Set(0, args[0]);
+        } else if (info[0]->IsObject()) {
+            Local<v8::Array> annot = Nan::New<v8::Array>(1);
+            annot->Set(0, info[0]);
             self->addAnnot(annot, &error);
         }
 
         if (error) {
-            Handle<Value> e = Exception::Error(NanNew(error));
+            Local<Value> e = Nan::Error(error);
             delete [] error;
-            return NanThrowError(e);
+            return Nan::ThrowError(e);
         } else {
-            NanReturnNull();
+            info.GetReturnValue().Set(Nan::Null());
         }
     }
 
     /**
      * Add annotations to page
      */
-    void NodePopplerPage::addAnnot(const Handle<v8::Array> v8array, char **error) {
-        NanScope();
+    void NodePopplerPage::addAnnot(const Local<v8::Array> v8array, char **error) {
+        Nan::HandleScope scope;
 
         double x1, y1, x2, y2, x3, y3, x4, y4;
         int len = v8array->Length();
@@ -436,17 +436,17 @@ namespace node {
     /**
      * Parse annotation quadrilateral
      */
-    void NodePopplerPage::parseAnnot(const Handle<Value> rect,
+    void NodePopplerPage::parseAnnot(const Local<Value> rect,
             double *x1, double *y1,
             double *x2, double *y2,
             double *x3, double *y3,
             double *x4, double *y4,
             char **error) {
-        NanScope();
-        Local<String> x1k = NanNew("x1");
-        Local<String> x2k = NanNew("x2");
-        Local<String> y1k = NanNew("y1");
-        Local<String> y2k = NanNew("y2");
+        Nan::HandleScope scope;
+        Local<String> x1k = Nan::New("x1").ToLocalChecked();
+        Local<String> x2k = Nan::New("x2").ToLocalChecked();
+        Local<String> y1k = Nan::New("y1").ToLocalChecked();
+        Local<String> y2k = Nan::New("y2").ToLocalChecked();
         if (!rect->IsObject() ||
                 !rect->ToObject()->Has(x1k) || !rect->ToObject()->Has(x2k) ||
                 !rect->ToObject()->Has(y1k) || !rect->ToObject()->Has(y2k)) {
@@ -454,10 +454,10 @@ namespace node {
             *error = new char[strlen(e)+1];
             strcpy(*error, e);
         } else {
-            Handle<Value> x1v = rect->ToObject()->Get(x1k);
-            Handle<Value> x2v = rect->ToObject()->Get(x2k);
-            Handle<Value> y1v = rect->ToObject()->Get(y1k);
-            Handle<Value> y2v = rect->ToObject()->Get(y2k);
+            Local<Value> x1v = rect->ToObject()->Get(x1k);
+            Local<Value> x2v = rect->ToObject()->Get(x2k);
+            Local<Value> y1v = rect->ToObject()->Get(y1k);
+            Local<Value> y2v = rect->ToObject()->Get(y2k);
             if (!x1v->IsNumber() || !x2v->IsNumber() || !y1v->IsNumber() || !y2v->IsNumber()) {
                 char *e = (char*)"Wrong values for rectangle corners definition";
                 *error = new char[strlen(e)+1];
@@ -578,13 +578,13 @@ namespace node {
     }
 
     void NodePopplerPage::AsyncRenderAfter(uv_work_t *req, int status) {
-        NanScope();
+        Nan::HandleScope scope;
         RenderWork *work = static_cast<RenderWork*>(req->data);
 
         work->closeStream();
 
         if (work->error) {
-            Local<Value> err = Exception::Error(NanNew(work->error));
+            Local<Value> err = Nan::Error(work->error);
             Local<Value> argv[] = {err};
             TryCatch try_catch;
             work->callback->Call(1, argv);
@@ -595,10 +595,10 @@ namespace node {
             switch (work->dest) {
                 case DEST_FILE:
                 {
-                    Local<v8::Object> out = NanNew<v8::Object>();
-                    out->Set(NanNew("type"), NanNew("file"));
-                    out->Set(NanNew("path"), NanNew(work->filename));
-                    Local<Value> argv[] = {NanNew<v8::Value>(NanNull()), NanNew<v8::Value>(out)};
+                    Local<v8::Object> out = Nan::New<v8::Object>();
+                    out->Set(Nan::New("type").ToLocalChecked(), Nan::New("file").ToLocalChecked());
+                    out->Set(Nan::New("path").ToLocalChecked(), Nan::New(work->filename).ToLocalChecked());
+                    Local<Value> argv[] = {Nan::New<v8::Value>(Nan::Null()), Nan::New<v8::Value>(out)};
                     TryCatch try_catch;
                     work->callback->Call(2, argv);
                     if (try_catch.HasCaught()) {
@@ -613,16 +613,16 @@ namespace node {
 #else
                     Local<v8::Object> buffer = Buffer::New(work->mstrm_len);
 #endif
-                    Local<v8::Object> out = NanNew<v8::Object>();
+                    Local<v8::Object> out = Nan::New<v8::Object>();
                     memcpy(Buffer::Data(buffer), work->mstrm_buf, work->mstrm_len);
-                    out->Set(NanNew("type"), NanNew("buffer"));
-                    out->Set(NanNew("format"), NanNew(work->format));
+                    out->Set(Nan::New("type").ToLocalChecked(), Nan::New("buffer").ToLocalChecked());
+                    out->Set(Nan::New("format").ToLocalChecked(), Nan::New(work->format).ToLocalChecked());
 #if NODE_VERSION_MAJOR == 0 && NODE_VERSION_MINOR <= 10
-                    out->Set(NanNew("data"), buffer->handle_);
+                    out->Set(Nan::New("data").ToLocalChecked(), buffer->handle_);
 #else
-                    out->Set(NanNew("data"), buffer);
+                    out->Set(Nan::New("data").ToLocalChecked(), buffer);
 #endif
-                    Local<Value> argv[] = {NanNew<v8::Value>(NanNull()), NanNew<v8::Value>(out)};
+                    Local<Value> argv[] = {Nan::New<v8::Value>(Nan::Null()), Nan::New<v8::Value>(out)};
                     TryCatch try_catch;
                     work->callback->Call(2, argv);
                     if (try_catch.HasCaught()) {
@@ -647,81 +647,81 @@ namespace node {
      * \param callback Function \see NodePopplerPage::renderToFile
      */
     NAN_METHOD(NodePopplerPage::renderToBuffer) {
-        NanScope();
-        NodePopplerPage* self = ObjectWrap::Unwrap<NodePopplerPage>(args.Holder());
+        Nan::HandleScope scope;
+        NodePopplerPage* self = Nan::ObjectWrap::Unwrap<NodePopplerPage>(info.Holder());
         RenderWork *work = new RenderWork(self, DEST_BUFFER);
 
-        if (args.Length() < 2 || !args[0]->IsString()) {
+        if (info.Length() < 2 || !info[0]->IsString()) {
             delete work;
-            return NanThrowError("Arguments: (method: String, PPI: Number[, options: Object, callback: Function]");
+            return Nan::ThrowError("Arguments: (method: String, PPI: Number[, options: Object, callback: Function]");
         }
 
-        if (args[args.Length() - 1]->IsFunction()) {
-            Local<v8::Function> callbackHandle = args[args.Length() - 1].As<v8::Function>();
-            work->callback = new NanCallback(callbackHandle);
+        if (info[info.Length() - 1]->IsFunction()) {
+            Local<v8::Function> callbackHandle = info[info.Length() - 1].As<v8::Function>();
+            work->callback = new Nan::Callback(callbackHandle);
         }
 
         if (self->isDocClosed()) {
-            Local<Value> err = Exception::Error(NanNew("Document closed. You must delete this page"));
+            Local<Value> err = Nan::Error("Document closed. You must delete this page");
             THROW_SYNC_ASYNC_ERR(work, err);
         }
 
-        work->setWriter(args[0]);
+        work->setWriter(info[0]);
         if (work->error) {
-            Local<Value> err = Exception::Error(NanNew(work->error));
+            Local<Value> err = Nan::Error(work->error);
             THROW_SYNC_ASYNC_ERR(work, err);
         }
 
-        work->setPPI(args[1]);
+        work->setPPI(info[1]);
         if (work->error) {
-            Local<Value> err = Exception::Error(NanNew(work->error));
+            Local<Value> err = Nan::Error(work->error);
             THROW_SYNC_ASYNC_ERR(work, err);
         }
 
-        if (args.Length() > 2 && args[2]->IsObject()) {
-            work->setWriterOptions(args[2]);
+        if (info.Length() > 2 && info[2]->IsObject()) {
+            work->setWriterOptions(info[2]);
             if (work->error) {
-                Local<Value> err = Exception::Error(NanNew(work->error));
+                Local<Value> err = Nan::Error(work->error);
                 THROW_SYNC_ASYNC_ERR(work, err);
             }
         }
 
         work->openStream();
         if (work->error) {
-            Local<Value> err = Exception::Error(NanNew(work->error));
+            Local<Value> err = Nan::Error(work->error);
             THROW_SYNC_ASYNC_ERR(work, err);
         }
 
         self->renderToStream(work);
         if (work->callback != NULL) {
-            NanReturnUndefined();
+            return;
         } else {
             work->closeStream();
 
             if (work->error) {
-                Handle<Value> e = Exception::Error(NanNew(work->error));
+                Local<Value> e = Nan::Error(work->error);
                 delete work;
-                return NanThrowError(e);
+                return Nan::ThrowError(e);
             } else {
 #if NODE_VERSION_MAJOR == 0 && NODE_VERSION_MINOR <= 10
                 Buffer* buffer = Buffer::New(work->mstrm_len);
 #else
                 Local<v8::Object> buffer = Buffer::New(work->mstrm_len);
 #endif
-                Handle<v8::Object> out = NanNew<v8::Object>();
+                Local<v8::Object> out = Nan::New<v8::Object>();
 
                 memcpy(Buffer::Data(buffer), work->mstrm_buf, work->mstrm_len);
 
-                out->Set(NanNew("type"), NanNew("buffer"));
-                out->Set(NanNew("format"), args[0]);
+                out->Set(Nan::New("type").ToLocalChecked(), Nan::New("buffer").ToLocalChecked());
+                out->Set(Nan::New("format").ToLocalChecked(), info[0]);
 #if NODE_VERSION_MAJOR == 0 && NODE_VERSION_MINOR <= 10
-                out->Set(NanNew("data"), buffer->handle_);
+                out->Set(Nan::New("data").ToLocalChecked(), buffer->handle_);
 #else
-                out->Set(NanNew("data"), buffer);
+                out->Set(Nan::New("data").ToLocalChecked(), buffer);
 #endif
 
                 delete work;
-                NanReturnValue(out);
+                info.GetReturnValue().Set(out);
             }
         }
     }
@@ -750,80 +750,80 @@ namespace node {
      * \return Node::Buffer Buffer with rendered image data.
      */
     NAN_METHOD(NodePopplerPage::renderToFile) {
-        NanScope();
-        NodePopplerPage* self = ObjectWrap::Unwrap<NodePopplerPage>(args.Holder());
+        Nan::HandleScope scope;
+        NodePopplerPage* self = Nan::ObjectWrap::Unwrap<NodePopplerPage>(info.Holder());
         RenderWork *work = new RenderWork(self, DEST_FILE);
 
-        if (args.Length() < 3) {
-            Local<Value> err = Exception::Error(NanNew(
-                "Arguments: (path: String, method: String, PPI: Number[, options: Object, callback: Function])"));
+        if (info.Length() < 3) {
+            Local<Value> err = Nan::Error(
+                "Arguments: (path: String, method: String, PPI: Number[, options: Object, callback: Function])");
             THROW_SYNC_ASYNC_ERR(work, err);
         }
 
-        if (args[args.Length() - 1]->IsFunction()) {
-            Local<v8::Function> callbackHandle = args[args.Length() - 1].As<v8::Function>();
-            work->callback = new NanCallback(callbackHandle);
+        if (info[info.Length() - 1]->IsFunction()) {
+            Local<v8::Function> callbackHandle = info[info.Length() - 1].As<v8::Function>();
+            work->callback = new Nan::Callback(callbackHandle);
         }
 
         if (self->isDocClosed()) {
-            Local<Value> err = Exception::Error(NanNew("Document closed. You must delete this page"));
+            Local<Value> err = Nan::Error("Document closed. You must delete this page");
             THROW_SYNC_ASYNC_ERR(work, err);
         }
 
-        work->setPath(args[0]);
+        work->setPath(info[0]);
         if (work->error) {
-            Local<Value> err = Exception::Error(NanNew(work->error));
+            Local<Value> err = Nan::Error(work->error);
             THROW_SYNC_ASYNC_ERR(work, err);
         }
 
-        work->setWriter(args[1]);
+        work->setWriter(info[1]);
         if (work->error) {
-            Local<Value> err = Exception::Error(NanNew(work->error));
+            Local<Value> err = Nan::Error(work->error);
             THROW_SYNC_ASYNC_ERR(work, err);
         }
 
-        work->setPPI(args[2]);
+        work->setPPI(info[2]);
         if (work->error) {
-            Local<Value> err = Exception::Error(NanNew(work->error));
+            Local<Value> err = Nan::Error(work->error);
             THROW_SYNC_ASYNC_ERR(work, err);
         }
 
-        if (args.Length() > 3 && args[3]->IsObject()) {
-            work->setWriterOptions(args[3]);
+        if (info.Length() > 3 && info[3]->IsObject()) {
+            work->setWriterOptions(info[3]);
             if (work->error) {
-                Local<Value> err = Exception::Error(NanNew(work->error));
+                Local<Value> err = Nan::Error(work->error);
                 THROW_SYNC_ASYNC_ERR(work, err);
             }
         }
 
         work->openStream();
         if (work->error) {
-            Local<Value> err = Exception::Error(NanNew(work->error));
+            Local<Value> err = Nan::Error(work->error);
             THROW_SYNC_ASYNC_ERR(work, err);
         }
 
         self->renderToStream(work);
         if (work->callback != NULL) {
-            NanReturnUndefined();
+            return;
         } else {
             work->closeStream();
             if (work->error) {
-                Handle<Value> e = Exception::Error(NanNew(work->error));
+                Local<Value> e = Nan::Error(work->error);
                 unlink(work->filename);
                 delete work;
-                return NanThrowError(e);
+                return Nan::ThrowError(e);
             } else {
-                Handle<v8::Object> out = NanNew<v8::Object>();
-                out->Set(NanNew("type"), NanNew("file"));
-                out->Set(NanNew("path"), NanNew(work->filename));
+                Local<v8::Object> out = Nan::New<v8::Object>();
+                out->Set(Nan::New("type").ToLocalChecked(), Nan::New("file").ToLocalChecked());
+                out->Set(Nan::New("path").ToLocalChecked(), Nan::New(work->filename).ToLocalChecked());
                 delete work;
-                NanReturnValue(out);
+                info.GetReturnValue().Set(out);
             }
         }
     }
 
-    void NodePopplerPage::RenderWork::setWriter(const Handle<Value> method) {
-        NanScope();
+    void NodePopplerPage::RenderWork::setWriter(const Local<Value> method) {
+        Nan::HandleScope scope;
         char *e = NULL;
         String::Utf8Value m(method);
         if (m.length() > 0) {
@@ -847,13 +847,13 @@ namespace node {
         }
     }
 
-    void NodePopplerPage::RenderWork::setWriterOptions(const Handle<Value> optsVal) {
-        NanScope();
+    void NodePopplerPage::RenderWork::setWriterOptions(const Local<Value> optsVal) {
+        Nan::HandleScope scope;
 
-        Local<String> ck = NanNew("compression");
-        Local<String> qk = NanNew("quality");
-        Local<String> pk = NanNew("progressive");
-        Local<String> sk = NanNew("slice");
+        Local<String> ck = Nan::New("compression").ToLocalChecked();
+        Local<String> qk = Nan::New("quality").ToLocalChecked();
+        Local<String> pk = Nan::New("progressive").ToLocalChecked();
+        Local<String> sk = Nan::New("slice").ToLocalChecked();
         Local<v8::Object> options;
         char *e = NULL;
 
@@ -865,9 +865,9 @@ namespace node {
                 case W_TIFF:
                 {
                     if (options->Has(ck)) {
-                        Handle<Value> cv = options->Get(ck);
+                        Local<Value> cv = options->Get(ck);
                         if (cv->IsString()) {
-                            Handle<String> cmp = cv->ToString();
+                            Local<String> cmp = cv->ToString();
                             if (cmp->Utf8Length() > 0) {
                                 this->compression = new char[cmp->Utf8Length()+1];
                                 cmp->WriteUtf8(this->compression);
@@ -883,7 +883,7 @@ namespace node {
                 case W_JPEG:
                 {
                     if (options->Has(qk)) {
-                        Handle<Value> qv = options->Get(qk);
+                        Local<Value> qv = options->Get(qk);
                         if (qv->IsUint32()) {
                             this->quality = qv->Uint32Value();
                             if (0 > this->quality || this->quality > 100) {
@@ -894,7 +894,7 @@ namespace node {
                         }
                     }
                     if (options->Has(pk)) {
-                        Handle<Value> pv = options->Get(pk);
+                        Local<Value> pv = options->Get(pk);
                         if (pv->IsBoolean()) {
                             this->progressive = pv->BooleanValue();
                         } else {
@@ -910,11 +910,11 @@ namespace node {
                 this->setSlice(options->Get(sk));
             } else {
                 // Injecting fake slice to render whole page
-                Local<v8::Object> slice = NanNew<v8::Object>();
-                slice->Set(NanNew("x"), NanNew<Number>(0));
-                slice->Set(NanNew("y"), NanNew<Number>(0));
-                slice->Set(NanNew("w"), NanNew<Number>(1));
-                slice->Set(NanNew("h"), NanNew<Number>(1));
+                Local<v8::Object> slice = Nan::New<v8::Object>();
+                slice->Set(Nan::New("x").ToLocalChecked(), Nan::New<Number>(0));
+                slice->Set(Nan::New("y").ToLocalChecked(), Nan::New<Number>(0));
+                slice->Set(Nan::New("w").ToLocalChecked(), Nan::New<Number>(1));
+                slice->Set(Nan::New("h").ToLocalChecked(), Nan::New<Number>(1));
                 this->setSlice(slice);
             }
         }
@@ -924,8 +924,8 @@ namespace node {
         }
     }
 
-    void NodePopplerPage::RenderWork::setPPI(const Handle<Value> PPI) {
-        NanScope();
+    void NodePopplerPage::RenderWork::setPPI(const Local<Value> PPI) {
+        Nan::HandleScope scope;
         char *e = NULL;
         if (PPI->IsNumber()) {
             double ppi;
@@ -944,8 +944,8 @@ namespace node {
         }
     }
 
-    void NodePopplerPage::RenderWork::setPath(const Handle<Value> path) {
-        NanScope();
+    void NodePopplerPage::RenderWork::setPath(const Local<Value> path) {
+        Nan::HandleScope scope;
         char *e = NULL;
         if (path->IsString()) {
             if (path->ToString()->Utf8Length() > 0) {
@@ -963,13 +963,13 @@ namespace node {
         }
     }
 
-    void NodePopplerPage::RenderWork::setSlice(const Handle<Value> sliceVal) {
-        NanScope();
+    void NodePopplerPage::RenderWork::setSlice(const Local<Value> sliceVal) {
+        Nan::HandleScope scope;
         Local<v8::Object> slice;
-        Local<String> xk = NanNew("x");
-        Local<String> yk = NanNew("y");
-        Local<String> wk = NanNew("w");
-        Local<String> hk = NanNew("h");
+        Local<String> xk = Nan::New("x").ToLocalChecked();
+        Local<String> yk = Nan::New("y").ToLocalChecked();
+        Local<String> wk = Nan::New("w").ToLocalChecked();
+        Local<String> hk = Nan::New("h").ToLocalChecked();
         char *e = NULL;
         if (!sliceVal->IsObject()) {
             e = (char*) "'slice' option value must be an instance of Object";
