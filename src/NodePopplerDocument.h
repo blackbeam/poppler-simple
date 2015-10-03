@@ -12,7 +12,7 @@
 
 namespace node {
     class NodePopplerPage;
-    class NodePopplerDocument : public ObjectWrap {
+    class NodePopplerDocument : public Nan::ObjectWrap {
     public:
         NodePopplerDocument(const char* cFileName);
         ~NodePopplerDocument();
@@ -23,7 +23,7 @@ namespace node {
         inline PDFDoc *getDoc() {
             return doc;
         }
-        static void Init(v8::Handle<v8::Object> exports);
+        static void Init(v8::Local<v8::Object> exports);
 
     protected:
         static NAN_METHOD(New);

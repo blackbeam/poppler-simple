@@ -41,73 +41,73 @@ namespace node {
         delete pages;
     }
 
-    void NodePopplerDocument::Init(v8::Handle<v8::Object> exports) {
-        Local<FunctionTemplate> tpl = NanNew<FunctionTemplate>(NodePopplerDocument::New);
-        tpl->SetClassName(NanNew<String>("PopplerDocument"));
+    void NodePopplerDocument::Init(v8::Local<v8::Object> exports) {
+        Local<FunctionTemplate> tpl = Nan::New<FunctionTemplate>(NodePopplerDocument::New);
+        tpl->SetClassName(Nan::New<String>("PopplerDocument").ToLocalChecked());
         tpl->InstanceTemplate()->SetInternalFieldCount(1);
 
         NODE_DEFINE_CONSTANT(exports, POPPLER_VERSION_MAJOR);
         NODE_DEFINE_CONSTANT(exports, POPPLER_VERSION_MINOR);
         NODE_DEFINE_CONSTANT(exports, POPPLER_VERSION_MICRO);
 
-        tpl->InstanceTemplate()->SetAccessor(NanNew<String>("pageCount"),
+        tpl->InstanceTemplate()->SetAccessor(Nan::New<String>("pageCount").ToLocalChecked(),
                                              NodePopplerDocument::paramsGetter);
-        tpl->InstanceTemplate()->SetAccessor(NanNew<String>("PDFMajorVersion"),
+        tpl->InstanceTemplate()->SetAccessor(Nan::New<String>("PDFMajorVersion").ToLocalChecked(),
                                              NodePopplerDocument::paramsGetter);
-        tpl->InstanceTemplate()->SetAccessor(NanNew<String>("PDFMinorVersion"),
+        tpl->InstanceTemplate()->SetAccessor(Nan::New<String>("PDFMinorVersion").ToLocalChecked(),
                                              NodePopplerDocument::paramsGetter);
-        tpl->InstanceTemplate()->SetAccessor(NanNew<String>("pdfVersion"),
+        tpl->InstanceTemplate()->SetAccessor(Nan::New<String>("pdfVersion").ToLocalChecked(),
                                              NodePopplerDocument::paramsGetter);
-        tpl->InstanceTemplate()->SetAccessor(NanNew<String>("isLinearized"),
+        tpl->InstanceTemplate()->SetAccessor(Nan::New<String>("isLinearized").ToLocalChecked(),
                                              NodePopplerDocument::paramsGetter);
-        tpl->InstanceTemplate()->SetAccessor(NanNew<String>("fileName"),
+        tpl->InstanceTemplate()->SetAccessor(Nan::New<String>("fileName").ToLocalChecked(),
                                              NodePopplerDocument::paramsGetter);
-        
-        exports->Set(NanNew("PopplerDocument"), tpl->GetFunction());
+
+        exports->Set(Nan::New("PopplerDocument").ToLocalChecked(), tpl->GetFunction());
     }
 
     V8_ACCESSOR_GETTER(NodePopplerDocument::paramsGetter) {
-        NanScope();
+        Nan::HandleScope scope;
         String::Utf8Value propName(property);
-        NodePopplerDocument *self = ObjectWrap::Unwrap<NodePopplerDocument>(info.This());
+        NodePopplerDocument *self = Nan::ObjectWrap::Unwrap<NodePopplerDocument>(info.This());
 
         if (strcmp(*propName, "pageCount") == 0) {
-            V8_ACCESSOR_RETURN(NanNew<Uint32>(self->doc->getNumPages()));
+            V8_ACCESSOR_RETURN(Nan::New<Uint32>(self->doc->getNumPages()));
 
         } else if (strcmp(*propName, "PDFMajorVersion") == 0) {
-            V8_ACCESSOR_RETURN(NanNew<Uint32>(self->doc->getPDFMajorVersion()));
+            V8_ACCESSOR_RETURN(Nan::New<Uint32>(self->doc->getPDFMajorVersion()));
 
         } else if (strcmp(*propName, "PDFMinorVersion") == 0) {
-            V8_ACCESSOR_RETURN(NanNew<Uint32>(self->doc->getPDFMinorVersion()));
+            V8_ACCESSOR_RETURN(Nan::New<Uint32>(self->doc->getPDFMinorVersion()));
 
         } else if (strcmp(*propName, "pdfVersion") == 0) {
             char versionString[16];
             sprintf(versionString, "PDF-%d.%d", self->doc->getPDFMajorVersion(), self->doc->getPDFMinorVersion());
-            V8_ACCESSOR_RETURN(NanNew<String>(versionString, strlen(versionString)));
+            V8_ACCESSOR_RETURN(Nan::New<String>(versionString, strlen(versionString)).ToLocalChecked());
 
         } else if (strcmp(*propName, "isLinearized") == 0) {
-            V8_ACCESSOR_RETURN(NanNew<Boolean>(self->doc->isLinearized()));
+            V8_ACCESSOR_RETURN(Nan::New<Boolean>(self->doc->isLinearized()));
 
         } else if (strcmp(*propName, "fileName") == 0) {
             GooString *fileName = self->doc->getFileName();
-            V8_ACCESSOR_RETURN(NanNew<String>(fileName->getCString(), fileName->getLength()));
+            V8_ACCESSOR_RETURN(Nan::New<String>(fileName->getCString(), fileName->getLength()).ToLocalChecked());
 
         } else {
-            V8_ACCESSOR_RETURN(NanNull());
+            V8_ACCESSOR_RETURN(Nan::Null());
         }
     }
 
     NAN_METHOD(NodePopplerDocument::New) {
-        NanScope();
+        Nan::HandleScope scope;
 
-        if(args.Length() != 1) {
-            return NanThrowError("One argument required: (filename: String).");
+        if(info.Length() != 1) {
+            return Nan::ThrowError("One argument required: (filename: String).");
         }
-        if(!args[0]->IsString()) {
-            return NanThrowTypeError("'filename' must be an instance of String.");
+        if(!info[0]->IsString()) {
+            return Nan::ThrowTypeError("'filename' must be an instance of String.");
         }
 
-        String::Utf8Value str(args[0]);
+        String::Utf8Value str(info[0]);
         NodePopplerDocument *doc = new NodePopplerDocument(*str);
 
         if (!doc->isOk()) {
@@ -150,10 +150,10 @@ namespace node {
             }
             sprintf(errorDescription, "Couldn't open file - %s.", errorName);
             delete doc;
-            return NanThrowError(Exception::Error(NanNew<String>(errorDescription, strlen(errorDescription))));
+            return Nan::ThrowError(Exception::Error(Nan::New<String>(errorDescription, strlen(errorDescription)).ToLocalChecked()));
         }
-        doc->Wrap(args.This());
-        NanReturnValue(args.This());
+        doc->Wrap(info.This());
+        info.GetReturnValue().Set(info.This());
     }
 
 }

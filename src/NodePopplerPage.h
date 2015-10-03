@@ -27,7 +27,7 @@
 
 namespace node {
     class NodePopplerDocument;
-    class NodePopplerPage : public ObjectWrap {
+    class NodePopplerPage : public Nan::ObjectWrap {
     public:
         enum Writer { W_PNG, W_JPEG, W_TIFF/*, W_PIXBUF*/ };
         enum Destination { DEST_BUFFER, DEST_FILE };
@@ -67,16 +67,16 @@ namespace node {
                 if (f) fclose(f);
                 if (stream) delete stream;
             }
-            void setWriter(const v8::Handle<v8::Value> method);
-            void setWriterOptions(const v8::Handle<v8::Value> optsVal);
-            void setPPI(const v8::Handle<v8::Value> PPI);
-            void setPath(const v8::Handle<v8::Value> path);
-            void setSlice(const v8::Handle<v8::Value> sliceVal);
+            void setWriter(const v8::Local<v8::Value> method);
+            void setWriterOptions(const v8::Local<v8::Value> optsVal);
+            void setPPI(const v8::Local<v8::Value> PPI);
+            void setPath(const v8::Local<v8::Value> path);
+            void setSlice(const v8::Local<v8::Value> sliceVal);
             void openStream();
             void closeStream();
 
             uv_work_t request;
-            NanCallback* callback;
+            Nan::Callback* callback;
             bool progressive;
             char *error;
             char *mstrm_buf;
@@ -100,13 +100,13 @@ namespace node {
         NodePopplerPage(NodePopplerDocument* doc, const int32_t pageNum);
         ~NodePopplerPage();
 
-        static void Init(v8::Handle<v8::Object> exports);
+        static void Init(v8::Local<v8::Object> exports);
 
         bool isOk() {
             return pg != NULL && pg->isOk();
         }
 
-        void wrap(v8::Handle<v8::Object> o) {
+        void wrap(v8::Local<v8::Object> o) {
             this->Wrap(o);
         }
 
@@ -141,7 +141,7 @@ namespace node {
 
         static void AsyncRenderWork(uv_work_t *req);
         static void AsyncRenderAfter(uv_work_t *req, int status);
-        void parseAnnot(const v8::Handle<v8::Value> rect,
+        void parseAnnot(const v8::Local<v8::Value> rect,
             double *x1, double *y1,
             double *x2, double *y2,
             double *x3, double *y3,
@@ -186,7 +186,7 @@ namespace node {
         void renderToStream(RenderWork *work);
 #if POPPLER_VERSION_MAJOR == 0 && POPPLER_VERSION_MINOR < 20
 #else
-        void addAnnot(const v8::Handle<v8::Array> array, char **error);
+        void addAnnot(const v8::Local<v8::Array> array, char **error);
 #endif
 
         PDFDoc *doc;
