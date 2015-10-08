@@ -1,7 +1,6 @@
 #include <v8.h>
 #include <node.h>
 #include <nan.h>
-#include "helpers.h"
 #include <GlobalParams.h>
 #include <cpp/poppler-version.h>
 #include <poppler/PDFDoc.h>
@@ -23,7 +22,7 @@ namespace node {
         inline PDFDoc *getDoc() {
             return doc;
         }
-        static void Init(v8::Local<v8::Object> exports);
+        static NAN_MODULE_INIT(Init);
 
     protected:
         static NAN_METHOD(New);
@@ -32,7 +31,7 @@ namespace node {
         GooList *pages;
 
     private:
-        V8_ACCESSOR_GETTER_DECL(paramsGetter);
+        static NAN_GETTER(paramsGetter);
 
         friend class NodePopplerPage;
         PDFDoc *doc;

@@ -25,7 +25,7 @@ using namespace node;
 
 namespace node {
 
-    void NodePopplerPage::Init(v8::Local<v8::Object> exports) {
+    NAN_MODULE_INIT(NodePopplerPage::Init) {
         Local<FunctionTemplate> tpl = Nan::New<FunctionTemplate>(NodePopplerPage::New);
         tpl->SetClassName(Nan::New<String>("PopplerPage").ToLocalChecked());
         tpl->InstanceTemplate()->SetInternalFieldCount(1);
@@ -40,22 +40,24 @@ namespace node {
         Nan::SetPrototypeMethod(tpl, "deleteAnnots", NodePopplerPage::deleteAnnots);
 #endif
 
-        tpl->InstanceTemplate()->SetAccessor(Nan::New("num").ToLocalChecked(), NodePopplerPage::paramsGetter);
-        tpl->InstanceTemplate()->SetAccessor(Nan::New("width").ToLocalChecked(), NodePopplerPage::paramsGetter);
-        tpl->InstanceTemplate()->SetAccessor(Nan::New("height").ToLocalChecked(), NodePopplerPage::paramsGetter);
-        tpl->InstanceTemplate()->SetAccessor(Nan::New("crop_box").ToLocalChecked(), NodePopplerPage::paramsGetter);
+        Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New<String>("num").ToLocalChecked(), NodePopplerPage::paramsGetter);
+        Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New<String>("width").ToLocalChecked(), NodePopplerPage::paramsGetter);
+        Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New<String>("height").ToLocalChecked(), NodePopplerPage::paramsGetter);
+        Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New<String>("crop_box").ToLocalChecked(), NodePopplerPage::paramsGetter);
 #if POPPLER_VERSION_MAJOR == 0 && POPPLER_VERSION_MINOR < 19
 #else
-        tpl->InstanceTemplate()->SetAccessor(Nan::New("numAnnots").ToLocalChecked(), NodePopplerPage::paramsGetter);
+        Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New<String>("numAnnots").ToLocalChecked(), NodePopplerPage::paramsGetter);
 #endif
-        tpl->InstanceTemplate()->SetAccessor(Nan::New("media_box").ToLocalChecked(), NodePopplerPage::paramsGetter);
-        tpl->InstanceTemplate()->SetAccessor(Nan::New("art_box").ToLocalChecked(), NodePopplerPage::paramsGetter);
-        tpl->InstanceTemplate()->SetAccessor(Nan::New("trim_box").ToLocalChecked(), NodePopplerPage::paramsGetter);
-        tpl->InstanceTemplate()->SetAccessor(Nan::New("bleed_box").ToLocalChecked(), NodePopplerPage::paramsGetter);
-        tpl->InstanceTemplate()->SetAccessor(Nan::New("rotate").ToLocalChecked(), NodePopplerPage::paramsGetter);
-        tpl->InstanceTemplate()->SetAccessor(Nan::New("isCropped").ToLocalChecked(), NodePopplerPage::paramsGetter);
+        Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New<String>("media_box").ToLocalChecked(), NodePopplerPage::paramsGetter);
+        Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New<String>("art_box").ToLocalChecked(), NodePopplerPage::paramsGetter);
+        Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New<String>("trim_box").ToLocalChecked(), NodePopplerPage::paramsGetter);
+        Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New<String>("bleed_box").ToLocalChecked(), NodePopplerPage::paramsGetter);
+        Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New<String>("rotate").ToLocalChecked(), NodePopplerPage::paramsGetter);
+        Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New<String>("isCropped").ToLocalChecked(), NodePopplerPage::paramsGetter);
 
-        exports->Set(Nan::New<String>("PopplerPage").ToLocalChecked(), tpl->GetFunction());
+        Nan::Set(target,
+                 Nan::New<String>("PopplerPage").ToLocalChecked(),
+                 Nan::GetFunction(tpl).ToLocalChecked());
     }
 
     NodePopplerPage::~NodePopplerPage() {
@@ -115,20 +117,18 @@ namespace node {
         info.GetReturnValue().Set(info.This());
     }
 
-    V8_ACCESSOR_GETTER(NodePopplerPage::paramsGetter) {
-        Nan::HandleScope scope;
-
+    NAN_GETTER(NodePopplerPage::paramsGetter) {
         String::Utf8Value propName(property);
         NodePopplerPage *self = Nan::ObjectWrap::Unwrap<NodePopplerPage>(info.This());
 
         if (strcmp(*propName, "width") == 0) {
-            V8_ACCESSOR_RETURN(Nan::New<Number>(self->getWidth()));
+            info.GetReturnValue().Set(Nan::New<Number>(self->getWidth()));
 
         } else if (strcmp(*propName, "height") == 0) {
-            V8_ACCESSOR_RETURN(Nan::New<Number>(self->getHeight()));
+            info.GetReturnValue().Set(Nan::New<Number>(self->getHeight()));
 
         } else if (strcmp(*propName, "num") == 0) {
-            V8_ACCESSOR_RETURN(Nan::New<Uint32>(self->pg->getNum()));
+            info.GetReturnValue().Set(Nan::New<Uint32>(self->pg->getNum()));
 
         } else if (strcmp(*propName, "crop_box") == 0) {
             PDFRectangle *rect = self->pg->getCropBox();
@@ -139,7 +139,7 @@ namespace node {
             crop_box->Set(Nan::New("y1").ToLocalChecked(), Nan::New<Number>(rect->y1));
             crop_box->Set(Nan::New("y2").ToLocalChecked(), Nan::New<Number>(rect->y2));
 
-            V8_ACCESSOR_RETURN(crop_box);
+            info.GetReturnValue().Set(crop_box);
 
         } else if (strcmp(*propName, "media_box") == 0) {
             PDFRectangle *rect = self->pg->getMediaBox();
@@ -150,7 +150,7 @@ namespace node {
             media_box->Set(Nan::New("y1").ToLocalChecked(), Nan::New<Number>(rect->y1));
             media_box->Set(Nan::New("y2").ToLocalChecked(), Nan::New<Number>(rect->y2));
 
-            V8_ACCESSOR_RETURN(media_box);
+            info.GetReturnValue().Set(media_box);
 
         } else if (strcmp(*propName, "bleed_box") == 0) {
             PDFRectangle *rect = self->pg->getBleedBox();
@@ -161,7 +161,7 @@ namespace node {
             bleed_box->Set(Nan::New("y1").ToLocalChecked(), Nan::New<Number>(rect->y1));
             bleed_box->Set(Nan::New("y2").ToLocalChecked(), Nan::New<Number>(rect->y2));
 
-            V8_ACCESSOR_RETURN(bleed_box);
+            info.GetReturnValue().Set(bleed_box);
 
         } else if (strcmp(*propName, "trim_box") == 0) {
             PDFRectangle *rect = self->pg->getTrimBox();
@@ -172,7 +172,7 @@ namespace node {
             trim_box->Set(Nan::New("y1").ToLocalChecked(), Nan::New<Number>(rect->y1));
             trim_box->Set(Nan::New("y2").ToLocalChecked(), Nan::New<Number>(rect->y2));
 
-            V8_ACCESSOR_RETURN(trim_box);
+            info.GetReturnValue().Set(trim_box);
 
         } else if (strcmp(*propName, "art_box") == 0) {
             PDFRectangle *rect = self->pg->getArtBox();
@@ -183,10 +183,10 @@ namespace node {
             art_box->Set(Nan::New("y1").ToLocalChecked(), Nan::New<Number>(rect->y1));
             art_box->Set(Nan::New("y2").ToLocalChecked(), Nan::New<Number>(rect->y2));
 
-            V8_ACCESSOR_RETURN(art_box);
+            info.GetReturnValue().Set(art_box);
 
         } else if (strcmp(*propName, "rotate") == 0) {
-            V8_ACCESSOR_RETURN(Nan::New<Int32>(self->pg->getRotate()));
+            info.GetReturnValue().Set(Nan::New<Int32>(self->pg->getRotate()));
 
         } else if (strcmp(*propName, "numAnnots") == 0) {
 #if POPPLER_VERSION_MAJOR == 0 && POPPLER_VERSION_MINOR < 19
@@ -194,13 +194,13 @@ namespace node {
 #else
             Annots *annots = self->pg->getAnnots();
 #endif
-            V8_ACCESSOR_RETURN(Nan::New<Uint32>(annots->getNumAnnots()));
+            info.GetReturnValue().Set(Nan::New<Uint32>(annots->getNumAnnots()));
 
         } else if (strcmp(*propName, "isCropped") == 0) {
-            V8_ACCESSOR_RETURN(Nan::New<Boolean>(self->pg->isCropped()));
+            info.GetReturnValue().Set(Nan::New<Boolean>(self->pg->isCropped()));
 
         } else {
-            V8_ACCESSOR_RETURN(Nan::Null());
+            info.GetReturnValue().Set(Nan::Null());
         }
     }
 
@@ -608,22 +608,13 @@ namespace node {
                 }
                 case DEST_BUFFER:
                 {
-#if NODE_VERSION_MAJOR == 0 && NODE_VERSION_MINOR <= 10
-                    Buffer* buffer = Nan::NewBuffer(work->mstrm_len)
-                                         .ToLocalChecked();
-#else
                     Local<v8::Object> buffer = Nan::NewBuffer(work->mstrm_len)
                                                    .ToLocalChecked();
-#endif
                     Local<v8::Object> out = Nan::New<v8::Object>();
                     memcpy(Buffer::Data(buffer), work->mstrm_buf, work->mstrm_len);
                     out->Set(Nan::New("type").ToLocalChecked(), Nan::New("buffer").ToLocalChecked());
                     out->Set(Nan::New("format").ToLocalChecked(), Nan::New(work->format).ToLocalChecked());
-#if NODE_VERSION_MAJOR == 0 && NODE_VERSION_MINOR <= 10
-                    out->Set(Nan::New("data").ToLocalChecked(), buffer->handle_);
-#else
                     out->Set(Nan::New("data").ToLocalChecked(), buffer);
-#endif
                     Local<Value> argv[] = {Nan::Null(), out};
                     Nan::TryCatch try_catch;
                     work->callback->Call(2, argv);
@@ -705,24 +696,14 @@ namespace node {
                 delete work;
                 return Nan::ThrowError(e);
             } else {
-#if NODE_VERSION_MAJOR == 0 && NODE_VERSION_MINOR <= 10
-                Buffer* buffer = Nan::NewBuffer(work->mstrm_len)
-                                     .ToLocalChecked();
-#else
-                Local<v8::Object> buffer = Nan::NewBuffer(work->mstrm_len)
-                                               .ToLocalChecked();
-#endif
+                Local<v8::Object> buffer = Nan::NewBuffer(work->mstrm_len).ToLocalChecked();
                 Local<v8::Object> out = Nan::New<v8::Object>();
 
                 memcpy(Buffer::Data(buffer), work->mstrm_buf, work->mstrm_len);
 
                 out->Set(Nan::New("type").ToLocalChecked(), Nan::New("buffer").ToLocalChecked());
                 out->Set(Nan::New("format").ToLocalChecked(), info[0]);
-#if NODE_VERSION_MAJOR == 0 && NODE_VERSION_MINOR <= 10
-                out->Set(Nan::New("data").ToLocalChecked(), buffer->handle_);
-#else
                 out->Set(Nan::New("data").ToLocalChecked(), buffer);
-#endif
 
                 delete work;
                 info.GetReturnValue().Set(out);

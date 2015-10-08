@@ -2,7 +2,6 @@
 #include <v8.h>
 #include <node.h>
 #include <nan.h>
-#include "helpers.h"
 #include <poppler/poppler-config.h>
 #include <cpp/poppler-version.h>
 #include <poppler/Page.h>
@@ -100,7 +99,7 @@ namespace node {
         NodePopplerPage(NodePopplerDocument* doc, const int32_t pageNum);
         ~NodePopplerPage();
 
-        static void Init(v8::Local<v8::Object> exports);
+        static NAN_MODULE_INIT(Init);
 
         bool isOk() {
             return pg != NULL && pg->isOk();
@@ -152,7 +151,7 @@ namespace node {
 
         bool docClosed;
     private:
-        V8_ACCESSOR_GETTER_DECL(paramsGetter);
+        static NAN_GETTER(paramsGetter);
 
         TextPage *getTextPage() {
             if (text == NULL) {
