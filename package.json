@@ -19,7 +19,7 @@
   },
   "main": "./lib/poppler.js",
   "engines": {
-    "node": ">=0.8.0"
+    "node": ">=0.10.0"
   },
   "dependencies": {
     "nan": "^2.0.9"
