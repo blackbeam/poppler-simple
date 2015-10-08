@@ -1,4 +1,4 @@
-## poppler-simple
+## poppler-simple [![Build Status](https://travis-ci.org/blackbeam/poppler-simple.svg)](https://travis-ci.org/blackbeam/poppler-simple)
 A simple javascript interface to [poppler](http://poppler.freedesktop.org/) library.
 
 ### Requirements:
