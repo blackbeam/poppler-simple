@@ -47,6 +47,21 @@ describe('PopplerDocument', function () {
             a.equal(d.fileName, names[i]);
         }
     });
+    it('should open pdf file from buffer', function () {
+        this.timeout(0);
+        docs = names.map(function (x) {
+            return new poppler.PopplerDocument(fs.readFileSync(x));
+        });
+        for (var i = docs.length - 1; i >= 0; i--) {
+            var d = docs[i];
+            a.equal(d.isLinearized, false);
+            a.equal(d.pdfVersion, 'PDF-1.4');
+            a.equal(d.pageCount, 1);
+            a.equal(d.PDFMajorVersion, 1);
+            a.equal(d.PDFMinorVersion, 4);
+            a.equal(d.fileName, null);
+        }
+    });
     it('should throw on non existing page', function () {
         this.timeout(0);
         a.throws(function () {
