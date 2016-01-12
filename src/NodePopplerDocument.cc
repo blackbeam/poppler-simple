@@ -7,9 +7,9 @@
 
 
 PDFDoc *createMemPDFDoc( char* buffer, size_t length ){
-  Object obj;
-  obj.initNull();
-  return new PDFDoc(new MemStream(buffer, 0, length, &obj), NULL, NULL);
+    Object obj;
+    obj.initNull();
+    return new PDFDoc(new MemStream(buffer, 0, length, &obj), NULL, NULL);
 }
 
 using namespace v8;
@@ -128,13 +128,13 @@ namespace node {
         }
         
         NodePopplerDocument *doc;
-	
+
         if(info[0]->IsString()){
-	  String::Utf8Value str(info[0]);
-	  doc = new NodePopplerDocument(*str);
-	}else if(Buffer::HasInstance(info[0])){
-	  doc = new NodePopplerDocument(Buffer::Data(info[0]) ,Buffer::Length(info[0]));
-	}else{
+            String::Utf8Value str(info[0]);
+            doc = new NodePopplerDocument(*str);
+        }else if(Buffer::HasInstance(info[0])){
+            doc = new NodePopplerDocument(Buffer::Data(info[0]) ,Buffer::Length(info[0]));
+        }else{
             return Nan::ThrowTypeError("'filename' must be an instance of String or Buffer.");
         }
         
