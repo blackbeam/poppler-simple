@@ -14,6 +14,7 @@ namespace node {
     class NodePopplerDocument : public Nan::ObjectWrap {
     public:
         NodePopplerDocument(const char* cFileName);
+        NodePopplerDocument(char* buffer, size_t length);
         ~NodePopplerDocument();
 
         inline bool isOk() {

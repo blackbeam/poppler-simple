@@ -5,6 +5,13 @@
 #include "NodePopplerDocument.h"
 #include "NodePopplerPage.h"
 
+
+PDFDoc *createMemPDFDoc( char* buffer, size_t length ){
+    Object obj;
+    obj.initNull();
+    return new PDFDoc(new MemStream(buffer, 0, length, &obj), NULL, NULL);
+}
+
 using namespace v8;
 using namespace node;
 
@@ -30,6 +37,12 @@ namespace node {
         doc = NULL;
         GooString *fileNameA = new GooString(cFileName);
         doc = PDFDocFactory().createPDFDoc(*fileNameA, NULL, NULL);
+        pages = new GooList();
+    }
+    
+    NodePopplerDocument::NodePopplerDocument(char* buffer, size_t length) {
+        doc = NULL;
+        doc = createMemPDFDoc(buffer, length);
         pages = new GooList();
     }
 
@@ -113,13 +126,18 @@ namespace node {
         if(info.Length() != 1) {
             return Nan::ThrowError("One argument required: (filename: String).");
         }
-        if(!info[0]->IsString()) {
-            return Nan::ThrowTypeError("'filename' must be an instance of String.");
+        
+        NodePopplerDocument *doc;
+
+        if(info[0]->IsString()){
+            String::Utf8Value str(info[0]);
+            doc = new NodePopplerDocument(*str);
+        }else if(Buffer::HasInstance(info[0])){
+            doc = new NodePopplerDocument(Buffer::Data(info[0]) ,Buffer::Length(info[0]));
+        }else{
+            return Nan::ThrowTypeError("'filename' must be an instance of String or Buffer.");
         }
-
-        String::Utf8Value str(info[0]);
-        NodePopplerDocument *doc = new NodePopplerDocument(*str);
-
+        
         if (!doc->isOk()) {
             int errorCode = doc->getDoc()->getErrorCode();
             char errorName[128];
