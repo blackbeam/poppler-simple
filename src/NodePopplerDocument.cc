@@ -39,7 +39,7 @@ namespace node {
         doc = PDFDocFactory().createPDFDoc(*fileNameA, NULL, NULL);
         pages = new GooList();
     }
-    
+
     NodePopplerDocument::NodePopplerDocument(char* buffer, size_t length) {
         doc = NULL;
         doc = createMemPDFDoc(buffer, length);
@@ -112,8 +112,14 @@ namespace node {
 
         } else if (strcmp(*propName, "fileName") == 0) {
             GooString *fileName = self->doc->getFileName();
-            info.GetReturnValue().Set(
-                Nan::New<String>(fileName->getCString(), fileName->getLength()).ToLocalChecked());
+            if (fileName != NULL) {
+                info.GetReturnValue().Set(
+                    Nan::New<String>(fileName->getCString(),
+                    fileName->getLength()).ToLocalChecked()
+                );
+            } else {
+                info.GetReturnValue().Set(Nan::Null());
+            }
 
         } else {
             info.GetReturnValue().Set(Nan::Null());
@@ -126,7 +132,7 @@ namespace node {
         if(info.Length() != 1) {
             return Nan::ThrowError("One argument required: (filename: String).");
         }
-        
+
         NodePopplerDocument *doc;
 
         if(info[0]->IsString()){
@@ -137,7 +143,7 @@ namespace node {
         }else{
             return Nan::ThrowTypeError("'filename' must be an instance of String or Buffer.");
         }
-        
+
         if (!doc->isOk()) {
             int errorCode = doc->getDoc()->getErrorCode();
             char errorName[128];
