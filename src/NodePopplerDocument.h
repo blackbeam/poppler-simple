@@ -36,5 +36,6 @@ namespace node {
 
         friend class NodePopplerPage;
         PDFDoc *doc;
+        char *buffer;
     };
 }

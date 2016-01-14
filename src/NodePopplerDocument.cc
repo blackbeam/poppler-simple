@@ -35,6 +35,7 @@ namespace node {
 
     NodePopplerDocument::NodePopplerDocument(const char* cFileName) {
         doc = NULL;
+        buffer = NULL;
         GooString *fileNameA = new GooString(cFileName);
         doc = PDFDocFactory().createPDFDoc(*fileNameA, NULL, NULL);
         pages = new GooList();
@@ -42,7 +43,10 @@ namespace node {
 
     NodePopplerDocument::NodePopplerDocument(char* buffer, size_t length) {
         doc = NULL;
-        doc = createMemPDFDoc(buffer, length);
+        this->buffer = NULL;
+        this->buffer = new char[length];
+        std::memcpy(this->buffer, buffer, length);
+        doc = createMemPDFDoc(this->buffer, length);
         pages = new GooList();
     }
 
@@ -51,6 +55,7 @@ namespace node {
             ((NodePopplerPage*)pages->get(i))->evDocumentClosed();
         }
         if (doc) delete doc;
+        if (buffer) delete buffer;
         delete pages;
     }
 
