@@ -129,18 +129,18 @@ namespace node {
     NAN_METHOD(NodePopplerDocument::New) {
         Nan::HandleScope scope;
 
-        if(info.Length() != 1) {
+        if (info.Length() != 1) {
             return Nan::ThrowError("One argument required: (filename: String).");
         }
 
         NodePopplerDocument *doc;
 
-        if(info[0]->IsString()){
+        if (info[0]->IsString()) {
             String::Utf8Value str(info[0]);
             doc = new NodePopplerDocument(*str);
-        }else if(Buffer::HasInstance(info[0])){
-            doc = new NodePopplerDocument(Buffer::Data(info[0]) ,Buffer::Length(info[0]));
-        }else{
+        } else if (Buffer::HasInstance(info[0])) {
+            doc = new NodePopplerDocument(Buffer::Data(info[0]), Buffer::Length(info[0]));
+        } else {
             return Nan::ThrowTypeError("'filename' must be an instance of String or Buffer.");
         }
 
