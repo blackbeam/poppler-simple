@@ -518,6 +518,37 @@ describe('PopplerPage', function () {
             });
         });
     });
+
+    describe('render to promise', function () {
+        it('should render to promise', function (done) {
+            this.timeout(0);
+            var n = pages.length, i = 0;
+            var slice = { x: 0, y: 0, w: 1, h: 0.5 };
+            pages.forEach(function (x, j) {
+                x.renderToBufferAsync('png', 50, {slice: slice}).then(function (out) {
+                    a.equal(out.type, 'buffer');
+                    a.equal(out.format, 'png');
+                    a.ok(Buffer.isBuffer(out.data));
+                    a.ok(out.data.length > 0);
+                    return x.renderToFileAsync('test/out'+j+'.png', 'png', 50, {slice: slice});
+                }).then(function (out) {
+                    i = i + 1;
+                    a.deepEqual(out, {type: 'file', path: 'test/out' + j + '.png'});
+                    a.ok(fs.statSync(out.path).size > 0);
+                    fs.unlinkSync(out.path);
+                }).catch(function (err) {
+                    i = i + 1;
+                    a.equal(err, null);
+                });
+            });
+            var interval = setInterval(function () {
+                if (i == n) {
+                    clearInterval(interval);
+                    done();
+                }
+            }, 10);
+        });
+    });
 });
 
 describe('freeing', function () {
