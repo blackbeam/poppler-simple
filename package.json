@@ -11,7 +11,7 @@
     "url": "git://github.com/blackbeam/poppler-simple.git"
   },
   "scripts": {
-    "install": "(node-gyp rebuild) || (exit 0)",
+    "install": "(node-gyp rebuild) || (exit 1)",
     "preinstall": "((npm install nan) && (node-gyp configure)) || (exit 0)",
     "test": "./node_modules/mocha/bin/mocha -gc --slow 250",
     "clean": "((node-gyp clean) && (rm -rf node_modules)) || (exit 0)",
