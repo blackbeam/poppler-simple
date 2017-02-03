@@ -542,7 +542,11 @@ namespace node {
 #endif
 
         SplashBitmap *bitmap = splashOut->getBitmap();
+#if POPPLER_VERSION_MAJOR > 0 || (POPPLER_VERSION_MAJOR == 0 && POPPLER_VERSION_MINOR > 49)
+	SplashError e = bitmap->writeImgFile(writer, work->f, (int)work->PPI, (int)work->PPI, splashModeRGB8);
+#else
         SplashError e = bitmap->writeImgFile(writer, work->f, (int)work->PPI, (int)work->PPI);
+#endif
         delete splashOut;
         if (writer != NULL) delete writer;
 
