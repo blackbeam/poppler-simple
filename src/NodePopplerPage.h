@@ -153,12 +153,12 @@ namespace node {
     private:
         static NAN_GETTER(paramsGetter);
 
-        TextPage *getTextPage() {
+        TextPage *getTextPage(GBool rawOrder) {
             if (text == NULL) {
                 TextOutputDev *textDev;
                 Gfx *gfx;
 #if (POPPLER_VERSION_MINOR < 19)
-                textDev = new TextOutputDev(NULL, gTrue, gFalse, gFalse);
+                textDev = new TextOutputDev(NULL, gTrue, gFalse, rawOrder);
                 gfx = pg->createGfx(textDev, 72., 72., 0,
                     gFalse,
                     gTrue,
@@ -167,7 +167,7 @@ namespace node {
                     doc->getCatalog(),
                     NULL, NULL, NULL, NULL);
 #else
-                textDev = new TextOutputDev(NULL, gTrue, 0, gFalse, gFalse);
+                textDev = new TextOutputDev(NULL, gTrue, 0, rawOrder, gFalse);
                 gfx = pg->createGfx(textDev, 72., 72., 0,
                     gFalse,
                     gTrue,
