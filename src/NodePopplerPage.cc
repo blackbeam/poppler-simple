@@ -214,11 +214,13 @@ namespace node {
         TextPage *text;
         TextWordList *wordList;
 
+        GBool rawOrder = info[0]->IsBoolean() ? (Nan::To<bool>(info[0]).FromMaybe(false) ? gTrue : gFalse) : gFalse;
+
         if (self->isDocClosed()) {
             return Nan::ThrowError("Document closed. You must delete this page");
         }
 
-        text = self->getTextPage();
+        text = self->getTextPage(rawOrder);
         wordList = text->makeWordList(gTrue);
         int l = wordList->getLength();
         Local<v8::Array> v8results = Nan::New<v8::Array>(l);
@@ -279,7 +281,7 @@ namespace node {
         String::Utf8Value str(info[0]);
 
         iconv_string("UCS-4LE", "UTF-8", *str, *str+strlen(*str)+1, &ucs4, &ucs4_len);
-        text = self->getTextPage();
+        text = self->getTextPage(gFalse);
 
         while (text->findText((unsigned int *)ucs4, ucs4_len/4 - 1,
                  gFalse, gTrue, // startAtTop, stopAtBottom
