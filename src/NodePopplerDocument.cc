@@ -6,10 +6,14 @@
 #include "NodePopplerPage.h"
 
 
-PDFDoc *createMemPDFDoc( char* buffer, size_t length ){
+PDFDoc *createMemPDFDoc( char* buffer, size_t length ) {
     Object obj;
+#if ((POPPLER_VERSION_MAJOR == 0) && (POPPLER_VERSION_MINOR < 55))
     obj.initNull();
     return new PDFDoc(new MemStream(buffer, 0, length, &obj), NULL, NULL);
+#else
+    return new PDFDoc(new MemStream(buffer, 0, length, std::move(obj)), NULL, NULL);
+#endif
 }
 
 using namespace v8;

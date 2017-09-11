@@ -405,6 +405,7 @@ namespace node {
                 delete array;
                 return;
             } else {
+#if ((POPPLER_VERSION_MAJOR == 0) && (POPPLER_VERSION_MINOR < 55))
                 array->add((new ::Object())->initReal(x1));
                 array->add((new ::Object())->initReal(y1));
                 array->add((new ::Object())->initReal(x2));
@@ -413,6 +414,16 @@ namespace node {
                 array->add((new ::Object())->initReal(y3));
                 array->add((new ::Object())->initReal(x4));
                 array->add((new ::Object())->initReal(y4));
+#else
+                array->add(::Object(x1));
+                array->add(::Object(y1));
+                array->add(::Object(x2));
+                array->add(::Object(y2));
+                array->add(::Object(x3));
+                array->add(::Object(y3));
+                array->add(::Object(x4));
+                array->add(::Object(y4));
+#endif
             }
         }
 
