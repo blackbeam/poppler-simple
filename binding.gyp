@@ -25,14 +25,21 @@
                 "NODE_VERSION_MINOR=<(minor_version)",
                 "NODE_VERSION_MICRO=<(micro_version)"
             ],
-            "xcode_settings": {
-                "OTHER_CFLAGS": [
-                    "<!@(pkg-config --cflags poppler)"
-                ],
-                "OTHER_LDFLAGS": [
-                    "-liconv"
-                ]
-            },
+            "conditions": [
+                ['OS=="mac"', {
+                    'xcode_settings': {
+                        'OTHER_CFLAGS': [
+                            "<!@(pkg-config --cflags poppler)",
+                            "<!@(dirname -- `pkg-config --cflags poppler`)",
+                            "-std=c++11",
+                            "-stdlib=libc++"
+                        ],
+                        "OTHER_LDFLAGS": [
+                            "-liconv"
+                        ]
+                    },
+                }],
+            ],
             "include_dirs": [
                 "<!(node -e \"require('nan')\")"
             ]
