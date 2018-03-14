@@ -159,7 +159,7 @@ namespace node {
             if (text == NULL) {
                 TextOutputDev *textDev;
                 Gfx *gfx;
-#if (POPPLER_VERSION_MINOR < 19)
+#if POPPLER_VERSION_MAJOR == 0 && POPPLER_VERSION_MINOR < 19
                 textDev = new TextOutputDev(NULL, gTrue, gFalse, rawOrder);
                 gfx = pg->createGfx(textDev, 72., 72., 0,
                     gFalse,
