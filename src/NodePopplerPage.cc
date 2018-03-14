@@ -541,16 +541,19 @@ namespace node {
 #endif
                 ((TiffWriter*)writer)->setCompressionString(work->compression);
         }
+        int sx, sy, sw, sh;
+        std::tie(sx, sy, sw, sh) = work->applyScale();
+        if (work->error) return;
 #if POPPLER_VERSION_MAJOR == 0 && POPPLER_VERSION_MINOR < 19
         work->self->pg->displaySlice(splashOut, work->PPI, work->PPI,
             0, gFalse, gTrue,
-            work->sx, work->sy, work->sw, work->sh,
+            sx, sy, sw, sh,
             gFalse, work->self->doc->getCatalog(),
             NULL, NULL, NULL, NULL);
 #else
         work->self->pg->displaySlice(splashOut, work->PPI, work->PPI,
             0, gFalse, gTrue,
-            work->sx, work->sy, work->sw, work->sh,
+            sx, sy, sw, sh,
             gFalse);
 #endif
 
@@ -965,6 +968,28 @@ namespace node {
         }
     }
 
+    std::tuple<int, int, int, int> NodePopplerPage::RenderWork::applyScale() {
+        char *e = NULL;
+        double scale, scaledWidth, scaledHeight;
+        int scaled_x, scaled_y, scaled_w, scaled_h;
+        scale = PPI / 72.0;
+        scaledWidth = self->getWidth() * scale;
+        scaledHeight = self->getHeight() * scale;
+        scaled_w = scaledWidth * slice_w;
+        scaled_h = scaledHeight * slice_h;
+        scaled_x = scaledWidth * slice_x;
+        scaled_y = scaledHeight - scaledHeight * slice_y - scaledHeight * slice_h;
+        if ((unsigned long)(scaled_w * scaled_h) > 100000000L)
+        {
+            e = (char*) "Result image is too big";
+        }
+        if (e) {
+            this->error = new char[strlen(e) + 1];
+            strcpy(this->error, e);
+        }
+        return std::make_tuple(scaled_x, scaled_y, scaled_w, scaled_h);
+    }
+
     void NodePopplerPage::RenderWork::setSlice(const Local<Value> sliceVal) {
         Nan::HandleScope scope;
         Local<v8::Object> slice;
@@ -995,20 +1020,13 @@ namespace node {
                             (0.0 > h || h > 1.0)) {
                         e = (char*) "Slice values must be 0 - 1 interval numbers";
                     } else {
-                        double scale, scaledWidth, scaledHeight;
                         // cap width and height to fit page size
                         if (y + h > 1.0) { h = 1.0 - y; }
                         if (x + w > 1.0) { w = 1.0 - x; }
-                        scale = this->PPI / 72.0;
-                        scaledWidth = this->self->getWidth() * scale;
-                        scaledHeight = this->self->getHeight() * scale;
-                        this->sw = scaledWidth * w;
-                        this->sh = scaledHeight * h;
-                        this->sx = scaledWidth * x;
-                        this->sy = scaledHeight - scaledHeight * y - scaledHeight * h; // convert to bottom related coords
-                        if ((unsigned long)(this->sh * this->sw) > 100000000L) {
-                            e = (char*) "Result image is too big";
-                        }
+                        this->slice_x = x;
+                        this->slice_y = y;
+                        this->slice_h = h;
+                        this->slice_w = w;
                     }
                 } else {
                     e = (char*) "Slice must be an object: {x: Number, y: Number, w: Number, h: Number}";

@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <tuple>
 
 #include "iconv_string.h"
 #include "MemoryStream.h"
@@ -42,10 +43,10 @@ namespace node {
                 , filename(NULL)
                 , compression(NULL)
                 , quality(100)
-                , sx(0)
-                , sy(0)
-                , sw(1)
-                , sh(1)
+                , slice_x(0)
+                , slice_y(0)
+                , slice_w(1)
+                , slice_h(1)
                 , PPI(72)
                 , f(NULL)
                 , stream(NULL)
@@ -73,6 +74,7 @@ namespace node {
             void setSlice(const v8::Local<v8::Value> sliceVal);
             void openStream();
             void closeStream();
+            std::tuple<int, int, int, int> applyScale();
 
             uv_work_t request;
             Nan::Callback* callback;
@@ -83,10 +85,10 @@ namespace node {
             char *compression;
             char format[5];
             int quality;
-            int sx;
-            int sy;
-            int sw;
-            int sh;
+            double slice_x;
+            double slice_y;
+            double slice_w;
+            double slice_h;
             double PPI;
             FILE *f;
             MemoryStream* stream;
