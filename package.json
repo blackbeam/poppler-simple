@@ -23,7 +23,7 @@
   },
   "dependencies": {
     "bluebird": "^3.2.1",
-    "nan": "^2.7.0"
+    "nan": "^2.9.2"
   },
   "devDependencies": {
     "mocha": "*"
