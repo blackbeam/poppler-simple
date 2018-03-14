@@ -344,8 +344,7 @@ namespace node {
     }
 #endif
 
-#if POPPLER_VERSION_MAJOR == 0 && POPPLER_VERSION_MINOR < 20
-#else
+#if POPPLER_VERSION_MAJOR == 0 && POPPLER_VERSION_MINOR >= 20
     /**
      * Adds annotations to a page
      *
@@ -405,7 +404,7 @@ namespace node {
                 delete array;
                 return;
             } else {
-#if ((POPPLER_VERSION_MAJOR == 0) && (POPPLER_VERSION_MINOR < 55))
+#if ((POPPLER_VERSION_MAJOR == 0) && (POPPLER_VERSION_MINOR <= 57))
                 array->add((new ::Object())->initReal(x1));
                 array->add((new ::Object())->initReal(y1));
                 array->add((new ::Object())->initReal(x2));
