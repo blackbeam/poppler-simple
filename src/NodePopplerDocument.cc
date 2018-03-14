@@ -8,7 +8,7 @@
 
 PDFDoc *createMemPDFDoc( char* buffer, size_t length ) {
     Object obj;
-#if ((POPPLER_VERSION_MAJOR == 0) && (POPPLER_VERSION_MINOR < 55))
+#if ((POPPLER_VERSION_MAJOR == 0) && (POPPLER_VERSION_MINOR <= 57))
     obj.initNull();
     return new PDFDoc(new MemStream(buffer, 0, length, &obj), NULL, NULL);
 #else
