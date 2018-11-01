@@ -10,7 +10,7 @@ A simple javascript interface to [poppler](http://poppler.freedesktop.org/) libr
 npm install poppler-simple
 ```
 
-## Install in Docker:
+#### Install in Docker:
 See `Dockerfile.example` for inspiration/information
 
 ### Load:
