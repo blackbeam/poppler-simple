@@ -10,6 +10,9 @@ A simple javascript interface to [poppler](http://poppler.freedesktop.org/) libr
 npm install poppler-simple
 ```
 
+#### Install in Docker:
+See `Dockerfile.example` for inspiration/information
+
 ### Load:
 ```javascript
 var PopplerDocument = require('poppler-simple').PopplerDocument;
