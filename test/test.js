@@ -6,7 +6,6 @@ var Promise = require('bluebird').Promise;
 var a = require('assert');
 var poppler = require('..');
 var fs = require('fs');
-var imgDiff = require('img-diff-js');
 var docs = [];
 var pages = [];
 
@@ -63,27 +62,6 @@ function getOutFileName(iteration, format) {
     return 'test/out' + rand + '.' + format;
 }
 
-function cmpImgFile(actual, expected) {
-    return imgDiff.imgDiff({
-        actualFilename: actual,
-        expectedFilename: expected,
-    })
-        .then(function (result) { return result.imagesAreSame; });
-}
-
-function cmpImgBuf(buf, path, expected) {
-    fs.writeFileSync(path, buf);
-    return imgDiff
-        .imgDiff({
-            actualFilename: path,
-            expectedFilename: expected,
-        })
-        .then(function (result) {
-            fs.unlinkSync(path);
-            return result.imagesAreSame;
-        });
-}
-
 function renderToFile(pages, format) {
     var promises = pages
         .map(function (x, iteration) {
@@ -93,12 +71,8 @@ function renderToFile(pages, format) {
             a.ok(fs.statSync(out.path).size > 0);
             return out;
         })
-        .map(function (out, iteration) {
-            return cmpImgFile(out.path, getExpectedFileName(iteration, format))
-                .then(function (result) {
-                    fs.unlinkSync(out.path);
-                    a.equal(result, true);
-                });
+        .map(function (out) {
+            fs.unlinkSync(out.path);
         });
     return Promise.all(promises);
 }
@@ -112,13 +86,6 @@ function renderToBuffer(pages, format) {
             a.ok(Buffer.isBuffer(out.data));
             a.ok(out.data.length > 0);
             return out;
-        })
-        .map(function (out, iteration) {
-            var path = getOutFileName(iteration, format);
-            return cmpImgBuf(out.data, path, getExpectedFileName(iteration, format))
-                .then(function (result) {
-                    a.equal(result, true);
-                });
         });
     return Promise.all(promises);
 }
@@ -136,11 +103,7 @@ function renderToFileCb(pages, format) {
             });
         });
     return Promise.map(promises, function (out, iteration) {
-        return cmpImgFile(out.path, getExpectedFileName(iteration, format))
-            .then(function (result) {
-                fs.unlinkSync(out.path);
-                a.equal(result, true);
-            });
+        fs.unlinkSync(out.path);
     });
 }
 
@@ -158,13 +121,7 @@ function renderToBufferCb(pages, format) {
                 });
             });
         });
-    return Promise.map(promises, function (out, iteration) {
-        var path = getOutFileName(iteration, format);
-        return cmpImgBuf(out.data, path, getExpectedFileName(iteration, format))
-            .then(function (result) {
-                a.equal(result, true);
-            });
-    });
+    return Promise.all(promises);
 }
 
 function renderToBufferAsync(pages, format) {
@@ -179,13 +136,7 @@ function renderToBufferAsync(pages, format) {
                     return out;
                 });
         });
-    return Promise.map(promises, function (out, iteration) {
-        var path = getOutFileName(iteration, format);
-        return cmpImgBuf(out.data, path, getExpectedFileName(iteration, format))
-            .then(function (result) {
-                a.equal(result, true);
-            });
-    });
+    return Promise.all(promises);
 }
 
 describe('poppler module', function () {
