@@ -26,7 +26,8 @@
     "nan": "^2.11.1"
   },
   "devDependencies": {
-    "mocha": "*"
+    "mocha": "5.2",
+    "img-diff-js": "0.4"
   },
   "optionalDependencies": {}
 }

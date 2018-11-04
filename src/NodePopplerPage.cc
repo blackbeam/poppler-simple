@@ -622,7 +622,10 @@ void NodePopplerPage::display(RenderWork *work)
 #else
         writer = new TiffWriter(TiffWriter::RGB);
 #endif
-        ((TiffWriter *)writer)->setCompressionString(work->compression);
+        if (work->compression != NULL)
+        {
+            ((TiffWriter *)writer)->setCompressionString(work->compression);
+        }
     }
     int sx, sy, sw, sh;
     std::tie(sx, sy, sw, sh) = work->applyScale();
@@ -1348,6 +1351,7 @@ void NodePopplerPage::RenderWork::closeStream()
             }
             close(filedes);
             fclose(this->f);
+            unlink(this->filename);
             this->f = NULL;
         }
     }

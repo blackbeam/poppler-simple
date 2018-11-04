@@ -1,8 +1,50 @@
 /*global it:true, describe:true, require:true, __dirname:true, gc:true, before:true */
 /*jshint node:true */
-"use strict";
+'use strict';
 
-var names = ['/fixtures/0.pdf', '/fixtures/90.pdf', '/fixtures/180.pdf', '/fixtures/270.pdf'].map(
+var Promise = require('bluebird').Promise;
+var a = require('assert');
+var poppler = require('..');
+var fs = require('fs');
+var imgDiff = require('img-diff-js');
+var docs = [];
+var pages = [];
+
+const NAMES = [
+    '/fixtures/0.pdf',
+    '/fixtures/90.pdf',
+    '/fixtures/180.pdf',
+    '/fixtures/270.pdf',
+];
+
+const PATHS = {
+    png: [
+        'test/expected/0.png',
+        'test/expected/90.png',
+        'test/expected/180.png',
+        'test/expected/270.png',
+    ],
+    jpeg: [
+        'test/expected/0.jpeg',
+        'test/expected/90.jpeg',
+        'test/expected/180.jpeg',
+        'test/expected/270.jpeg',
+    ],
+    tiff: [
+        'test/expected/0.tiff',
+        'test/expected/90.tiff',
+        'test/expected/180.tiff',
+        'test/expected/270.tiff',
+    ],
+};
+
+const OPTS = {
+    png: { slice: { x: 0, y: 0, w: 1, h: 0.5 } },
+    jpeg: { quality: 100 },
+    tiff: { compression: 'none' },
+};
+
+var names = NAMES.map(
     function (x) {
         return __dirname + x;
     }
@@ -12,11 +54,139 @@ var targets = names.map(function (x) {
     return 'file://' + x;
 });
 
-var a = require('assert');
-var poppler = require('..');
-var fs = require('fs');
-var docs = [];
-var pages = [];
+function getExpectedFileName(iteration, format) {
+    return PATHS[format][iteration];
+}
+
+function getOutFileName(iteration, format) {
+    var rand = Math.ceil(Math.random() * 100000000000);
+    return 'test/out' + rand + '.' + format;
+}
+
+function cmpImgFile(actual, expected) {
+    return imgDiff.imgDiff({
+        actualFilename: actual,
+        expectedFilename: expected,
+    })
+        .then(function (result) { return result.imagesAreSame; });
+}
+
+function cmpImgBuf(buf, path, expected) {
+    fs.writeFileSync(path, buf);
+    return imgDiff
+        .imgDiff({
+            actualFilename: path,
+            expectedFilename: expected,
+        })
+        .then(function (result) {
+            fs.unlinkSync(path);
+            return result.imagesAreSame;
+        });
+}
+
+function renderToFile(pages, format) {
+    var promises = pages
+        .map(function (x, iteration) {
+            var path = getOutFileName(iteration, format);
+            var out = x.renderToFile(path, format, 50, OPTS[format]);
+            a.deepEqual(out, { type: 'file', path: path });
+            a.ok(fs.statSync(out.path).size > 0);
+            return out;
+        })
+        .map(function (out, iteration) {
+            return cmpImgFile(out.path, getExpectedFileName(iteration, format))
+                .then(function (result) {
+                    fs.unlinkSync(out.path);
+                    a.equal(result, true);
+                });
+        });
+    return Promise.all(promises);
+}
+
+function renderToBuffer(pages, format) {
+    var promises = pages
+        .map(function (x) {
+            var out = x.renderToBuffer(format, 50, OPTS[format]);
+            a.equal(out.type, 'buffer');
+            a.equal(out.format, format);
+            a.ok(Buffer.isBuffer(out.data));
+            a.ok(out.data.length > 0);
+            return out;
+        })
+        .map(function (out, iteration) {
+            var path = getOutFileName(iteration, format);
+            return cmpImgBuf(out.data, path, getExpectedFileName(iteration, format))
+                .then(function (result) {
+                    a.equal(result, true);
+                });
+        });
+    return Promise.all(promises);
+}
+
+function renderToFileCb(pages, format) {
+    var promises = pages
+        .map(function (x, iteration) {
+            var path = getOutFileName(iteration, format);
+            return new Promise(function (resolve) {
+                x.renderToFile(path, format, 50, OPTS[format], function (err, out) {
+                    a.deepEqual(out, { type: 'file', path: path });
+                    a.ok(fs.statSync(out.path).size > 0);
+                    resolve(out);
+                });
+            });
+        });
+    return Promise.map(promises, function (out, iteration) {
+        return cmpImgFile(out.path, getExpectedFileName(iteration, format))
+            .then(function (result) {
+                fs.unlinkSync(out.path);
+                a.equal(result, true);
+            });
+    });
+}
+
+function renderToBufferCb(pages, format) {
+    var promises = pages
+        .map(function (x) {
+            return new Promise(function (resolve) {
+                x.renderToBuffer(format, 50, OPTS[format], function (err, out) {
+                    a.equal(err, null);
+                    a.equal(out.type, 'buffer');
+                    a.equal(out.format, format);
+                    a.ok(Buffer.isBuffer(out.data));
+                    a.ok(out.data.length > 0);
+                    resolve(out);
+                });
+            });
+        });
+    return Promise.map(promises, function (out, iteration) {
+        var path = getOutFileName(iteration, format);
+        return cmpImgBuf(out.data, path, getExpectedFileName(iteration, format))
+            .then(function (result) {
+                a.equal(result, true);
+            });
+    });
+}
+
+function renderToBufferAsync(pages, format) {
+    var promises = pages
+        .map(function (x) {
+            return x.renderToBufferAsync(format, 50, OPTS[format])
+                .then(function (out) {
+                    a.equal(out.type, 'buffer');
+                    a.equal(out.format, format);
+                    a.ok(Buffer.isBuffer(out.data));
+                    a.ok(out.data.length > 0);
+                    return out;
+                });
+        });
+    return Promise.map(promises, function (out, iteration) {
+        var path = getOutFileName(iteration, format);
+        return cmpImgBuf(out.data, path, getExpectedFileName(iteration, format))
+            .then(function (result) {
+                a.equal(result, true);
+            });
+    });
+}
 
 describe('poppler module', function () {
     it('should be loaded', function () {
@@ -28,9 +198,8 @@ describe('PopplerDocument', function () {
     it('should throw on non existing document', function () {
         this.timeout(0);
         a.throws(function () {
-            var doc = new poppler.PopplerDocument('file:///123.pdf');
-            doc = null;
-        }, new RegExp("Couldn't open file - fopen error. Errno: 2."));
+            new poppler.PopplerDocument('file:///123.pdf');
+        }, new RegExp('Couldn\'t open file - fopen error. Errno: 2.'));
     });
     it('should open pdf file', function () {
         this.timeout(0);
@@ -65,8 +234,7 @@ describe('PopplerDocument', function () {
     it('should throw on non existing page', function () {
         this.timeout(0);
         a.throws(function () {
-            var page = docs[0].getPage(65536);
-            page = null;
+            docs[0].getPage(65536);
         }, new RegExp('Page number out of bounds'));
     });
     it('should open pages', function () {
@@ -105,8 +273,7 @@ describe('PopplerDocument', function () {
             a.equal(p.isCropped, false);
             if ((poppler.POPPLER_VERSION_MAJOR === 0 &&
                 poppler.POPPLER_VERSION_MINOR >= 20) ||
-                poppler.POPPLER_VERSION_MAJOR > 0)
-            {
+                poppler.POPPLER_VERSION_MAJOR > 0) {
                 a.equal(p.numAnnots, 0);
             }
             a.deepEqual(p.media_box, { x1: 0, x2: 299, y1: 0, y2: 572 });
@@ -122,8 +289,7 @@ describe('PopplerPage', function () {
     it('should return word list', function () {
         this.timeout(0);
         var results = pages.map(function (x) {
-            var word_list = x.getWordList();
-            return word_list;
+            return x.getWordList();
         });
         a.equal(results[0].length, 45);
         a.equal(results[1].length, 45);
@@ -134,30 +300,34 @@ describe('PopplerPage', function () {
             x2: 0.38838531772575263,
             y1: 0.8903321678321678,
             y2: 0.9060664335664337,
-            text: 'Российская' });
+            text: 'Российская'
+        });
         a.deepEqual(results[1][0], {
             x1: 0.6241083916083916,
             x2: 0.6378496503496504,
             y1: 0.7519090301003345,
             y2: 0.9871571906354514,
-            text: 'ЭТНОСОЦИАЛЬНАЯ' });
+            text: 'ЭТНОСОЦИАЛЬНАЯ'
+        });
         a.deepEqual(results[2][0], {
             x1: 0.5975623411371238,
             x2: 0.6588628762541806,
             y1: 0.8016363636363637,
             y2: 0.8142237762237763,
-            text: '1882' });
+            text: '1882'
+        });
         a.deepEqual(results[3][0], {
             x1: 0.39110139860139864,
             x2: 0.40484265734265734,
             y1: 0.7972115050167224,
             y2: 0.8783848829431437,
-            text: 'вв.)' });
+            text: 'вв.)'
+        });
     });
     it('should search for text', function () {
         this.timeout(0);
         var results = pages.map(function (x) {
-            return x.findText("ко");
+            return x.findText('ко');
         });
         var tmp = [
             [
@@ -220,8 +390,8 @@ describe('PopplerPage', function () {
         a.deepEqual(results, tmp);
     });
     if ((poppler.POPPLER_VERSION_MAJOR === 0 &&
-         poppler.POPPLER_VERSION_MINOR >= 20) ||
-         poppler.POPPLER_VERSION_MAJOR > 0) {
+        poppler.POPPLER_VERSION_MINOR >= 20) ||
+        poppler.POPPLER_VERSION_MAJOR > 0) {
         it('should add annotations', function () {
             this.timeout(0);
             pages.forEach(function (x) {
@@ -250,57 +420,37 @@ describe('PopplerPage', function () {
     describe('render to file', function () {
         it('should render to png', function () {
             this.timeout(0);
-            pages.forEach(function (x) {
-                var out = x.renderToFile('test/out.png', 'png', 50, {
-                    slice: { x: 0, y: 0, w: 1, h: 0.5 }
-                });
-                a.deepEqual(out, {type: 'file', path: 'test/out.png'});
-                a.ok(fs.statSync(out.path).size > 0);
-                fs.unlinkSync(out.path);
-            });
+            return renderToFile(pages, 'png');
         });
         it('should render to jpeg', function () {
             this.timeout(0);
-            pages.forEach(function (x) {
-                var out = x.renderToFile('test/out.jpeg', 'jpeg', 50, {quality: 100});
-                a.deepEqual(out, {type: 'file', path: 'test/out.jpeg'});
-                a.ok(fs.statSync(out.path).size > 0);
-                fs.unlinkSync(out.path);
-            });
+            return renderToFile(pages, 'jpeg');
         });
         it('should render to tiff', function () {
             this.timeout(0);
-            pages.forEach(function (x) {
-                var out = x.renderToFile('test/out.tiff', 'tiff', 50, {compression: 'lzw'});
-                a.deepEqual(out, {type: 'file', path: 'test/out.tiff'});
-                a.ok(fs.statSync(out.path).size > 0);
-                fs.unlinkSync(out.path);
-            });
+            return renderToFile(pages, 'tiff');
         });
         it('should throw on wrong arguments', function () {
             this.timeout(0);
             pages.forEach(function (x) {
                 a.throws(function () {
-                    var out = x.renderToFile('foo');
-                    out = null;
-                }, new RegExp("Arguments"));
+                    x.renderToFile('foo');
+                }, new RegExp('Arguments'));
             });
         });
         it('should throw on bad output path', function () {
             this.timeout(0);
             pages.forEach(function (x) {
                 a.throws(function () {
-                    var out = x.renderToFile('/t/t/t/t/t/t/t/123', 'jpeg', 50);
-                    out = null;
-                }, new RegExp("Could not open output stream"));
+                    x.renderToFile('/t/t/t/t/t/t/t/123', 'jpeg', 50);
+                }, new RegExp('Could not open output stream'));
             });
         });
         it('should throw on unknown format', function () {
             this.timeout(0);
             pages.forEach(function (x) {
                 a.throws(function () {
-                    var out = x.renderToFile('test/out.bmp', 'bmp', 50);
-                    out = null;
+                    x.renderToFile('test/out.bmp', 'bmp', 50);
                 }, new RegExp('Unsupported compression method'));
             });
         });
@@ -308,84 +458,37 @@ describe('PopplerPage', function () {
             this.timeout(0);
             pages.forEach(function (x) {
                 a.throws(function () {
-                    var out = x.renderToFile('test/x.jpeg', 'jpeg', -1);
-                    out = null;
-                }, new RegExp("PPI' value must be greater then 0"));
+                    x.renderToFile('test/x.jpeg', 'jpeg', -1);
+                }, new RegExp('PPI\' value must be greater then 0'));
             });
         });
         it('should throw on bad writer options', function () {
             this.timeout(0);
             pages.forEach(function (x) {
                 a.throws(function () {
-                    var out = x.renderToFile('test/x.jpeg', 'jpeg', 50, {quality: 'foobar'});
-                    out = null;
-                }, new RegExp("'quality' option value must be 0 - 100 interval integer"));
+                    x.renderToFile('test/x.jpeg', 'jpeg', 50, { quality: 'foobar' });
+                }, new RegExp('\'quality\' option value must be 0 - 100 interval integer'));
             });
         });
     });
     describe('render to file async', function () {
-        it('should render to png', function (done) {
+        it('should render to png', function () {
             this.timeout(0);
-            var n = pages.length, i = 0;
-            pages.forEach(function (x, j) {
-                x.renderToFile('test/out'+j+'.png', 'png', 50, {slice: { x: 0, y: 0, w: 1, h: 0.5 }}, function (err, out) {
-                    i = i + 1;
-                    a.equal(err, null);
-                    a.deepEqual(out, {type: 'file', path: 'test/out'+j+'.png'});
-                    a.ok(fs.statSync(out.path).size > 0);
-                    fs.unlinkSync(out.path);
-                });
-            });
-            var interval = setInterval(function () {
-                if (i == n) {
-                    clearInterval(interval);
-                    done();
-                }
-            }, 10);
+            return renderToFileCb(pages, 'png');
         });
-        it('should render to jpeg', function (done) {
+        it('should render to jpeg', function () {
             this.timeout(0);
-            var n = pages.length, i = 0;
-            pages.forEach(function (x, j) {
-                x.renderToFile('test/out'+j+'.jpeg', 'jpeg', 50, {quality: 100}, function (err, out) {
-                    i = i + 1;
-                    a.equal(err, null);
-                    a.deepEqual(out, {type: 'file', path: 'test/out'+j+'.jpeg'});
-                    a.ok(fs.statSync(out.path).size > 0);
-                    fs.unlinkSync(out.path);
-                });
-            });
-            var interval = setInterval(function () {
-                if (i == n) {
-                    clearInterval(interval);
-                    done();
-                }
-            }, 10);
+            return renderToFileCb(pages, 'jpeg');
         });
-        it('should render to tiff', function (done) {
+        it('should render to tiff', function () {
             this.timeout(0);
-            var n = pages.length, i = 0;
-            pages.forEach(function (x, j) {
-                x.renderToFile('test/out'+j+'.tiff', 'tiff', 50, {compression: 'lzw'}, function (err, out) {
-                    i = i + 1;
-                    a.equal(err, null);
-                    a.deepEqual(out, {type: 'file', path: 'test/out'+j+'.tiff'});
-                    a.ok(fs.statSync(out.path).size > 0);
-                    fs.unlinkSync(out.path);
-                });
-            });
-            var interval = setInterval(function () {
-                if (i == n) {
-                    clearInterval(interval);
-                    done();
-                }
-            }, 10);
+            return renderToFileCb(pages, 'tiff');
         });
         it('should pass error on bad output path', function (done) {
             this.timeout(0);
             pages[0].renderToFile('/t/t/t/t/t/t/t/123', 'jpeg', 50, function (err, out) {
                 a.equal(out, undefined);
-                a.equal(err.message, "Could not open output stream");
+                a.equal(err.message, 'Could not open output stream');
                 done();
             });
         });
@@ -393,7 +496,7 @@ describe('PopplerPage', function () {
             this.timeout(0);
             pages[0].renderToFile('test/out.bmp', 'bmp', 50, function (err, out) {
                 a.equal(out, undefined);
-                a.equal(err.message, "Unsupported compression method");
+                a.equal(err.message, 'Unsupported compression method');
                 done();
             });
         });
@@ -401,15 +504,15 @@ describe('PopplerPage', function () {
             this.timeout(0);
             pages[0].renderToFile('test/x.jpeg', 'jpeg', -1, function (err, out) {
                 a.equal(out, undefined);
-                a.equal(err.message, "'PPI' value must be greater then 0");
+                a.equal(err.message, '\'PPI\' value must be greater then 0');
                 done();
             });
         });
         it('should pass error on bad writer options', function (done) {
             this.timeout(0);
-            pages[0].renderToFile('test/x.jpeg', 'jpeg', 50, {quality: 'foobar'}, function (err, out) {
+            pages[0].renderToFile('test/x.jpeg', 'jpeg', 50, { quality: 'foobar' }, function (err, out) {
                 a.equal(out, undefined);
-                a.equal(err.message, "'quality' option value must be 0 - 100 interval integer");
+                a.equal(err.message, '\'quality\' option value must be 0 - 100 interval integer');
                 done();
             });
         });
@@ -417,136 +520,52 @@ describe('PopplerPage', function () {
     describe('render to buffer', function () {
         it('should render to png', function () {
             this.timeout(0);
-            pages.forEach(function (x) {
-                var out = x.renderToBuffer('png', 50, {
-                    slice: { x: 0, y: 0, w: 1, h: 0.5 }
-                });
-                a.equal(out.type, 'buffer');
-                a.equal(out.format, 'png');
-                a.ok(Buffer.isBuffer(out.data));
-                a.ok(out.data.length > 0);
-            });
+            return renderToBuffer(pages, 'png');
         });
         it('should render to jpeg', function () {
             this.timeout(0);
-            pages.forEach(function (x) {
-                var out = x.renderToBuffer('jpeg', 50, {quality: 100});
-                a.equal(out.type, 'buffer');
-                a.equal(out.format, 'jpeg');
-                a.ok(Buffer.isBuffer(out.data));
-                a.ok(out.data.length > 0);
-            });
+            return renderToBuffer(pages, 'jpeg');
         });
         it('should render to tiff', function () {
             this.timeout(0);
-            pages.forEach(function (x) {
-                var out = x.renderToBuffer('tiff', 50, {compression: 'lzw'});
-                a.equal(out.type, 'buffer');
-                a.equal(out.format, 'tiff');
-                a.ok(Buffer.isBuffer(out.data));
-                a.ok(out.data.length > 0);
-            });
+            return renderToBuffer(pages, 'tiff');
         });
     });
     describe('render to buffer async', function () {
-        it('should render to png', function (done) {
+        it('should render to png', function () {
             this.timeout(0);
-            var n = pages.length, i = 0;
-            pages.forEach(function (x, j) {
-                x.renderToBuffer('png', 50, {slice: { x: 0, y: 0, w: 1, h: 0.5 }}, function (err, out) {
-                    i = i + 1;
-                    a.equal(err, null);
-                    a.equal(out.type, 'buffer');
-                    a.equal(out.format, 'png');
-                    a.ok(Buffer.isBuffer(out.data));
-                    a.ok(out.data.length > 0);
-                });
-            });
-            var interval = setInterval(function () {
-                if (i == n) {
-                    clearInterval(interval);
-                    done();
-                }
-            }, 10);
+            return renderToBufferCb(pages, 'png');
         });
-        it('should render to jpeg', function (done) {
+        it('should render to jpeg', function () {
             this.timeout(0);
-            var n = pages.length, i = 0;
-            pages.forEach(function (x, j) {
-                x.renderToBuffer('jpeg', 50, {quality: 100}, function (err, out) {
-                    i = i + 1;
-                    a.equal(err, null);
-                    a.equal(out.type, 'buffer');
-                    a.equal(out.format, 'jpeg');
-                    a.ok(Buffer.isBuffer(out.data));
-                    a.ok(out.data.length > 0);
-                });
-            });
-            var interval = setInterval(function () {
-                if (i == n) {
-                    clearInterval(interval);
-                    done();
-                }
-            }, 10);
+            return renderToBufferCb(pages, 'jpeg');
         });
-        it('should render to tiff', function (done) {
+        it('should render to tiff', function () {
             this.timeout(0);
-            var n = pages.length, i = 0;
-            pages.forEach(function (x, j) {
-                x.renderToBuffer('tiff', 50, {compression: 'lzw'}, function (err, out) {
-                    i = i + 1;
-                    a.equal(err, null);
-                    a.equal(out.type, 'buffer');
-                    a.equal(out.format, 'tiff');
-                    a.ok(Buffer.isBuffer(out.data));
-                    a.ok(out.data.length > 0);
-                });
-            });
-            var interval = setInterval(function () {
-                if (i == n) {
-                    clearInterval(interval);
-                    done();
-                }
-            }, 10);
+            return renderToBufferCb(pages, 'tiff');
         });
         it('should pass errors asyncronously', function (done) {
             this.timeout(0);
             pages[0].renderToBuffer('jpg', 50, function (err, out) {
                 a.equal(out, undefined);
-                a.equal(err.message, "Unsupported compression method");
+                a.equal(err.message, 'Unsupported compression method');
                 done();
             });
         });
     });
 
     describe('render to promise', function () {
-        it('should render to promise', function (done) {
+        it('should render png to promise', function () {
             this.timeout(0);
-            var n = pages.length, i = 0;
-            var slice = { x: 0, y: 0, w: 1, h: 0.5 };
-            pages.forEach(function (x, j) {
-                x.renderToBufferAsync('png', 50, {slice: slice}).then(function (out) {
-                    a.equal(out.type, 'buffer');
-                    a.equal(out.format, 'png');
-                    a.ok(Buffer.isBuffer(out.data));
-                    a.ok(out.data.length > 0);
-                    return x.renderToFileAsync('test/out'+j+'.png', 'png', 50, {slice: slice});
-                }).then(function (out) {
-                    i = i + 1;
-                    a.deepEqual(out, {type: 'file', path: 'test/out' + j + '.png'});
-                    a.ok(fs.statSync(out.path).size > 0);
-                    fs.unlinkSync(out.path);
-                }).catch(function (err) {
-                    i = i + 1;
-                    a.equal(err, null);
-                });
-            });
-            var interval = setInterval(function () {
-                if (i == n) {
-                    clearInterval(interval);
-                    done();
-                }
-            }, 10);
+            return renderToBufferAsync(pages, 'png');
+        });
+        it('should render jpeg to promise', function () {
+            this.timeout(0);
+            return renderToBufferAsync(pages, 'jpeg');
+        });
+        it('should render tiff to promise', function () {
+            this.timeout(0);
+            return renderToBufferAsync(pages, 'tiff');
         });
     });
 });
@@ -566,7 +585,7 @@ describe('freeing', function () {
         a.throws(function () {
             pages.forEach(function (x) {
                 x.renderToBuffer('jpeg', 72);
-            }, new RegExp("Document closed. You must delete this page"));
+            }, new RegExp('Document closed. You must delete this page'));
         });
     });
 });
