@@ -285,8 +285,12 @@ NAN_METHOD(NodePopplerPage::getWordList)
         v8result->Set(Nan::New("x2", 2).ToLocalChecked(), Nan::New<Number>(x2));
         v8result->Set(Nan::New("y1", 2).ToLocalChecked(), Nan::New<Number>(y1));
         v8result->Set(Nan::New("y2", 2).ToLocalChecked(), Nan::New<Number>(y2));
-        v8result->Set(Nan::New("text", 4).ToLocalChecked(), Nan::New(str->getCString()).ToLocalChecked());
-
+#if POPPLER_VERSION_MAJOR == 0 && POPPLER_VERSION_MINOR < 72
+        auto c_str = str->getCString();
+#else
+        auto c_str = str->c_str();
+#endif
+        v8result->Set(Nan::New("text", 4).ToLocalChecked(), Nan::New(c_str).ToLocalChecked());
         v8results->Set(i, v8result);
 
         delete str;

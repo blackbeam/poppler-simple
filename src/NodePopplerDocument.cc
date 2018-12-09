@@ -154,10 +154,13 @@ NAN_GETTER(NodePopplerDocument::paramsGetter)
         auto fileName = self->doc->getFileName();
         if (fileName != NULL)
         {
-            info.GetReturnValue().Set(
-                Nan::New<String>(fileName->getCString(),
-                                 fileName->getLength())
-                    .ToLocalChecked());
+#if POPPLER_VERSION_MAJOR == 0 && POPPLER_VERSION_MINOR < 72
+            auto c_str = fileName->getCString();
+#else
+            auto c_str = fileName->c_str();
+#endif
+            info.GetReturnValue().Set(Nan::New<String>(c_str, fileName->getLength())
+                                          .ToLocalChecked());
         }
         else
         {
