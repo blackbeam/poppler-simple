@@ -1,4 +1,5 @@
 #include <v8.h>
+#include <memory>
 #include <node.h>
 #include <node_buffer.h>
 
@@ -73,10 +74,6 @@ NodePopplerPage::~NodePopplerPage()
     {
         text->decRefCnt();
     }
-    if (color != NULL)
-    {
-        delete color;
-    }
     if (!docClosed)
     {
         parent->evPageClosed(this);
@@ -84,17 +81,14 @@ NodePopplerPage::~NodePopplerPage()
 }
 
 NodePopplerPage::NodePopplerPage(NodePopplerDocument *doc, const int32_t pageNum)
+    : text(NULL), color_r(0), color_g(1), color_b(0)
 {
-    text = NULL;
-    color = NULL;
-
     pg = doc->doc->getPage(pageNum);
     if (pg && pg->isOk())
     {
         parent = doc;
         parent->evPageOpened(this);
         this->doc = doc->doc;
-        color = new AnnotColor(0, 1, 0);
         docClosed = false;
     }
     else
@@ -164,7 +158,7 @@ NAN_GETTER(NodePopplerPage::paramsGetter)
     }
     else if (strcmp(*propName, "crop_box") == 0)
     {
-        PDFRectangle *rect = self->pg->getCropBox();
+        auto rect = self->pg->getCropBox();
         Local<v8::Object> crop_box = Nan::New<v8::Object>();
 
         crop_box->Set(Nan::New("x1").ToLocalChecked(), Nan::New<Number>(rect->x1));
@@ -176,7 +170,7 @@ NAN_GETTER(NodePopplerPage::paramsGetter)
     }
     else if (strcmp(*propName, "media_box") == 0)
     {
-        PDFRectangle *rect = self->pg->getMediaBox();
+        auto rect = self->pg->getMediaBox();
         Local<v8::Object> media_box = Nan::New<v8::Object>();
 
         media_box->Set(Nan::New("x1").ToLocalChecked(), Nan::New<Number>(rect->x1));
@@ -188,7 +182,7 @@ NAN_GETTER(NodePopplerPage::paramsGetter)
     }
     else if (strcmp(*propName, "bleed_box") == 0)
     {
-        PDFRectangle *rect = self->pg->getBleedBox();
+        auto rect = self->pg->getBleedBox();
         Local<v8::Object> bleed_box = Nan::New<v8::Object>();
 
         bleed_box->Set(Nan::New("x1").ToLocalChecked(), Nan::New<Number>(rect->x1));
@@ -200,7 +194,7 @@ NAN_GETTER(NodePopplerPage::paramsGetter)
     }
     else if (strcmp(*propName, "trim_box") == 0)
     {
-        PDFRectangle *rect = self->pg->getTrimBox();
+        auto rect = self->pg->getTrimBox();
         Local<v8::Object> trim_box = Nan::New<v8::Object>();
 
         trim_box->Set(Nan::New("x1").ToLocalChecked(), Nan::New<Number>(rect->x1));
@@ -212,7 +206,7 @@ NAN_GETTER(NodePopplerPage::paramsGetter)
     }
     else if (strcmp(*propName, "art_box") == 0)
     {
-        PDFRectangle *rect = self->pg->getArtBox();
+        auto rect = self->pg->getArtBox();
         Local<v8::Object> art_box = Nan::New<v8::Object>();
 
         art_box->Set(Nan::New("x1").ToLocalChecked(), Nan::New<Number>(rect->x1));
@@ -256,7 +250,7 @@ NAN_METHOD(NodePopplerPage::getWordList)
     TextPage *text;
     TextWordList *wordList;
 
-    GBool rawOrder = info[0]->IsBoolean() ? (To<bool>(info[0]).FromMaybe(false) ? gTrue : gFalse) : gFalse;
+    bool rawOrder = info[0]->IsBoolean() ? (To<bool>(info[0]).FromMaybe(false) ? true : false) : false;
 
     if (self->isDocClosed())
     {
@@ -264,7 +258,7 @@ NAN_METHOD(NodePopplerPage::getWordList)
     }
 
     text = self->getTextPage(rawOrder);
-    wordList = text->makeWordList(gTrue);
+    wordList = text->makeWordList(true);
     int l = wordList->getLength();
     Local<v8::Array> v8results = Nan::New<v8::Array>(l);
     for (int i = 0; i < l; i++)
@@ -328,15 +322,15 @@ NAN_METHOD(NodePopplerPage::findText)
     Nan::Utf8String str(info[0]);
 
     iconv_string("UCS-4LE", "UTF-8", *str, *str + strlen(*str) + 1, &ucs4, &ucs4_len);
-    text = self->getTextPage(gFalse);
+    text = self->getTextPage(false);
 
     while (text->findText((unsigned int *)ucs4, ucs4_len / 4 - 1,
-                          gFalse, gTrue,  // startAtTop, stopAtBottom
-                          gFalse, gFalse, // startAtLast, stopAtLast
-                          gFalse, gFalse, // caseSensitive, backwards
+                          false, true,  // startAtTop, stopAtBottom
+                          false, false, // startAtLast, stopAtLast
+                          false, false, // caseSensitive, backwards
 #if POPPLER_VERSION_MAJOR == 0 && POPPLER_VERSION_MINOR < 19
 #else
-                          gFalse, // wholeWord
+                          false, // wholeWord
 #endif
                           &xMin, &yMin, &xMax, &yMax))
     {
@@ -508,7 +502,12 @@ void NodePopplerPage::addAnnot(const Local<v8::Array> v8array, char **error)
 #endif
 
     annot->setOpacity(.5);
-    annot->setColor(color);
+#if POPPLER_VERSION_MAJOR == 0 && POPPLER_VERSION_MINOR < 70
+    annot->setColor(new AnnotColor(color_r, color_g, color_b));
+#else
+    auto new_color = std::unique_ptr<AnnotColor>(new AnnotColor(color_r, color_g, color_b));
+    annot->setColor(std::move(new_color));
+#endif
     pg->addAnnot(annot);
 
     delete array;
@@ -599,7 +598,7 @@ void NodePopplerPage::display(RenderWork *work)
     paperColor[2] = 255;
     SplashOutputDev *splashOut = new SplashOutputDev(
         splashModeRGB8,
-        4, gFalse,
+        4, false,
         paperColor);
 #if POPPLER_VERSION_MAJOR == 0 && POPPLER_VERSION_MINOR < 19
     splashOut->startDoc(work->self->doc->getXRef());
@@ -633,15 +632,15 @@ void NodePopplerPage::display(RenderWork *work)
         return;
 #if POPPLER_VERSION_MAJOR == 0 && POPPLER_VERSION_MINOR < 19
     work->self->pg->displaySlice(splashOut, work->PPI, work->PPI,
-                                 0, gFalse, gTrue,
+                                 0, false, true,
                                  sx, sy, sw, sh,
-                                 gFalse, work->self->doc->getCatalog(),
+                                 false, work->self->doc->getCatalog(),
                                  NULL, NULL, NULL, NULL);
 #else
     work->self->pg->displaySlice(splashOut, work->PPI, work->PPI,
-                                 0, gFalse, gTrue,
+                                 0, false, true,
                                  sx, sy, sw, sh,
-                                 gFalse);
+                                 false);
 #endif
 
     SplashBitmap *bitmap = splashOut->getBitmap();

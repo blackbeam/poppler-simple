@@ -31,7 +31,11 @@ void NodePopplerDocument::evPageOpened(const NodePopplerPage *p)
             return;
         }
     }
+#if POPPLER_VERSION_MAJOR == 0 && POPPLER_VERSION_MINOR < 70
     pages->append((void *)p);
+#else
+    pages->push_back((void *)p);
+#endif
 }
 
 void NodePopplerDocument::evPageClosed(const NodePopplerPage *p)
@@ -40,7 +44,12 @@ void NodePopplerDocument::evPageClosed(const NodePopplerPage *p)
     {
         if (p == (NodePopplerPage *)pages->get(i))
         {
+#if POPPLER_VERSION_MAJOR == 0 && POPPLER_VERSION_MINOR < 70
             pages->del(i);
+#else
+            auto iter = pages->begin() + i;
+            pages->erase(iter);
+#endif
         }
     }
 }
@@ -142,7 +151,7 @@ NAN_GETTER(NodePopplerDocument::paramsGetter)
     }
     else if (strcmp(*propName, "fileName") == 0)
     {
-        GooString *fileName = self->doc->getFileName();
+        auto fileName = self->doc->getFileName();
         if (fileName != NULL)
         {
             info.GetReturnValue().Set(
