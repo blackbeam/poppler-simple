@@ -109,6 +109,9 @@ NAN_MODULE_INIT(NodePopplerDocument::Init)
                      Nan::New<String>("pdfVersion").ToLocalChecked(),
                      NodePopplerDocument::paramsGetter);
     Nan::SetAccessor(tpl->InstanceTemplate(),
+                     Nan::New<String>("isEncrypted").ToLocalChecked(),
+                     NodePopplerDocument::paramsGetter);
+    Nan::SetAccessor(tpl->InstanceTemplate(),
                      Nan::New<String>("isLinearized").ToLocalChecked(),
                      NodePopplerDocument::paramsGetter);
     Nan::SetAccessor(tpl->InstanceTemplate(),
@@ -144,6 +147,10 @@ NAN_GETTER(NodePopplerDocument::paramsGetter)
                 self->doc->getPDFMajorVersion(),
                 self->doc->getPDFMinorVersion());
         info.GetReturnValue().Set(Nan::New<String>(versionString).ToLocalChecked());
+    }
+    else if (strcmp(*propName, "isEncrypted") == 0)
+    {
+        info.GetReturnValue().Set(Nan::New<Boolean>(self->doc->isEncrypted()));
     }
     else if (strcmp(*propName, "isLinearized") == 0)
     {

@@ -182,6 +182,18 @@ describe('PopplerDocument', function () {
             a.equal(d.fileName, null);
         }
     });
+    it('should open an encrypted pdf file', function () {
+        this.timeout(0);
+        var fileName = __dirname + '/fixtures/encrypted.pdf';
+        var d = new poppler.PopplerDocument(fileName);
+        a.equal(d.isEncrypted, true);
+        a.equal(d.isLinearized, false);
+        a.equal(d.pdfVersion, 'PDF-1.5');
+        a.equal(d.pageCount, 1);
+        a.equal(d.PDFMajorVersion, 1);
+        a.equal(d.PDFMinorVersion, 5);
+        a.equal(d.fileName, fileName);
+    });
     it('should throw on non existing page', function () {
         this.timeout(0);
         a.throws(function () {
