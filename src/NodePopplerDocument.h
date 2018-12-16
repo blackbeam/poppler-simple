@@ -13,8 +13,15 @@ namespace node {
     class NodePopplerPage;
     class NodePopplerDocument : public Nan::ObjectWrap {
     public:
-        NodePopplerDocument(const char* cFileName);
-        NodePopplerDocument(char* buffer, size_t length);
+        NodePopplerDocument(
+            const char* cFileName,
+            GooString* ownerPassword = nullptr,
+            GooString* userPassword = nullptr);
+        NodePopplerDocument(
+            char* buffer,
+            size_t length,
+            GooString* ownerPassword = nullptr,
+            GooString* userPassword = nullptr);
         ~NodePopplerDocument();
 
         inline bool isOk() {

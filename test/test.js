@@ -193,6 +193,15 @@ describe('PopplerDocument', function () {
         a.equal(d.PDFMajorVersion, 1);
         a.equal(d.PDFMinorVersion, 5);
         a.equal(d.fileName, fileName);
+        var fileName = __dirname + '/fixtures/password_protected.pdf';
+        var d = new poppler.PopplerDocument(fileName, '1234');
+        a.equal(d.isEncrypted, true);
+        a.equal(d.isLinearized, false);
+        a.equal(d.pdfVersion, 'PDF-1.6');
+        a.equal(d.pageCount, 1);
+        a.equal(d.PDFMajorVersion, 1);
+        a.equal(d.PDFMinorVersion, 6);
+        a.equal(d.fileName, fileName);
     });
     it('should throw on non existing page', function () {
         this.timeout(0);

@@ -5,14 +5,19 @@
 #include "NodePopplerDocument.h"
 #include "NodePopplerPage.h"
 
-PDFDoc *createMemPDFDoc(char *buffer, size_t length)
+PDFDoc *createMemPDFDoc(
+    char *buffer,
+    size_t length,
+    GooString* ownerPassword = nullptr,
+    GooString* userPassword = nullptr)
 {
     Object obj;
+
 #if ((POPPLER_VERSION_MAJOR == 0) && (POPPLER_VERSION_MINOR <= 57))
     obj.initNull();
-    return new PDFDoc(new MemStream(buffer, 0, length, &obj), NULL, NULL);
+    return new PDFDoc(new MemStream(buffer, 0, length, &obj), ownerPassword, userPassword);
 #else
-    return new PDFDoc(new MemStream(buffer, 0, length, std::move(obj)), NULL, NULL);
+    return new PDFDoc(new MemStream(buffer, 0, length, std::move(obj)), ownerPassword, userPassword);
 #endif
 }
 
@@ -54,22 +59,32 @@ void NodePopplerDocument::evPageClosed(const NodePopplerPage *p)
     }
 }
 
-NodePopplerDocument::NodePopplerDocument(const char *cFileName)
+NodePopplerDocument::NodePopplerDocument(
+    const char *cFileName,
+    GooString* ownerPassword,
+    GooString* userPassword)
 {
     doc = NULL;
     buffer = NULL;
+
     GooString *fileNameA = new GooString(cFileName);
-    doc = PDFDocFactory().createPDFDoc(*fileNameA, NULL, NULL);
+
+    doc = PDFDocFactory().createPDFDoc(*fileNameA, ownerPassword, userPassword);
+
     pages = new GooList();
 }
 
-NodePopplerDocument::NodePopplerDocument(char *buffer, size_t length)
+NodePopplerDocument::NodePopplerDocument(
+    char *buffer,
+    size_t length,
+    GooString* ownerPassword,
+    GooString* userPassword)
 {
     doc = NULL;
     this->buffer = NULL;
     this->buffer = new char[length];
     std::memcpy(this->buffer, buffer, length);
-    doc = createMemPDFDoc(this->buffer, length);
+    doc = createMemPDFDoc(this->buffer, length, ownerPassword, userPassword);
     pages = new GooList();
 }
 
@@ -184,21 +199,42 @@ NAN_METHOD(NodePopplerDocument::New)
 {
     Nan::HandleScope scope;
 
-    if (info.Length() != 1)
+    if (
+        !(0 < info.Length() && info.Length() <= 3)
+        || !(info[0]->IsString() || Buffer::HasInstance(info[0]))
+        || !(info[1]->IsUndefined() || info[1]->IsNull() || info[1]->IsString())
+        || !(info[2]->IsUndefined() || info[2]->IsNull() || info[2]->IsString()))
     {
-        return Nan::ThrowError("One argument required: (filename: String).");
+        return Nan::ThrowError("Supported arguments: (fileName: string | Buffer, userPassword?: string, ownerPassword?: string).");
     }
 
     NodePopplerDocument *doc;
 
+    GooString* userPassword = nullptr;
+    GooString* ownerPassword = nullptr;
+
+    if (info[1]->IsString()) {
+        Nan::Utf8String jsUserPassword(To<String>(info[1]).ToLocalChecked());
+        userPassword = new GooString(*jsUserPassword);
+    }
+
+    if (info[2]->IsString()) {
+        Nan::Utf8String jsOwnerPassword(To<String>(info[2]).ToLocalChecked());
+        ownerPassword = new GooString(*jsOwnerPassword);
+    }
+
     if (info[0]->IsString())
     {
         Nan::Utf8String str(To<String>(info[0]).ToLocalChecked());
-        doc = new NodePopplerDocument(*str);
+        doc = new NodePopplerDocument(*str, ownerPassword, userPassword);
     }
     else if (Buffer::HasInstance(info[0]))
     {
-        doc = new NodePopplerDocument(Buffer::Data(info[0]), Buffer::Length(info[0]));
+        doc = new NodePopplerDocument(
+            Buffer::Data(info[0]),
+            Buffer::Length(info[0]),
+            userPassword,
+            ownerPassword);
     }
     else
     {
