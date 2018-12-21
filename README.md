@@ -13,30 +13,19 @@ npm install poppler-simple
 #### Install in Docker:
 See `Dockerfile.example` for inspiration/information
 
-### Load:
+### Documentation:
+Documentation is available in form of [typescript definitions](lib/poppler.d.ts).
+
+### Example:
+
 ```javascript
-var PopplerDocument = require('poppler-simple').PopplerDocument;
+import { PopperDocument } from 'poppler-simple';
+
+let doc = new PopplerDocument('file://' + pathToSomeDocument);
+let page = doc.getPage(pageNum);
+// renders page to a buffer in jpeg format with 75 quality and 120 DPI:
+let result = page.renderToBuffer('jpeg', 120, {'quality': 75});
 ```
-
-### Open document:
-```javascript
-var doc = new PopplerDocument('file://' + pathToDocument);
-```
-
-### Get a page:
-```javascript
-var page = doc.getPage(pageNum);
-```
-
-### Render page to a buffer in jpeg format with 75 quality and 120 DPI:
-```javascript
-var buf = page.renderToBuffer('jpeg', 120, {'quality': 75});
-```
-
-
-***
-For more info see _test/test.js_
-
 ## License
 
 Licensed under either of
