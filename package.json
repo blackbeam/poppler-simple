@@ -18,6 +18,7 @@
     "build-debug": "(node-gyp configure --debug && node-gyp rebuild --debug) || (exit 0)"
   },
   "main": "./lib/poppler.js",
+  "types": "./lib/poppler.d.ts",
   "engines": {
     "node": ">=0.10.0"
   },

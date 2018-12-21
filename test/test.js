@@ -205,9 +205,8 @@ describe('PopplerDocument', function () {
     });
     it('should throw on non existing page', function () {
         this.timeout(0);
-        a.throws(function () {
-            docs[0].getPage(65536);
-        }, new RegExp('Page number out of bounds'));
+        let page = docs[0].getPage(65536);
+        a.equal(page, null);
     });
     it('should open pages', function () {
         this.timeout(0);
