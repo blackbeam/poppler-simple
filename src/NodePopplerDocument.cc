@@ -37,7 +37,7 @@ void NodePopplerDocument::evPageOpened(NodePopplerPage *p)
 
 void NodePopplerDocument::evPageClosed(NodePopplerPage *p)
 {
-    for (int i = 0; i < pages.size(); i++)
+    for (unsigned int i = 0; i < pages.size(); i++)
     {
         if (p == pages[i])
         {
@@ -121,8 +121,8 @@ NAN_MODULE_INIT(NodePopplerDocument::Init)
                      NodePopplerDocument::paramsGetter);
 
     Nan::Set(target,
-             Nan::New<String>("PopplerDocument").ToLocalChecked(),
-             tpl->GetFunction());
+        Nan::New<String>("PopplerDocument").ToLocalChecked(),
+        Nan::GetFunction(tpl).ToLocalChecked());
 }
 
 NAN_GETTER(NodePopplerDocument::paramsGetter)
