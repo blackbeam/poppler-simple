@@ -6,6 +6,7 @@ addons:
     packages:
     - libpoppler-cpp-dev
     - libpoppler-dev
+    - libpoppler-private-dev
     - libfontconfig1-dev
     - libpng12-dev
     - libjpeg-turbo8-dev

@@ -1,7 +1,6 @@
 #include <v8.h>
 #include <node.h>
 #include <nan.h>
-#include <GlobalParams.h>
 #include <cpp/poppler-version.h>
 #include <poppler/PDFDoc.h>
 #include <poppler/ErrorCodes.h>
