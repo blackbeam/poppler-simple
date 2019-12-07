@@ -161,10 +161,10 @@ NAN_GETTER(NodePopplerPage::paramsGetter)
         auto rect = self->pg->getCropBox();
         Local<v8::Object> crop_box = Nan::New<v8::Object>();
 
-        crop_box->Set(Nan::New("x1").ToLocalChecked(), Nan::New<Number>(rect->x1));
-        crop_box->Set(Nan::New("x2").ToLocalChecked(), Nan::New<Number>(rect->x2));
-        crop_box->Set(Nan::New("y1").ToLocalChecked(), Nan::New<Number>(rect->y1));
-        crop_box->Set(Nan::New("y2").ToLocalChecked(), Nan::New<Number>(rect->y2));
+        Nan::Set(crop_box, Nan::New("x1").ToLocalChecked(), Nan::New<Number>(rect->x1));
+        Nan::Set(crop_box, Nan::New("x2").ToLocalChecked(), Nan::New<Number>(rect->x2));
+        Nan::Set(crop_box, Nan::New("y1").ToLocalChecked(), Nan::New<Number>(rect->y1));
+        Nan::Set(crop_box, Nan::New("y2").ToLocalChecked(), Nan::New<Number>(rect->y2));
 
         info.GetReturnValue().Set(crop_box);
     }
@@ -173,10 +173,10 @@ NAN_GETTER(NodePopplerPage::paramsGetter)
         auto rect = self->pg->getMediaBox();
         Local<v8::Object> media_box = Nan::New<v8::Object>();
 
-        media_box->Set(Nan::New("x1").ToLocalChecked(), Nan::New<Number>(rect->x1));
-        media_box->Set(Nan::New("x2").ToLocalChecked(), Nan::New<Number>(rect->x2));
-        media_box->Set(Nan::New("y1").ToLocalChecked(), Nan::New<Number>(rect->y1));
-        media_box->Set(Nan::New("y2").ToLocalChecked(), Nan::New<Number>(rect->y2));
+        Nan::Set(media_box, Nan::New("x1").ToLocalChecked(), Nan::New<Number>(rect->x1));
+        Nan::Set(media_box, Nan::New("x2").ToLocalChecked(), Nan::New<Number>(rect->x2));
+        Nan::Set(media_box, Nan::New("y1").ToLocalChecked(), Nan::New<Number>(rect->y1));
+        Nan::Set(media_box, Nan::New("y2").ToLocalChecked(), Nan::New<Number>(rect->y2));
 
         info.GetReturnValue().Set(media_box);
     }
@@ -185,10 +185,10 @@ NAN_GETTER(NodePopplerPage::paramsGetter)
         auto rect = self->pg->getBleedBox();
         Local<v8::Object> bleed_box = Nan::New<v8::Object>();
 
-        bleed_box->Set(Nan::New("x1").ToLocalChecked(), Nan::New<Number>(rect->x1));
-        bleed_box->Set(Nan::New("x2").ToLocalChecked(), Nan::New<Number>(rect->x2));
-        bleed_box->Set(Nan::New("y1").ToLocalChecked(), Nan::New<Number>(rect->y1));
-        bleed_box->Set(Nan::New("y2").ToLocalChecked(), Nan::New<Number>(rect->y2));
+        Nan::Set(bleed_box, Nan::New("x1").ToLocalChecked(), Nan::New<Number>(rect->x1));
+        Nan::Set(bleed_box, Nan::New("x2").ToLocalChecked(), Nan::New<Number>(rect->x2));
+        Nan::Set(bleed_box, Nan::New("y1").ToLocalChecked(), Nan::New<Number>(rect->y1));
+        Nan::Set(bleed_box, Nan::New("y2").ToLocalChecked(), Nan::New<Number>(rect->y2));
 
         info.GetReturnValue().Set(bleed_box);
     }
@@ -197,10 +197,10 @@ NAN_GETTER(NodePopplerPage::paramsGetter)
         auto rect = self->pg->getTrimBox();
         Local<v8::Object> trim_box = Nan::New<v8::Object>();
 
-        trim_box->Set(Nan::New("x1").ToLocalChecked(), Nan::New<Number>(rect->x1));
-        trim_box->Set(Nan::New("x2").ToLocalChecked(), Nan::New<Number>(rect->x2));
-        trim_box->Set(Nan::New("y1").ToLocalChecked(), Nan::New<Number>(rect->y1));
-        trim_box->Set(Nan::New("y2").ToLocalChecked(), Nan::New<Number>(rect->y2));
+        Nan::Set(trim_box, Nan::New("x1").ToLocalChecked(), Nan::New<Number>(rect->x1));
+        Nan::Set(trim_box, Nan::New("x2").ToLocalChecked(), Nan::New<Number>(rect->x2));
+        Nan::Set(trim_box, Nan::New("y1").ToLocalChecked(), Nan::New<Number>(rect->y1));
+        Nan::Set(trim_box, Nan::New("y2").ToLocalChecked(), Nan::New<Number>(rect->y2));
 
         info.GetReturnValue().Set(trim_box);
     }
@@ -209,10 +209,10 @@ NAN_GETTER(NodePopplerPage::paramsGetter)
         auto rect = self->pg->getArtBox();
         Local<v8::Object> art_box = Nan::New<v8::Object>();
 
-        art_box->Set(Nan::New("x1").ToLocalChecked(), Nan::New<Number>(rect->x1));
-        art_box->Set(Nan::New("x2").ToLocalChecked(), Nan::New<Number>(rect->x2));
-        art_box->Set(Nan::New("y1").ToLocalChecked(), Nan::New<Number>(rect->y1));
-        art_box->Set(Nan::New("y2").ToLocalChecked(), Nan::New<Number>(rect->y2));
+        Nan::Set(art_box, Nan::New("x1").ToLocalChecked(), Nan::New<Number>(rect->x1));
+        Nan::Set(art_box, Nan::New("x2").ToLocalChecked(), Nan::New<Number>(rect->x2));
+        Nan::Set(art_box, Nan::New("y1").ToLocalChecked(), Nan::New<Number>(rect->y1));
+        Nan::Set(art_box, Nan::New("y2").ToLocalChecked(), Nan::New<Number>(rect->y2));
 
         info.GetReturnValue().Set(art_box);
     }
@@ -281,17 +281,17 @@ NAN_METHOD(NodePopplerPage::getWordList)
         y2 = y1 - y2;
         y1 = y1 - y2;
 
-        v8result->Set(Nan::New("x1", 2).ToLocalChecked(), Nan::New<Number>(x1));
-        v8result->Set(Nan::New("x2", 2).ToLocalChecked(), Nan::New<Number>(x2));
-        v8result->Set(Nan::New("y1", 2).ToLocalChecked(), Nan::New<Number>(y1));
-        v8result->Set(Nan::New("y2", 2).ToLocalChecked(), Nan::New<Number>(y2));
+        Nan::Set(v8result, Nan::New("x1", 2).ToLocalChecked(), Nan::New<Number>(x1));
+        Nan::Set(v8result, Nan::New("x2", 2).ToLocalChecked(), Nan::New<Number>(x2));
+        Nan::Set(v8result, Nan::New("y1", 2).ToLocalChecked(), Nan::New<Number>(y1));
+        Nan::Set(v8result, Nan::New("y2", 2).ToLocalChecked(), Nan::New<Number>(y2));
 #if POPPLER_VERSION_MAJOR == 0 && POPPLER_VERSION_MINOR < 72
         auto c_str = str->getCString();
 #else
         auto c_str = str->c_str();
 #endif
-        v8result->Set(Nan::New("text", 4).ToLocalChecked(), Nan::New(c_str).ToLocalChecked());
-        v8results->Set(i, v8result);
+        Nan::Set(v8result, Nan::New("text", 4).ToLocalChecked(), Nan::New(c_str).ToLocalChecked());
+        Nan::Set(v8results, i, v8result);
 
         delete str;
     }
@@ -348,11 +348,11 @@ NAN_METHOD(NodePopplerPage::findText)
     {
         PDFRectangle *match = matches[i];
         Local<v8::Object> v8result = Nan::New<v8::Object>();
-        v8result->Set(Nan::New("x1").ToLocalChecked(), Nan::New<Number>(match->x1 / self->getWidth()));
-        v8result->Set(Nan::New("x2").ToLocalChecked(), Nan::New<Number>(match->x2 / self->getWidth()));
-        v8result->Set(Nan::New("y1").ToLocalChecked(), Nan::New<Number>(match->y1 / self->getHeight()));
-        v8result->Set(Nan::New("y2").ToLocalChecked(), Nan::New<Number>(match->y2 / self->getHeight()));
-        v8results->Set(i, v8result);
+        Nan::Set(v8result, Nan::New("x1").ToLocalChecked(), Nan::New<Number>(match->x1 / self->getWidth()));
+        Nan::Set(v8result, Nan::New("x2").ToLocalChecked(), Nan::New<Number>(match->x2 / self->getWidth()));
+        Nan::Set(v8result, Nan::New("y1").ToLocalChecked(), Nan::New<Number>(match->y1 / self->getHeight()));
+        Nan::Set(v8result, Nan::New("y2").ToLocalChecked(), Nan::New<Number>(match->y2 / self->getHeight()));
+        Nan::Set(v8results, i, v8result);
         delete match;
     }
     if (ucs4 != NULL)
@@ -438,7 +438,7 @@ NAN_METHOD(NodePopplerPage::addAnnot)
     else if (info[0]->IsObject())
     {
         Local<v8::Array> annot = Nan::New<v8::Array>(1);
-        annot->Set(0, info[0]);
+        Nan::Set(annot, 0, info[0]);
         self->addAnnot(annot, &error);
     }
 
@@ -466,7 +466,7 @@ void NodePopplerPage::addAnnot(const Local<v8::Array> v8array, char **error)
     ::Array *array = new ::Array(doc->getXRef());
     for (int i = 0; i < len; i++)
     {
-        parseAnnot(v8array->Get(i), &x1, &y1, &x2, &y2, &x3, &y3, &x4, &y4, error);
+        parseAnnot(Nan::Get(v8array, i).ToLocalChecked(), &x1, &y1, &x2, &y2, &x3, &y3, &x4, &y4, error);
         if (*error)
         {
             delete array;
@@ -531,63 +531,60 @@ void NodePopplerPage::parseAnnot(const Local<Value> rect,
                                  char **error)
 {
     Nan::HandleScope scope;
-    Local<String> x1k = Nan::New("x1").ToLocalChecked();
-    Local<String> x2k = Nan::New("x2").ToLocalChecked();
-    Local<String> y1k = Nan::New("y1").ToLocalChecked();
-    Local<String> y2k = Nan::New("y2").ToLocalChecked();
-    if (!rect->IsObject() ||
-        !To<v8::Object>(rect).ToLocalChecked()->Has(x1k) ||
-        !To<v8::Object>(rect).ToLocalChecked()->Has(x2k) ||
-        !To<v8::Object>(rect).ToLocalChecked()->Has(y1k) ||
-        !To<v8::Object>(rect).ToLocalChecked()->Has(y2k))
-    {
+
+    Local<v8::Object> rect_obj;
+    Local<Value> x1v;
+    Local<Value> x2v;
+    Local<Value> y1v;
+    Local<Value> y2v;
+
+    if (!To<v8::Object>(rect).ToLocal(&rect_obj)
+          || !Nan::Get(rect_obj, Nan::New("x1").ToLocalChecked()).ToLocal(&x1v)
+          || !Nan::Get(rect_obj, Nan::New("x2").ToLocalChecked()).ToLocal(&x2v)
+          || !Nan::Get(rect_obj, Nan::New("y1").ToLocalChecked()).ToLocal(&y1v)
+          || !Nan::Get(rect_obj, Nan::New("y2").ToLocalChecked()).ToLocal(&y2v)) {
         char *e = (char *)"Invalid rectangle definition for annotation quadrilateral";
         *error = new char[strlen(e) + 1];
         strcpy(*error, e);
+        return;
     }
-    else
+
+    if (!x1v->IsNumber() || !x2v->IsNumber() || !y1v->IsNumber() || !y2v->IsNumber())
     {
-        Local<Value> x1v = To<v8::Object>(rect).ToLocalChecked()->Get(x1k);
-        Local<Value> x2v = To<v8::Object>(rect).ToLocalChecked()->Get(x2k);
-        Local<Value> y1v = To<v8::Object>(rect).ToLocalChecked()->Get(y1k);
-        Local<Value> y2v = To<v8::Object>(rect).ToLocalChecked()->Get(y2k);
-        if (!x1v->IsNumber() || !x2v->IsNumber() || !y1v->IsNumber() || !y2v->IsNumber())
-        {
-            char *e = (char *)"Wrong values for rectangle corners definition";
-            *error = new char[strlen(e) + 1];
-            strcpy(*error, e);
-        }
-        else
-        {
-            int rotation = getRotate();
-            switch (rotation)
-            {
-            case 90:
-                *x1 = *x2 = pg->getCropWidth() * (1 - To<double>(y1v).FromJust());
-                *x3 = *x4 = pg->getCropWidth() * (1 - To<double>(y2v).FromJust());
-                *y2 = *y4 = pg->getCropHeight() * To<double>(x2v).FromJust();
-                *y1 = *y3 = pg->getCropHeight() * To<double>(x1v).FromJust();
-                break;
-            case 180:
-                *x1 = *x2 = pg->getCropWidth() * (1 - To<double>(x2v).FromJust());
-                *x3 = *x4 = pg->getCropWidth() * (1 - To<double>(x1v).FromJust());
-                *y2 = *y4 = pg->getCropHeight() * (1 - To<double>(y2v).FromJust());
-                *y1 = *y3 = pg->getCropHeight() * (1 - To<double>(y1v).FromJust());
-                break;
-            case 270:
-                *x1 = *x2 = pg->getCropWidth() * (To<double>(y1v).FromJust());
-                *x3 = *x4 = pg->getCropWidth() * (To<double>(y2v).FromJust());
-                *y2 = *y4 = pg->getCropHeight() * (1 - To<double>(x2v).FromJust());
-                *y1 = *y3 = pg->getCropHeight() * (1 - To<double>(x1v).FromJust());
-                break;
-            default:
-                *x1 = *x2 = pg->getCropWidth() * To<double>(x1v).FromJust();
-                *x3 = *x4 = pg->getCropWidth() * To<double>(x2v).FromJust();
-                *y2 = *y4 = pg->getCropHeight() * To<double>(y1v).FromJust();
-                *y1 = *y3 = pg->getCropHeight() * To<double>(y2v).FromJust();
-                break;
-            }
-        }
+        char *e = (char *)"Wrong values for rectangle corners definition";
+        *error = new char[strlen(e) + 1];
+        strcpy(*error, e);
+        return;
+    }
+
+    int rotation = getRotate();
+
+    switch (rotation)
+    {
+    case 90:
+        *x1 = *x2 = pg->getCropWidth() * (1 - To<double>(y1v).FromJust());
+        *x3 = *x4 = pg->getCropWidth() * (1 - To<double>(y2v).FromJust());
+        *y2 = *y4 = pg->getCropHeight() * To<double>(x2v).FromJust();
+        *y1 = *y3 = pg->getCropHeight() * To<double>(x1v).FromJust();
+        break;
+    case 180:
+        *x1 = *x2 = pg->getCropWidth() * (1 - To<double>(x2v).FromJust());
+        *x3 = *x4 = pg->getCropWidth() * (1 - To<double>(x1v).FromJust());
+        *y2 = *y4 = pg->getCropHeight() * (1 - To<double>(y2v).FromJust());
+        *y1 = *y3 = pg->getCropHeight() * (1 - To<double>(y1v).FromJust());
+        break;
+    case 270:
+        *x1 = *x2 = pg->getCropWidth() * (To<double>(y1v).FromJust());
+        *x3 = *x4 = pg->getCropWidth() * (To<double>(y2v).FromJust());
+        *y2 = *y4 = pg->getCropHeight() * (1 - To<double>(x2v).FromJust());
+        *y1 = *y3 = pg->getCropHeight() * (1 - To<double>(x1v).FromJust());
+        break;
+    default:
+        *x1 = *x2 = pg->getCropWidth() * To<double>(x1v).FromJust();
+        *x3 = *x4 = pg->getCropWidth() * To<double>(x2v).FromJust();
+        *y2 = *y4 = pg->getCropHeight() * To<double>(y1v).FromJust();
+        *y1 = *y3 = pg->getCropHeight() * To<double>(y2v).FromJust();
+        break;
     }
 }
 
@@ -719,8 +716,8 @@ void NodePopplerPage::AsyncRenderAfter(uv_work_t *req, int status)
         case DEST_FILE:
         {
             Local<v8::Object> out = Nan::New<v8::Object>();
-            out->Set(Nan::New("type").ToLocalChecked(), Nan::New("file").ToLocalChecked());
-            out->Set(Nan::New("path").ToLocalChecked(), Nan::New(work->filename).ToLocalChecked());
+            Nan::Set(out, Nan::New("type").ToLocalChecked(), Nan::New("file").ToLocalChecked());
+            Nan::Set(out, Nan::New("path").ToLocalChecked(), Nan::New(work->filename).ToLocalChecked());
             Local<Value> argv[] = {Nan::Null(), out};
             Nan::TryCatch try_catch;
             Nan::AsyncResource res(Nan::New("poppler-simple::render-to-file").ToLocalChecked());
@@ -737,9 +734,9 @@ void NodePopplerPage::AsyncRenderAfter(uv_work_t *req, int status)
                                            .ToLocalChecked();
             Local<v8::Object> out = Nan::New<v8::Object>();
             memcpy(Buffer::Data(buffer), work->mstrm_buf, work->mstrm_len);
-            out->Set(Nan::New("type").ToLocalChecked(), Nan::New("buffer").ToLocalChecked());
-            out->Set(Nan::New("format").ToLocalChecked(), Nan::New(work->format).ToLocalChecked());
-            out->Set(Nan::New("data").ToLocalChecked(), buffer);
+            Nan::Set(out, Nan::New("type").ToLocalChecked(), Nan::New("buffer").ToLocalChecked());
+            Nan::Set(out, Nan::New("format").ToLocalChecked(), Nan::New(work->format).ToLocalChecked());
+            Nan::Set(out, Nan::New("data").ToLocalChecked(), buffer);
             Local<Value> argv[] = {Nan::Null(), out};
             Nan::TryCatch try_catch;
             Nan::AsyncResource res(Nan::New("poppler-simple::render-to-buffer").ToLocalChecked());
@@ -843,9 +840,9 @@ NAN_METHOD(NodePopplerPage::renderToBuffer)
 
             memcpy(Buffer::Data(buffer), work->mstrm_buf, work->mstrm_len);
 
-            out->Set(Nan::New("type").ToLocalChecked(), Nan::New("buffer").ToLocalChecked());
-            out->Set(Nan::New("format").ToLocalChecked(), info[0]);
-            out->Set(Nan::New("data").ToLocalChecked(), buffer);
+            Nan::Set(out, Nan::New("type").ToLocalChecked(), Nan::New("buffer").ToLocalChecked());
+            Nan::Set(out, Nan::New("format").ToLocalChecked(), info[0]);
+            Nan::Set(out, Nan::New("data").ToLocalChecked(), buffer);
 
             delete work;
             info.GetReturnValue().Set(out);
@@ -957,8 +954,8 @@ NAN_METHOD(NodePopplerPage::renderToFile)
         else
         {
             Local<v8::Object> out = Nan::New<v8::Object>();
-            out->Set(Nan::New("type").ToLocalChecked(), Nan::New("file").ToLocalChecked());
-            out->Set(Nan::New("path").ToLocalChecked(), Nan::New(work->filename).ToLocalChecked());
+            Nan::Set(out, Nan::New("type").ToLocalChecked(), Nan::New("file").ToLocalChecked());
+            Nan::Set(out, Nan::New("path").ToLocalChecked(), Nan::New(work->filename).ToLocalChecked());
             delete work;
             info.GetReturnValue().Set(out);
         }
@@ -1026,9 +1023,9 @@ void NodePopplerPage::RenderWork::setWriterOptions(const Local<Value> optsVal)
         {
         case W_TIFF:
         {
-            if (options->Has(ck))
+            if (Nan::Has(options, ck).FromMaybe(false))
             {
-                Local<Value> cv = options->Get(ck);
+                Local<Value> cv = Nan::Get(options, ck).ToLocalChecked();
                 if (cv->IsString())
                 {
                     Local<String> cmp = To<String>(cv).ToLocalChecked();
@@ -1054,9 +1051,9 @@ void NodePopplerPage::RenderWork::setWriterOptions(const Local<Value> optsVal)
         break;
         case W_JPEG:
         {
-            if (options->Has(qk))
+            if (Nan::Has(options, qk).FromMaybe(false))
             {
-                Local<Value> qv = options->Get(qk);
+                Local<Value> qv = Nan::Get(options, qk).ToLocalChecked();
                 if (qv->IsUint32())
                 {
                     this->quality = To<int32_t>(qv).FromJust();
@@ -1070,9 +1067,9 @@ void NodePopplerPage::RenderWork::setWriterOptions(const Local<Value> optsVal)
                     e = (char *)"'quality' option value must be 0 - 100 interval integer";
                 }
             }
-            if (options->Has(pk))
+            if (Nan::Has(options, pk).FromMaybe(false))
             {
-                Local<Value> pv = options->Get(pk);
+                Local<Value> pv = Nan::Get(options, pk).ToLocalChecked();
                 if (pv->IsBoolean())
                 {
                     this->progressive = To<bool>(pv).FromJust();
@@ -1087,18 +1084,18 @@ void NodePopplerPage::RenderWork::setWriterOptions(const Local<Value> optsVal)
         case W_PNG:
             break;
         }
-        if (options->Has(sk))
+        if (Nan::Has(options, sk).FromMaybe(false))
         {
-            this->setSlice(options->Get(sk));
+            this->setSlice(Nan::Get(options, sk).ToLocalChecked());
         }
         else
         {
             // Injecting fake slice to render whole page
             Local<v8::Object> slice = Nan::New<v8::Object>();
-            slice->Set(Nan::New("x").ToLocalChecked(), Nan::New<Number>(0));
-            slice->Set(Nan::New("y").ToLocalChecked(), Nan::New<Number>(0));
-            slice->Set(Nan::New("w").ToLocalChecked(), Nan::New<Number>(1));
-            slice->Set(Nan::New("h").ToLocalChecked(), Nan::New<Number>(1));
+            Nan::Set(slice, Nan::New("x").ToLocalChecked(), Nan::New<Number>(0));
+            Nan::Set(slice, Nan::New("y").ToLocalChecked(), Nan::New<Number>(0));
+            Nan::Set(slice, Nan::New("w").ToLocalChecked(), Nan::New<Number>(1));
+            Nan::Set(slice, Nan::New("h").ToLocalChecked(), Nan::New<Number>(1));
             this->setSlice(slice);
         }
     }
@@ -1195,25 +1192,26 @@ std::tuple<int, int, int, int> NodePopplerPage::RenderWork::applyScale()
 void NodePopplerPage::RenderWork::setSlice(const Local<Value> sliceVal)
 {
     Nan::HandleScope scope;
+    char *e = NULL;
+
     Local<v8::Object> slice;
+
     Local<String> xk = Nan::New("x").ToLocalChecked();
     Local<String> yk = Nan::New("y").ToLocalChecked();
     Local<String> wk = Nan::New("w").ToLocalChecked();
     Local<String> hk = Nan::New("h").ToLocalChecked();
-    char *e = NULL;
-    if (!sliceVal->IsObject())
-    {
+
+    if (!To<v8::Object>(sliceVal).ToLocal(&slice)) {
         e = (char *)"'slice' option value must be an instance of Object";
-    }
-    else
-    {
-        slice = To<v8::Object>(sliceVal).ToLocalChecked();
-        if (slice->Has(xk) && slice->Has(yk) && slice->Has(wk) && slice->Has(hk))
-        {
-            Local<Value> xv = slice->Get(xk);
-            Local<Value> yv = slice->Get(yk);
-            Local<Value> wv = slice->Get(wk);
-            Local<Value> hv = slice->Get(hk);
+    } else {
+        Local<Value> xv, yv, hv, wv;
+
+        if (!Nan::Get(slice, xk).ToLocal(&xv)
+              || !Nan::Get(slice, yk).ToLocal(&yv)
+              || !Nan::Get(slice, wk).ToLocal(&wv)
+              || !Nan::Get(slice, hk).ToLocal(&hv)) {
+            e = (char *)"Slice must be an object: {x: Number, y: Number, w: Number, h: Number}";
+        } else {
             if (xv->IsNumber() && yv->IsNumber() && wv->IsNumber() && hv->IsNumber())
             {
                 double x, y, w, h;
@@ -1250,10 +1248,6 @@ void NodePopplerPage::RenderWork::setSlice(const Local<Value> sliceVal)
             {
                 e = (char *)"Slice must be an object: {x: Number, y: Number, w: Number, h: Number}";
             }
-        }
-        else
-        {
-            e = (char *)"Slice must be an object: {x: Number, y: Number, w: Number, h: Number}";
         }
     }
     if (e)
