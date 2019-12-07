@@ -27,34 +27,22 @@ using Nan::To;
 
 namespace node
 {
-void NodePopplerDocument::evPageOpened(const NodePopplerPage *p)
+void NodePopplerDocument::evPageOpened(NodePopplerPage *p)
 {
-    for (int i = 0; i < pages->getLength(); i++)
-    {
-        if (p == (NodePopplerPage *)pages->get(i))
-        {
-            return;
-        }
+    for (NodePopplerPage* kp : pages) {
+        if (p == kp) return;
     }
-#if POPPLER_VERSION_MAJOR == 0 && POPPLER_VERSION_MINOR < 70
-    pages->append((void *)p);
-#else
-    pages->push_back((void *)p);
-#endif
+    pages.push_back(p);
 }
 
-void NodePopplerDocument::evPageClosed(const NodePopplerPage *p)
+void NodePopplerDocument::evPageClosed(NodePopplerPage *p)
 {
-    for (int i = 0; i < pages->getLength(); i++)
+    for (int i = 0; i < pages.size(); i++)
     {
-        if (p == (NodePopplerPage *)pages->get(i))
+        if (p == pages[i])
         {
-#if POPPLER_VERSION_MAJOR == 0 && POPPLER_VERSION_MINOR < 70
-            pages->del(i);
-#else
-            auto iter = pages->begin() + i;
-            pages->erase(iter);
-#endif
+            pages.erase(pages.begin() + i);
+            break;
         }
     }
 }
@@ -71,7 +59,7 @@ NodePopplerDocument::NodePopplerDocument(
 
     doc = PDFDocFactory().createPDFDoc(*fileNameA, ownerPassword, userPassword);
 
-    pages = new GooList();
+    pages = std::vector<NodePopplerPage*>();
 }
 
 NodePopplerDocument::NodePopplerDocument(
@@ -85,20 +73,19 @@ NodePopplerDocument::NodePopplerDocument(
     this->buffer = new char[length];
     std::memcpy(this->buffer, buffer, length);
     doc = createMemPDFDoc(this->buffer, length, ownerPassword, userPassword);
-    pages = new GooList();
+    pages = std::vector<NodePopplerPage*>();
 }
 
 NodePopplerDocument::~NodePopplerDocument()
 {
-    for (int i = 0; i < pages->getLength(); i++)
-    {
-        ((NodePopplerPage *)pages->get(i))->evDocumentClosed();
+    for (NodePopplerPage* p : pages) {
+        p->evDocumentClosed();
     }
+
     if (doc)
         delete doc;
     if (buffer)
         delete buffer;
-    delete pages;
 }
 
 NAN_MODULE_INIT(NodePopplerDocument::Init)

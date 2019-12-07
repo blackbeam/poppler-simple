@@ -11,7 +11,6 @@
 #include <poppler/SplashOutputDev.h>
 #include <splash/SplashBitmap.h>
 #include <splash/SplashErrorCodes.h>
-#include <goo/gtypes.h>
 #include <goo/ImgWriter.h>
 #include <goo/PNGWriter.h>
 #include <goo/TiffWriter.h>
