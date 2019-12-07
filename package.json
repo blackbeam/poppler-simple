@@ -12,7 +12,7 @@
   },
   "scripts": {
     "install": "(node-gyp rebuild) || (exit 1)",
-    "preinstall": "((npm install nan@2.11.1) && (node-gyp configure)) || (exit 0)",
+    "preinstall": "((npm install nan@2.14.0) && (node-gyp configure)) || (exit 0)",
     "test": "./node_modules/mocha/bin/mocha -gc --slow 250",
     "clean": "((node-gyp clean) && (rm -rf node_modules)) || (exit 0)",
     "build-debug": "(node-gyp configure --debug && node-gyp rebuild --debug) || (exit 0)"
@@ -24,7 +24,7 @@
   },
   "dependencies": {
     "bluebird": "^3.5.3",
-    "nan": "^2.11.1"
+    "nan": "^2.14.0"
   },
   "devDependencies": {
     "mocha": "5.2"
