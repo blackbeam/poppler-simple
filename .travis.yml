@@ -9,7 +9,7 @@ addons:
     - libfontconfig1-dev
     - libpng12-dev
     - libjpeg-turbo8-dev
-    - libtiff4-dev
+    - libtiff5-dev
     - g++-4.9
 env: CXX=g++-4.9
 node_js:
