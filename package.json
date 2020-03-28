@@ -13,7 +13,7 @@
   "scripts": {
     "install": "(node-gyp rebuild) || (exit 1)",
     "preinstall": "((npm install nan@2.14.0) && (node-gyp configure)) || (exit 0)",
-    "test": "./node_modules/mocha/bin/mocha -gc --slow 250",
+    "test": "./node_modules/mocha/bin/mocha --expose-gc",
     "clean": "((node-gyp clean) && (rm -rf node_modules)) || (exit 0)",
     "build-debug": "(node-gyp configure --debug && node-gyp rebuild --debug) || (exit 0)"
   },
@@ -27,7 +27,11 @@
     "nan": "^2.14.0"
   },
   "devDependencies": {
-    "mocha": "5.2"
+    "mocha": "^7.1.0"
   },
-  "optionalDependencies": {}
+  "optionalDependencies": {},
+  "mocha": {
+    "reporter": "spec",
+    "slow": "250"
+  }
 }
