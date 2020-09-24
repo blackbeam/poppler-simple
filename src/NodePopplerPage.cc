@@ -42,20 +42,14 @@ NAN_MODULE_INIT(NodePopplerPage::Init)
     Nan::SetPrototypeMethod(tpl, "renderToBuffer", NodePopplerPage::renderToBuffer);
     Nan::SetPrototypeMethod(tpl, "findText", NodePopplerPage::findText);
     Nan::SetPrototypeMethod(tpl, "getWordList", NodePopplerPage::getWordList);
-#if POPPLER_VERSION_MAJOR == 0 && POPPLER_VERSION_MINOR < 20
-#else
     Nan::SetPrototypeMethod(tpl, "addAnnot", NodePopplerPage::addAnnot);
     Nan::SetPrototypeMethod(tpl, "deleteAnnots", NodePopplerPage::deleteAnnots);
-#endif
 
     Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New<String>("num").ToLocalChecked(), NodePopplerPage::paramsGetter);
     Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New<String>("width").ToLocalChecked(), NodePopplerPage::paramsGetter);
     Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New<String>("height").ToLocalChecked(), NodePopplerPage::paramsGetter);
     Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New<String>("crop_box").ToLocalChecked(), NodePopplerPage::paramsGetter);
-#if POPPLER_VERSION_MAJOR == 0 && POPPLER_VERSION_MINOR < 19
-#else
     Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New<String>("numAnnots").ToLocalChecked(), NodePopplerPage::paramsGetter);
-#endif
     Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New<String>("media_box").ToLocalChecked(), NodePopplerPage::paramsGetter);
     Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New<String>("art_box").ToLocalChecked(), NodePopplerPage::paramsGetter);
     Nan::SetAccessor(tpl->InstanceTemplate(), Nan::New<String>("trim_box").ToLocalChecked(), NodePopplerPage::paramsGetter);
@@ -222,11 +216,7 @@ NAN_GETTER(NodePopplerPage::paramsGetter)
     }
     else if (strcmp(*propName, "numAnnots") == 0)
     {
-#if POPPLER_VERSION_MAJOR == 0 && POPPLER_VERSION_MINOR < 19
-        Annots *annots = self->pg->getAnnots(self->doc->getCatalog());
-#else
         Annots *annots = self->pg->getAnnots();
-#endif
         info.GetReturnValue().Set(Nan::New<Uint32>(annots->getNumAnnots()));
     }
     else if (strcmp(*propName, "isCropped") == 0)
@@ -332,10 +322,7 @@ NAN_METHOD(NodePopplerPage::findText)
                           false, true,  // startAtTop, stopAtBottom
                           false, false, // startAtLast, stopAtLast
                           false, false, // caseSensitive, backwards
-#if POPPLER_VERSION_MAJOR == 0 && POPPLER_VERSION_MINOR < 19
-#else
                           false, // wholeWord
-#endif
                           &xMin, &yMin, &xMax, &yMax))
     {
         PDFRectangle **t_matches = matches;
@@ -366,11 +353,9 @@ NAN_METHOD(NodePopplerPage::findText)
     info.GetReturnValue().Set(v8results);
 }
 
-#if POPPLER_VERSION_MAJOR == 0 && POPPLER_VERSION_MINOR < 20
-#else
 /**
-     * Deletes typeHighlight annotations from end of an annotations array
-     */
+* Deletes typeHighlight annotations from end of an annotations array
+*/
 NAN_METHOD(NodePopplerPage::deleteAnnots)
 {
     Nan::HandleScope scope;
@@ -397,9 +382,7 @@ NAN_METHOD(NodePopplerPage::deleteAnnots)
 
     info.GetReturnValue().Set(Nan::Null());
 }
-#endif
 
-#if POPPLER_VERSION_MAJOR == 0 && POPPLER_VERSION_MINOR >= 20
 /**
      * Adds annotations to a page
      *
@@ -518,7 +501,6 @@ void NodePopplerPage::addAnnot(const Local<v8::Array> v8array, char **error)
     delete rect;
     delete aq;
 }
-#endif
 
 /**
      * Parse annotation quadrilateral
@@ -601,11 +583,7 @@ void NodePopplerPage::display(RenderWork *work)
         splashModeRGB8,
         4, false,
         paperColor);
-#if POPPLER_VERSION_MAJOR == 0 && POPPLER_VERSION_MINOR < 19
-    splashOut->startDoc(work->self->doc->getXRef());
-#else
     splashOut->startDoc(work->self->doc);
-#endif
     ImgWriter *writer = NULL;
     switch (work->w)
     {
@@ -616,12 +594,7 @@ void NodePopplerPage::display(RenderWork *work)
         writer = new JpegWriter(work->quality, work->progressive);
         break;
     case W_TIFF:
-#if POPPLER_VERSION_MAJOR == 0 && POPPLER_VERSION_MINOR < 21
-        writer = new TiffWriter();
-        ((TiffWriter *)writer)->setSplashMode(splashModeRGB8);
-#else
         writer = new TiffWriter(TiffWriter::RGB);
-#endif
         if (work->compression != NULL)
         {
             ((TiffWriter *)writer)->setCompressionString(work->compression);
@@ -631,18 +604,10 @@ void NodePopplerPage::display(RenderWork *work)
     std::tie(sx, sy, sw, sh) = work->applyScale();
     if (work->error)
         return;
-#if POPPLER_VERSION_MAJOR == 0 && POPPLER_VERSION_MINOR < 19
-    work->self->pg->displaySlice(splashOut, work->PPI, work->PPI,
-                                 0, false, true,
-                                 sx, sy, sw, sh,
-                                 false, work->self->doc->getCatalog(),
-                                 NULL, NULL, NULL, NULL);
-#else
     work->self->pg->displaySlice(splashOut, work->PPI, work->PPI,
                                  0, false, true,
                                  sx, sy, sw, sh,
                                  false);
-#endif
 
     SplashBitmap *bitmap = splashOut->getBitmap();
 #if POPPLER_VERSION_MAJOR > 0 || (POPPLER_VERSION_MAJOR == 0 && POPPLER_VERSION_MINOR > 49)
@@ -655,10 +620,6 @@ void NodePopplerPage::display(RenderWork *work)
         delete writer;
 
     if (e
-#if POPPLER_VERSION_MAJOR == 0 && (POPPLER_VERSION_MINOR < 20 || (POPPLER_VERSION_MINOR == 20 && POPPLER_VERSION_MICRO < 1))
-        // must ignore this due to a bug in poppler
-        && e != splashErrGeneric
-#endif
     )
     {
         char err[256];

@@ -138,10 +138,7 @@ class NodePopplerPage : public Nan::ObjectWrap
     static NAN_METHOD(getWordList);
     static NAN_METHOD(renderToFile);
     static NAN_METHOD(renderToBuffer);
-#if POPPLER_VERSION_MAJOR == 0 && POPPLER_VERSION_MINOR < 20
-#else
     static NAN_METHOD(addAnnot);
-#endif
     static NAN_METHOD(deleteAnnots);
 
     static void AsyncRenderWork(uv_work_t *req);
@@ -166,23 +163,12 @@ class NodePopplerPage : public Nan::ObjectWrap
         {
             TextOutputDev *textDev;
             Gfx *gfx;
-#if POPPLER_VERSION_MAJOR == 0 && POPPLER_VERSION_MINOR < 19
-            textDev = new TextOutputDev(NULL, true, false, rawOrder);
-            gfx = pg->createGfx(textDev, 72., 72., 0,
-                                false,
-                                true,
-                                -1, -1, -1, -1,
-                                false,
-                                doc->getCatalog(),
-                                NULL, NULL, NULL, NULL);
-#else
             textDev = new TextOutputDev(NULL, true, 0, rawOrder, false);
             gfx = pg->createGfx(textDev, 72., 72., 0,
                                 false,
                                 true,
                                 -1, -1, -1, -1,
                                 false, NULL, NULL);
-#endif
             pg->display(gfx);
             textDev->endPage();
             text = textDev->takeText();
@@ -192,10 +178,7 @@ class NodePopplerPage : public Nan::ObjectWrap
         return text;
     }
     void renderToStream(RenderWork *work);
-#if POPPLER_VERSION_MAJOR == 0 && POPPLER_VERSION_MINOR < 20
-#else
     void addAnnot(const v8::Local<v8::Array> array, char **error);
-#endif
 
     PDFDoc *doc;
     Page *pg;
