@@ -239,7 +239,7 @@ export class PopplerPage {
         format: 'png' | 'jpeg' | 'tiff',
         ppi: number,
         options?: RenderOptions,
-        callback: (err: Error, result: FileRenderResult) => any,
+        callback?: (err: Error, result: FileRenderResult) => any,
     ): void;
 
     /**
@@ -279,7 +279,7 @@ export class PopplerPage {
         format: 'png' | 'jpeg' | 'tiff',
         ppi: number,
         options?: RenderOptions,
-        callback: (err: Error, result: BufferRenderResult) => any,
+        callback?: (err: Error, result: BufferRenderResult) => any,
     ): void;
 
     /**
