@@ -231,6 +231,20 @@ export class PopplerPage {
      * @param path path to a file
      * @param format output file format
      * @param ppi resolution in pixels per inch
+     * @param callback operation callback
+     */
+    renderToFile(
+        path: string,
+        format: 'png' | 'jpeg' | 'tiff',
+        ppi: number,
+        callback: (err: Error, result: FileRenderResult) => any,
+    ): void;
+
+    /**
+     * Renders page to a file asyncronously using old-fashioned CPS API.
+     * @param path path to a file
+     * @param format output file format
+     * @param ppi resolution in pixels per inch
      * @param options render options
      * @param callback operation callback
      */
@@ -238,8 +252,8 @@ export class PopplerPage {
         path: string,
         format: 'png' | 'jpeg' | 'tiff',
         ppi: number,
-        options?: RenderOptions,
-        callback?: (err: Error, result: FileRenderResult) => any,
+        options: RenderOptions,
+        callback: (err: Error, result: FileRenderResult) => any,
     ): void;
 
     /**
@@ -272,14 +286,26 @@ export class PopplerPage {
      * Renders page to a buffer asyncronously using old-fashioned CPS API.
      * @param format output file format
      * @param ppi resolution in pixels per inch
+     * @param callback operation callback
+     */
+    renderToBuffer(
+        format: 'png' | 'jpeg' | 'tiff',
+        ppi: number,
+        callback: (err: Error, result: BufferRenderResult) => any,
+    ): void;
+
+    /**
+     * Renders page to a buffer asyncronously using old-fashioned CPS API.
+     * @param format output file format
+     * @param ppi resolution in pixels per inch
      * @param options render options
      * @param callback operation callback
      */
     renderToBuffer(
         format: 'png' | 'jpeg' | 'tiff',
         ppi: number,
-        options?: RenderOptions,
-        callback?: (err: Error, result: BufferRenderResult) => any,
+        options: RenderOptions,
+        callback: (err: Error, result: BufferRenderResult) => any,
     ): void;
 
     /**
