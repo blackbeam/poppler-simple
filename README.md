@@ -10,6 +10,20 @@ A simple javascript interface to [poppler](http://poppler.freedesktop.org/) libr
 npm install poppler-simple
 ```
 
+#### CentOS
+
+To install the poppler libraries on CentOS the following packages need to be installed:
+```bash
+sudo yum install poppler poppler-utils poppler-cpp-devel
+```
+
+#### Ubuntu
+
+To install the poppler libraries on Ubuntu the following packages need to be installed:
+```bash
+sudo apt-get install poppler-utils libpoppler-cpp-dev libpoppler-private-dev
+```
+
 #### Install in Docker:
 See `Dockerfile.example` for inspiration/information
 
