@@ -21,7 +21,7 @@ sudo yum install poppler poppler-utils poppler-cpp-devel
 
 To install the poppler libraries on Ubuntu the following packages need to be installed:
 ```bash
-sudo apt-get install poppler-utils libpoppler-cpp-dev libpoppler-private-dev
+sudo apt-get install libpoppler-cpp-dev libpoppler-private-dev
 ```
 
 #### Install in Docker:
