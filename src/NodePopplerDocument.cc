@@ -5,7 +5,7 @@
 #include "NodePopplerDocument.h"
 #include "NodePopplerPage.h"
 
-PDFDoc *createMemPDFDoc(
+std::unique_ptr<PDFDoc> createMemPDFDoc(
     char *buffer,
     size_t length,
     GooString* ownerPassword = nullptr,
@@ -15,10 +15,11 @@ PDFDoc *createMemPDFDoc(
 
 #if ((POPPLER_VERSION_MAJOR == 0) && (POPPLER_VERSION_MINOR <= 57))
     obj.initNull();
-    return new PDFDoc(new MemStream(buffer, 0, length, &obj), ownerPassword, userPassword);
+    std::unique_ptr<PDFDoc> doc(new PDFDoc(new MemStream(buffer, 0, length, &obj), ownerPassword, userPassword));
 #else
-    return new PDFDoc(new MemStream(buffer, 0, length, std::move(obj)), ownerPassword, userPassword);
+    std::unique_ptr<PDFDoc> doc(new PDFDoc(new MemStream(buffer, 0, length, std::move(obj)), ownerPassword, userPassword));
 #endif
+    return doc;
 }
 
 using namespace v8;
@@ -57,7 +58,11 @@ NodePopplerDocument::NodePopplerDocument(
 
     GooString *fileNameA = new GooString(cFileName);
 
+#if (POPPLER_VERSION_MAJOR < 21 || (POPPLER_VERSION_MAJOR == 21 && POPPLER_VERSION_MINOR < 3))
+    doc = std::unique_ptr<PDFDoc>(PDFDocFactory().createPDFDoc(*fileNameA, ownerPassword, userPassword));
+#else
     doc = PDFDocFactory().createPDFDoc(*fileNameA, ownerPassword, userPassword);
+#endif
 
     pages = std::vector<NodePopplerPage*>();
 }
@@ -82,8 +87,6 @@ NodePopplerDocument::~NodePopplerDocument()
         p->evDocumentClosed();
     }
 
-    if (doc)
-        delete doc;
     if (buffer)
         delete buffer;
 }
