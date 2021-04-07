@@ -82,7 +82,7 @@ NodePopplerPage::NodePopplerPage(NodePopplerDocument *doc, const int32_t pageNum
     {
         parent = doc;
         parent->evPageOpened(this);
-        this->doc = doc->doc;
+        this->doc = doc->getDoc();
         docClosed = false;
     }
     else

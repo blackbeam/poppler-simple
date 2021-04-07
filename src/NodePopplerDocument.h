@@ -26,7 +26,7 @@ namespace node {
             return doc->isOk();
         }
         inline PDFDoc *getDoc() {
-            return doc;
+            return doc.get();
         }
         static NAN_MODULE_INIT(Init);
 
@@ -40,7 +40,7 @@ namespace node {
         static NAN_GETTER(paramsGetter);
 
         friend class NodePopplerPage;
-        PDFDoc *doc;
+        std::unique_ptr<PDFDoc> doc;
         char *buffer;
     };
 }

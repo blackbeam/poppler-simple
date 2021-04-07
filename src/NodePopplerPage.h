@@ -180,7 +180,9 @@ class NodePopplerPage : public Nan::ObjectWrap
     void renderToStream(RenderWork *work);
     void addAnnot(const v8::Local<v8::Array> array, char **error);
 
+    // we doesn't own this
     PDFDoc *doc;
+
     Page *pg;
     TextPage *text;
     double color_r;
