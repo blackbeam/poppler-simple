@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node:
+          - 10
+          - 12
+          - 14
+          - 16
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '${{ matrix.node }}'
+      - run: sudo apt-get update -y
+      - run: sudo apt-get install -y pkg-config libpoppler-dev libpoppler-cpp-dev libpoppler-glib-dev libpoppler-private-dev libpoppler-qt5-dev poppler-data poppler-utils 
+      - run: npm install .
+      - run: npm test
