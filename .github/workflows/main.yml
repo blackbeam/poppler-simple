@@ -23,5 +23,7 @@ jobs:
       - uses: actions/setup-node@v2
         with:
           node-version: '${{ matrix.node }}'
+      - run: sudo apt-get update -y
+      - run: sudo apt-get install -y pkg-config libpoppler-dev
       - run: npm install .
       - run: npm test
