@@ -31,13 +31,17 @@
                         'OTHER_CFLAGS': [
                             "<!@(pkg-config --cflags poppler)",
                             "<!@(dirname -- `pkg-config --cflags poppler`)",
-                            "-std=c++11",
                             "-stdlib=libc++"
                         ],
                         "OTHER_LDFLAGS": [
                             "-liconv"
                         ]
                     },
+                }],
+                ['OS!="win"', {
+                    'cflags_cc+': [
+                        '-std=c++14',
+                    ],
                 }],
             ],
             "include_dirs": [
