@@ -238,7 +238,6 @@ NAN_METHOD(NodePopplerPage::getWordList)
     Nan::HandleScope scope;
     NodePopplerPage *self = Nan::ObjectWrap::Unwrap<NodePopplerPage>(info.Holder());
     TextPage *text;
-    TextWordList *wordList;
 
     bool rawOrder = info[0]->IsBoolean() ? (To<bool>(info[0]).FromMaybe(false) ? true : false) : false;
 
@@ -248,7 +247,7 @@ NAN_METHOD(NodePopplerPage::getWordList)
     }
 
     text = self->getTextPage(rawOrder);
-    wordList = text->makeWordList(true);
+    auto wordList = text->makeWordList(true);
     int l = wordList->getLength();
     Local<v8::Array> v8results = Nan::New<v8::Array>(l);
     for (int i = 0; i < l; i++)
