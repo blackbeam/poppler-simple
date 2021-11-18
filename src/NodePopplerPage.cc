@@ -284,7 +284,10 @@ NAN_METHOD(NodePopplerPage::getWordList)
 
         delete str;
     }
+
+#if (POPPLER_VERSION_MAJOR == 21 && POPPLER_VERSION_MINOR < 11) || POPPLER_VERSION_MAJOR < 21
     delete wordList;
+#endif
 
     info.GetReturnValue().Set(v8results);
 }
