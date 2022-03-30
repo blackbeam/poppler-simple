@@ -20,6 +20,9 @@
             "cflags": [
                 "<!@(pkg-config --cflags poppler)"
             ],
+            "cflags_cc": [
+                "-std=c++17"
+            ],
             "defines": [
                 "NODE_VERSION_MAJOR=<(major_version)",
                 "NODE_VERSION_MINOR=<(minor_version)",
@@ -31,7 +34,8 @@
                         'OTHER_CFLAGS': [
                             "<!@(pkg-config --cflags poppler)",
                             "<!@(dirname -- `pkg-config --cflags poppler`)",
-                            "-stdlib=libc++"
+                            "-stdlib=libc++",
+                            "-std=c++17"
                         ],
                         "OTHER_LDFLAGS": [
                             "-liconv"
@@ -40,7 +44,7 @@
                 }],
                 ['OS!="win"', {
                     'cflags_cc+': [
-                        '-std=c++14',
+                        '-std=c++17',
                     ],
                 }],
             ],
