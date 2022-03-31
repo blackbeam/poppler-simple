@@ -14,7 +14,6 @@ jobs:
     strategy:
       matrix:
         node:
-          - 10
           - 12
           - 14
           - 16
@@ -26,4 +25,5 @@ jobs:
       - run: sudo apt-get update -y
       - run: sudo apt-get install -y pkg-config libpoppler-dev libpoppler-cpp-dev libpoppler-glib-dev libpoppler-private-dev libpoppler-qt5-dev poppler-data poppler-utils 
       - run: npm install .
+      - run: npm install typescript
       - run: npm test
