@@ -16,6 +16,17 @@ std::unique_ptr<PDFDoc> createMemPDFDoc(
 #if ((POPPLER_VERSION_MAJOR == 0) && (POPPLER_VERSION_MINOR <= 57))
     obj.initNull();
     std::unique_ptr<PDFDoc> doc(new PDFDoc(new MemStream(buffer, 0, length, &obj), ownerPassword, userPassword));
+#elif ((POPPLER_VERSION_MAJOR == 22) && (POPPLER_VERSION_MINOR >= 3)) || POPPLER_VERSION_MAJOR > 22
+    std::optional<GooString> ownerPW, userPW;
+    if (ownerPassword != nullptr)
+    {
+        ownerPW = GooString(ownerPassword);
+    }
+    if (userPassword != nullptr)
+    {
+        userPW = GooString(userPassword);
+    }
+    std::unique_ptr<PDFDoc> doc(new PDFDoc(new MemStream(buffer, 0, length, std::move(obj)), ownerPW, userPW));
 #else
     std::unique_ptr<PDFDoc> doc(new PDFDoc(new MemStream(buffer, 0, length, std::move(obj)), ownerPassword, userPassword));
 #endif
@@ -60,6 +71,17 @@ NodePopplerDocument::NodePopplerDocument(
 
 #if (POPPLER_VERSION_MAJOR < 21 || (POPPLER_VERSION_MAJOR == 21 && POPPLER_VERSION_MINOR < 3))
     doc = std::unique_ptr<PDFDoc>(PDFDocFactory().createPDFDoc(*fileNameA, ownerPassword, userPassword));
+#elif ((POPPLER_VERSION_MAJOR == 22) && (POPPLER_VERSION_MINOR >= 3)) || POPPLER_VERSION_MAJOR > 22
+    std::optional<GooString> ownerPW, userPW;
+    if (ownerPassword != nullptr)
+    {
+        ownerPW = GooString(ownerPassword);
+    }
+    if (userPassword != nullptr)
+    {
+        userPW = GooString(userPassword);
+    }
+    doc = PDFDocFactory().createPDFDoc(*fileNameA, ownerPW, userPW);
 #else
     doc = PDFDocFactory().createPDFDoc(*fileNameA, ownerPassword, userPassword);
 #endif
