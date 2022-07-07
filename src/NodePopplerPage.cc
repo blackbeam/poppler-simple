@@ -6,6 +6,22 @@
 #include "NodePopplerDocument.h"
 #include "NodePopplerPage.h"
 
+int getNumAnnotsHelper(Annots &annots) {
+#if ((POPPLER_VERSION_MAJOR == 22) && (POPPLER_VERSION_MINOR >= 3)) || POPPLER_VERSION_MAJOR > 22
+    return annots.getAnnots().size();
+#else
+    return annots.getNumAnnots();
+#endif
+}
+
+Annot *getAnnotHelper(Annots &annots, int i) {
+#if ((POPPLER_VERSION_MAJOR == 22) && (POPPLER_VERSION_MINOR >= 3)) || POPPLER_VERSION_MAJOR > 22
+    return annots.getAnnots()[i];
+#else
+    return annots.getAnnot(i);
+#endif
+}
+
 #define THROW_SYNC_ASYNC_ERR(work, err)      \
     if (work->callback == NULL)              \
     {                                        \
@@ -217,7 +233,7 @@ NAN_GETTER(NodePopplerPage::paramsGetter)
     else if (strcmp(*propName, "numAnnots") == 0)
     {
         Annots *annots = self->pg->getAnnots();
-        info.GetReturnValue().Set(Nan::New<Uint32>(annots->getNumAnnots()));
+        info.GetReturnValue().Set(Nan::New<Uint32>(getNumAnnotsHelper(*annots)));
     }
     else if (strcmp(*propName, "isCropped") == 0)
     {
@@ -366,10 +382,10 @@ NAN_METHOD(NodePopplerPage::deleteAnnots)
     while (true)
     {
         Annots *annots = self->pg->getAnnots();
-        int num_annots = annots->getNumAnnots();
+        int num_annots = getNumAnnotsHelper(*annots);
         if (num_annots > 0)
         {
-            Annot *annot = annots->getAnnot(num_annots - 1);
+            Annot *annot = getAnnotHelper(*annots, num_annots - 1);
             if (annot->getType() != Annot::typeHighlight)
             {
                 break;
