@@ -157,6 +157,26 @@ class NodePopplerPage : public Nan::ObjectWrap
   private:
     static NAN_GETTER(paramsGetter);
 
+#if ((POPPLER_VERSION_MAJOR == 24) && (POPPLER_VERSION_MINOR >= 12)) || POPPLER_VERSION_MAJOR > 24
+    TextPage *getTextPage(bool rawOrder)
+    {
+        if (text == NULL)
+        {
+            TextOutputDev *textDev;
+            textDev = new TextOutputDev(NULL, true, 0, rawOrder, false);
+            auto gfx = pg->createGfx(textDev, 72., 72., 0,
+                                false,
+                                true,
+                                -1, -1, -1, -1, NULL, NULL);
+            pg->display(gfx.get());
+            textDev->endPage();
+            text = textDev->takeText();
+            gfx.reset();
+            delete textDev;
+        }
+        return text;
+    }
+#else
     TextPage *getTextPage(bool rawOrder)
     {
         if (text == NULL)
@@ -164,11 +184,20 @@ class NodePopplerPage : public Nan::ObjectWrap
             TextOutputDev *textDev;
             Gfx *gfx;
             textDev = new TextOutputDev(NULL, true, 0, rawOrder, false);
+
+#if ((POPPLER_VERSION_MAJOR == 24) && (POPPLER_VERSION_MINOR >= 10)) || POPPLER_VERSION_MAJOR > 24
             gfx = pg->createGfx(textDev, 72., 72., 0,
                                 false,
                                 true,
                                 -1, -1, -1, -1,
-                                false, NULL, NULL);
+                                NULL, NULL);
+#else
+            gfx = pg->createGfx(textDev, 72., 72., 0,
+                                false,
+                                true,
+                                -1, -1, -1, -1, false,
+                                NULL, NULL);
+#endif
             pg->display(gfx);
             textDev->endPage();
             text = textDev->takeText();
@@ -177,6 +206,8 @@ class NodePopplerPage : public Nan::ObjectWrap
         }
         return text;
     }
+#endif
+
     void renderToStream(RenderWork *work);
     void addAnnot(const v8::Local<v8::Array> array, char **error);
 

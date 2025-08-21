@@ -503,7 +503,13 @@ void NodePopplerPage::addAnnot(const Local<v8::Array> v8array, char **error)
     AnnotTextMarkup *annot = new AnnotTextMarkup(doc, rect, Annot::typeHighlight, aq);
 #else
     AnnotTextMarkup *annot = new AnnotTextMarkup(doc, rect, Annot::typeHighlight);
+
+#if ((POPPLER_VERSION_MAJOR == 25) && (POPPLER_VERSION_MINOR >= 1)) || POPPLER_VERSION_MAJOR > 25
+    annot->setQuadrilaterals(*aq);
+#else
     annot->setQuadrilaterals(aq);
+#endif
+
 #endif
 
     annot->setOpacity(.5);
@@ -641,7 +647,7 @@ void NodePopplerPage::display(RenderWork *work)
     )
     {
         char err[256];
-        sprintf(err, "SplashError %d", e);
+        snprintf(err, 255, "SplashError %d", e);
         work->error = new char[strlen(err) + 1];
         strcpy(work->error, err);
     }
@@ -1320,7 +1326,7 @@ void NodePopplerPage::RenderWork::closeStream()
                 if (count != (ssize_t)this->mstrm_len && this->error == NULL)
                 {
                     char err[256];
-                    sprintf(err, "Can't read temporary file");
+                    snprintf(err, 255, "Can't read temporary file");
                     this->error = new char[strlen(err) + 1];
                     strcpy(this->error, err);
                 }
