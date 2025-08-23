@@ -170,7 +170,7 @@ NAN_GETTER(NodePopplerDocument::paramsGetter)
     else if (strcmp(*propName, "pdfVersion") == 0)
     {
         char versionString[16];
-        sprintf(versionString, "PDF-%d.%d",
+        snprintf(versionString, 15, "PDF-%d.%d",
                 self->doc->getPDFMajorVersion(),
                 self->doc->getPDFMinorVersion());
         info.GetReturnValue().Set(Nan::New<String>(versionString).ToLocalChecked());
@@ -261,39 +261,39 @@ NAN_METHOD(NodePopplerDocument::New)
         switch (errorCode)
         {
         case errOpenFile:
-            sprintf(errorName, "fopen error. Errno: %d", doc->getDoc()->getFopenErrno());
+            snprintf(errorName, 127, "fopen error. Errno: %d", doc->getDoc()->getFopenErrno());
             break;
         case errBadCatalog:
-            sprintf(errorName, "bad catalog");
+            snprintf(errorName, 127, "bad catalog");
             break;
         case errDamaged:
-            sprintf(errorName, "damaged");
+            snprintf(errorName, 127, "damaged");
             break;
         case errEncrypted:
-            sprintf(errorName, "encrypted");
+            snprintf(errorName, 127, "encrypted");
             break;
         case errHighlightFile:
-            sprintf(errorName, "highlight file");
+            snprintf(errorName, 127, "highlight file");
             break;
         case errBadPrinter:
-            sprintf(errorName, "bad printer");
+            snprintf(errorName, 127, "bad printer");
             break;
         case errPrinting:
-            sprintf(errorName, "printing error");
+            snprintf(errorName, 127, "printing error");
             break;
         case errPermission:
-            sprintf(errorName, "permission error");
+            snprintf(errorName, 127, "permission error");
             break;
         case errBadPageNum:
-            sprintf(errorName, "bad page num");
+            snprintf(errorName, 127, "bad page num");
             break;
         case errFileIO:
-            sprintf(errorName, "file IO error");
+            snprintf(errorName, 127, "file IO error");
             break;
         default:
-            sprintf(errorName, "other error");
+            snprintf(errorName, 127, "other error");
         }
-        sprintf(errorDescription, "Couldn't open file - %s.", errorName);
+        snprintf(errorDescription, 255, "Couldn't open file - %s.", errorName);
         delete doc;
         return Nan::ThrowError(Exception::Error(Nan::New<String>(errorDescription, strlen(errorDescription)).ToLocalChecked()));
     }
